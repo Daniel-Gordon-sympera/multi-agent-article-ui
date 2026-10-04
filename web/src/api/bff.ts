@@ -14,6 +14,7 @@ import type {
   CreateUserInput,
   CrossJobSignalFilters,
   CrossJobSignalsPage,
+  CrossJobSignalsSummary,
   DismissSuggestionInput,
   Estimate,
   LoginInput,
@@ -255,6 +256,28 @@ export async function listCrossJobSignals(
     items: result.items ?? [],
     next_cursor: result.next_cursor ?? null,
     degraded: result.degraded ?? false,
+    scanned_jobs: result.scanned_jobs,
+    truncated: result.truncated,
+  };
+}
+
+export async function getCrossJobSignalsSummary(
+  filters: CrossJobSignalFilters = {},
+): Promise<CrossJobSignalsSummary> {
+  const result = await apiGet<Partial<CrossJobSignalsSummary>>(
+    withQuery("/app/signals/summary", asQuery(filters)),
+  );
+  return {
+    signals: result.signals ?? 0,
+    companies: result.companies ?? 0,
+    jobs: result.jobs ?? 0,
+    by_materiality: {
+      high: result.by_materiality?.high ?? 0,
+      medium: result.by_materiality?.medium ?? 0,
+      low: result.by_materiality?.low ?? 0,
+    },
+    top_signal: result.top_signal ?? null,
+    degraded: result.degraded,
     scanned_jobs: result.scanned_jobs,
     truncated: result.truncated,
   };

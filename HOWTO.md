@@ -128,8 +128,59 @@ and promote sites the finder suggested. <!-- feature agent: fill -->
 
 ## 9. Signals explorer and saved views
 
-**Signals** (`/signals`) lists signals across jobs with filters, a column chooser,
-density, saved views and a detail drawer, and exports the filtered set as CSV. <!-- feature agent: fill -->
+**Signals** (`/signals`) lists every signal across jobs with the evidence behind it. The
+same table, columns and drawer serve a single run's **Signals** tab (`/jobs/<id>/signals`).
+
+**Find signals.**
+1. Open **Signals** in the sidebar. The table is sorted by article date (newest first);
+   each row shows the company, the signal with its materiality and confidence, the verbatim
+   evidence, the HQ city/state, the company industry and revenue bin, the job's location
+   and the job id (click it to open the run).
+2. Type in the search box to match company names, evidence, signal titles or domains.
+3. Click **+ Add filter** and pick a field: state, county, job industry, company industry,
+   signal (the catalog of `signals.json`), materiality, revenue bin, org kind, HQ scope, a
+   date range (with "Last 7 days" / "Last 30 days" presets), a job id, a company key or a
+   batch id. Every active filter becomes a chip; click a chip's × to drop it, **Clear all**
+   to start over. Filters, the open drawer, the page and the columns live in the URL, so
+   the address bar is a shareable link.
+4. The line at the right of the chips ("128 signals · 61 companies · 9 jobs") and the
+   **By materiality** strip (split bar, counts, top signal) describe the whole filtered
+   set, not only the page.
+5. Use the two icon buttons at the right of the toolbar to switch **compact rows** and to
+   **choose columns** (HQ scope, article source and the job columns are available on both
+   screens; the chooser remembers the choice in the URL).
+
+**Read a signal.** Click a company name, a row or the › at the end of a row. The drawer
+shows the verbatim evidence with its checks (verbatim match, name grounded), the role and
+the confidence meter; the article (title link, domain, publication date, when the run
+accepted it, the article id, the main idea of the summary) with **Open article** (new tab),
+**Saved text** (the text the pipeline saved; "expired" when the artifact retention removed
+it) and **Summary record** (the full analysis record); the company profile from the
+enrichment flags (org kind, HQ scope, entity flag, industry, revenue bin, enrichment source)
+with **Across jobs** counts and **Open profile** (that company's signals across runs); and
+the job with its status. **Copy link** copies the drawer's URL, **Export row** downloads
+that one signal as CSV, **‹ ›** step through the loaded rows, `Esc` closes.
+
+**Export.** **Export CSV** in the header downloads the filtered set
+(`/app/signals/export.csv?…`, the pipeline `signals.csv` columns plus
+`job_id, county, state, job_industry`). On a run's Signals tab, **signals.csv** downloads
+that run's table straight from the pipeline API.
+
+**Saved views.**
+1. Set the filters and columns you want, click **Save view**, give it a name and tick
+   **Share with everyone** if the whole team should see it. The view is stored by the
+   console (`ui.saved_views`); names are unique per account and screen.
+2. Pick a view from **View: …** in the toolbar to apply it (`?view=<id>` in the URL);
+   changing a filter afterwards detaches the URL from the view again.
+3. **Manage views…** (last entry of the select) renames, shares/unshares and deletes views.
+   Only the owner (or an admin) can change a view; shared views are read-only for others.
+
+**Until the pipeline's cross-job read (B1) is deployed** the console shows a note: the
+explorer merges the signals of the 20 most recent runs that match the state, county, job
+industry, job or batch filters (30 s cache; a run with more than 1,000 signals is cut at
+1,000 and flagged). Older runs stay reachable through their own Signals tab or by filtering
+on their job id. Once `GET /v1/signals` exists the note disappears on the next capability
+probe (`GET /app/capabilities`) without a redeploy.
 
 ## 10. Settings
 

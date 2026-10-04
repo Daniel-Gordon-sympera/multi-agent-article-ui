@@ -181,3 +181,45 @@ with the warn status, so a High pill and a "Retry in …" pill look alike in col
 pills differ in text and the status pill carries a dot, so meaning is never colour-only.
 If Daniel prefers the legend rule, switch High to brand-700 text on brand-200 background
 in the variant map (one line) and supersede this record.
+
+## ADR-UI-009 — Cross-job signals: one column registry, offset cursors for the fallback, `?detail=` for the drawer
+
+**Status:** accepted (2026-10-04).
+
+**Context.** The Signals explorer and the Job › Signals tab draw the same record cell with two
+different column sets (mockup §6.2); the explorer must work before the pipeline's cross-job
+read (B1) exists (ADR-UI-007: merge the 20 most recent matching jobs in the BFF, 30 s cache);
+the contract names the drawer's opener `?signal=` but `signal` is also the cross-job *type*
+filter of §4.4; and the pipeline's keyset cursors (`lpad(id)`) cannot page a list the BFF
+merged from several jobs.
+
+**Decision.**
+1. **One column registry.** `features/signals/signalColumns.ts` holds the eleven columns
+   (`record, hqCity, hqScope, hqState, industry, revenueBin, date, source, jobLocation, job,
+   open`) with per-route default visibility; the job tab shows the HQ scope chip under the
+   city and the article source, the explorer the job location/source and the job id. Every
+   column stays available in the chooser on both screens and the chosen set lives in `?cols=`.
+   The evidence is always the verbatim `signal_evidence`/`evidence` of the API, ellipsised by
+   CSS, never pre-trimmed.
+2. **Offset cursors for the BFF fallback.** `GET /app/signals` pages the merged, sorted
+   (article date desc, id desc) list with the opaque offset cursor of `cursors.py`, bound to
+   the normalised filter set (a cursor reused with other filters → `400 invalid_cursor`). The
+   SPA treats it like any keyset cursor (`useKeysetPage`, `?after=`). With `signals_global`
+   the API's own cursor is passed through unchanged; only a free-text `q` (applied in the
+   BFF by contract) switches to a bounded pull (2,000 rows) with offset paging. The summary
+   endpoint (`/app/signals/summary`) computes over the same bounded set, so the chip-row
+   totals, the materiality strip and the "of N" footer agree with the table.
+3. **`?detail=<mention id>` opens the drawer** on both screens (contract §7); the id is kept
+   numeric in the search schema so the router writes `detail=9000` rather than a JSON-quoted
+   string. Previous/Next step through the loaded page only; a deep link to a row outside the
+   page shows an explanatory empty state instead of a second query.
+4. **Saved views store the §4.4 filter object plus the column list** (`search` + `columns`),
+   never table rows; applying a view rewrites the URL (`?view=<id>`), and any later filter
+   change detaches the URL from the view.
+
+**Consequences.** Both screens share `SignalsTable`, `SignalRecordCell` and `SignalDrawer`
+(one place to change the record anatomy); the fallback's paging is honest about its limits
+(`degraded`, `scanned_jobs`, `truncated`) and disappears behind the same endpoints once B1
+lands; mention ids in URLs stay readable. Costs: the fallback's "of N" total is only as
+good as its 20-job window, and the Job › Signals footer counts companies on the page, not
+across pages (the API gives no totals).

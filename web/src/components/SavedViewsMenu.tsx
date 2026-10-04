@@ -4,7 +4,7 @@
  * A view stores a search-param object and an optional column list (contract §4.3).
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Trash2 } from "lucide-react";
+import { Pencil, Save, Trash2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { createView, deleteView, listViews, updateView } from "@/api/bff";
 import { qk } from "@/api/keys";
@@ -212,7 +212,104 @@ export interface ManageViewsDialogProps {
   views: View[];
   onDelete: (id: string) => void;
   onToggleShared?: (view: View) => void;
+  /** Enables inline renaming (pencil → name field → Save). */
+  onRename?: (view: View, name: string) => void;
+  /** Views the current user may change (own, or every one for admins); default: all. */
+  canEdit?: (view: View) => boolean;
   deletingId?: string | null;
+}
+
+function ManageViewRow({
+  view,
+  onDelete,
+  onToggleShared,
+  onRename,
+  editable,
+  deleting,
+}: {
+  view: View;
+  onDelete: (id: string) => void;
+  onToggleShared?: (view: View) => void;
+  onRename?: (view: View, name: string) => void;
+  editable: boolean;
+  deleting: boolean;
+}) {
+  const [renaming, setRenaming] = useState(false);
+  const [name, setName] = useState(view.name);
+  const inputId = `rename-view-${view.id}`;
+  if (renaming && onRename) {
+    return (
+      <li className="py-2.5">
+        <form
+          className="flex items-center gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const next = name.trim();
+            if (next && next !== view.name) onRename(view, next);
+            setRenaming(false);
+          }}
+        >
+          <Label htmlFor={inputId} className="sr-only">
+            New name for {view.name}
+          </Label>
+          <Input
+            id={inputId}
+            inputSize="toolbar"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            required
+          />
+          <Button variant="primary" size="sm" type="submit" disabled={!name.trim()}>
+            Save
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setRenaming(false)}>
+            Cancel
+          </Button>
+        </form>
+      </li>
+    );
+  }
+  return (
+    <li className="flex items-center justify-between gap-3 py-2.5">
+      <div className="min-w-0">
+        <p className="truncate text-[13px] font-semibold text-ink">{view.name}</p>
+        <p className="text-[12px] text-muted">{view.shared ? "shared" : "only you"}</p>
+      </div>
+      {editable ? (
+        <div className="flex shrink-0 items-center gap-1.5">
+          {onRename ? (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label={`Rename view ${view.name}`}
+              onClick={() => {
+                setName(view.name);
+                setRenaming(true);
+              }}
+            >
+              <Pencil aria-hidden />
+            </Button>
+          ) : null}
+          {onToggleShared ? (
+            <Button variant="ghost" size="xs" onClick={() => onToggleShared(view)}>
+              {view.shared ? "Unshare" : "Share"}
+            </Button>
+          ) : null}
+          <Button
+            variant="danger"
+            size="icon-xs"
+            aria-label={`Delete view ${view.name}`}
+            onClick={() => onDelete(view.id)}
+            loading={deleting}
+          >
+            <Trash2 aria-hidden />
+          </Button>
+        </div>
+      ) : (
+        <span className="text-[12px] text-muted">read-only</span>
+      )}
+    </li>
+  );
 }
 
 export function ManageViewsDialog({
@@ -221,6 +318,8 @@ export function ManageViewsDialog({
   views,
   onDelete,
   onToggleShared,
+  onRename,
+  canEdit,
   deletingId,
 }: ManageViewsDialogProps) {
   return (
@@ -235,30 +334,17 @@ export function ManageViewsDialog({
         {views.length === 0 ? (
           <p className="py-4 text-center text-[13px] text-muted">No saved views yet.</p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className="divide-y divide-border" aria-label="Saved views">
             {views.map((view) => (
-              <li key={view.id} className="flex items-center justify-between gap-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="truncate text-[13px] font-semibold text-ink">{view.name}</p>
-                  <p className="text-[12px] text-muted">{view.shared ? "shared" : "only you"}</p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  {onToggleShared ? (
-                    <Button variant="ghost" size="xs" onClick={() => onToggleShared(view)}>
-                      {view.shared ? "Unshare" : "Share"}
-                    </Button>
-                  ) : null}
-                  <Button
-                    variant="danger"
-                    size="icon-xs"
-                    aria-label={`Delete view ${view.name}`}
-                    onClick={() => onDelete(view.id)}
-                    loading={deletingId === view.id}
-                  >
-                    <Trash2 aria-hidden />
-                  </Button>
-                </div>
-              </li>
+              <ManageViewRow
+                key={view.id}
+                view={view}
+                onDelete={onDelete}
+                onToggleShared={onToggleShared}
+                onRename={onRename}
+                editable={canEdit ? canEdit(view) : true}
+                deleting={deletingId === view.id}
+              />
             ))}
           </ul>
         )}

@@ -379,6 +379,18 @@ export interface CrossJobSignalsPage {
   truncated?: boolean;
 }
 
+/** `GET /app/signals/summary` — counts over the same bounded set as the list (contract §4.4). */
+export interface CrossJobSignalsSummary {
+  signals: number;
+  companies: number;
+  jobs: number;
+  by_materiality: { high: number; medium: number; low: number };
+  top_signal: { key: string; title: string; count: number } | null;
+  degraded?: boolean;
+  scanned_jobs?: number;
+  truncated?: boolean;
+}
+
 export interface RetryDeadResult {
   retried: number;
   task_ids: number[];
