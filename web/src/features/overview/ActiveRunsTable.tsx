@@ -42,7 +42,7 @@ function buildColumns(batches: Record<string, BatchMembership>): ColumnDef<Activ
             </Link>
             <span className="flex items-center gap-1.5 text-[12px] text-muted">
               <span className="font-mono">{shortId(run.id)}</span>
-              {membership ? (
+              {membership && membership.size > 1 ? (
                 <>
                   <span aria-hidden>·</span>
                   <Tag tone="brand">

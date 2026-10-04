@@ -12,7 +12,7 @@
     "dev:mock": "VITE_API_MOCK=1 vite",
     "build": "pnpm gen:routes && tsc -b && vite build",
     "preview": "vite preview --port ${E2E_PORT:-4173}",
-    "preview:mock": "VITE_API_MOCK=1 vite build --mode mock && vite preview --port ${E2E_PORT:-4173}",
+    "preview:mock": "VITE_API_MOCK=1 vite build --mode mock --outDir dist-mock && vite preview --outDir dist-mock --port ${E2E_PORT:-4173}",
     "typecheck": "pnpm gen:routes && tsc -b --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",

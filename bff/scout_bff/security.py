@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 CONTENT_SECURITY_POLICY = (
-    "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
-    "font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; "
-    "form-action 'self'"
+    "default-src 'self'; script-src 'self'; img-src 'self' data:; "
+    "style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; "
+    "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 )
 # Swagger UI and ReDoc load their assets from jsdelivr; only those two pages relax
 # the script/style sources. Everything else gets the contract's strict policy.

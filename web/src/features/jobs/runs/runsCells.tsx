@@ -33,7 +33,7 @@ export function JobCell({ job }: { job: JobRecord }) {
         <span className="font-mono">{shortId(job.id)}</span>
         <span aria-hidden>·</span>
         <span>{jobKindLabel(job.kind)}</span>
-        {batch ? (
+        {batch && batch.size > 1 ? (
           <Tag tone="brand">
             batch {batch.position} of {batch.size}
           </Tag>

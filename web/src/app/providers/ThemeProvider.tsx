@@ -91,9 +91,10 @@ export function applyThemeToDocument(theme: ResolvedTheme, density: DensityPrefe
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const { status } = useSession();
+  const { status, user } = useSession();
   const queryClient = useQueryClient();
-  const signedIn = status === "authenticated";
+  // Preferences are not loaded while the BFF gates the account behind a password change.
+  const signedIn = status === "authenticated" && user?.must_change_password !== true;
   const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
 
   const [localPrefs, setLocalPrefs] = useState<Prefs>(() =>

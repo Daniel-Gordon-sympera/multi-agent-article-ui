@@ -3,6 +3,7 @@
 # dependencies and build output
 node_modules/
 web/dist/
+web/dist-mock/
 web/.vite/
 bff/scout_bff/static/
 

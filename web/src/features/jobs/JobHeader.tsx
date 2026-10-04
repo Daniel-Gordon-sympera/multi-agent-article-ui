@@ -60,7 +60,7 @@ export function JobHeader({ job, batch }: JobHeaderProps) {
       <strong className="font-semibold text-ink-2">{job.created_by}</strong>
     </span>,
   ];
-  if (batch) {
+  if (batch && (batch.scout_name || batch.size > 1)) {
     meta.push(
       <span key="batch" className="inline-flex items-center gap-1.5">
         {batch.scout_name ? (
@@ -81,12 +81,14 @@ export function JobHeader({ job, batch }: JobHeaderProps) {
               </Link>
             )}
             {batch.run_number ? <> · run {batch.run_number}</> : null}
-            {" · "}
+            {batch.size > 1 ? " · " : null}
           </>
         ) : null}
-        <Tag tone="brand">
-          batch {batch.position} of {batch.size}
-        </Tag>
+        {batch.size > 1 ? (
+          <Tag tone="brand">
+            batch {batch.position} of {batch.size}
+          </Tag>
+        ) : null}
       </span>,
     );
   }
