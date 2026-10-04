@@ -9,8 +9,7 @@ hosts the pipeline, from the **pipeline repository** (the folder with its
 alias dcu='docker compose -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml'
 ```
 
-Sections 4–10 are completed by the feature agents when their screens land (see
-`README.md` › Features for what exists today).
+Button, tab and field names below are written as they appear in the console.
 
 ## 1. Install and first run (Docker)
 
@@ -26,7 +25,7 @@ Sections 4–10 are completed by the feature agents when their screens land (see
    PIPELINE_READER_KEY=sympera_…             # from section 2
    SESSION_SECRET=$(openssl rand -hex 32)
    UI_BOOTSTRAP_ADMIN_EMAIL=you@sympera.ai
-   UI_BOOTSTRAP_ADMIN_PASSWORD=<temporary password>
+   UI_BOOTSTRAP_ADMIN_PASSWORD=<temporary password, at least 12 characters>
    UI_DOMAIN=scout.localhost                 # or scout.<your-domain> pointing at this machine
    ```
 
@@ -69,134 +68,155 @@ curl -sS -X POST http://127.0.0.1:8000/v1/api-keys \
      -d '{"name": "scout-ui-reader", "role": "reader"}'
 ```
 
-Each call answers `201 {"id", "name", "role", "created_at", "key": "sympera_…"}`; the
-`key` is shown exactly once — copy it into `PIPELINE_OPERATOR_KEY` /
-`PIPELINE_READER_KEY`. A `409 key_name_exists` means the name is taken: pick another
+Each call answers `201 {"id", "name", "role", "created_at", "key"}`; the `key` is shown
+exactly once — copy it into `PIPELINE_OPERATOR_KEY` / `PIPELINE_READER_KEY`. Key names
+match `A–Z a–z 0–9 _ . -` and are unique: a `409` means the name is taken — pick another
 name or revoke the old key first (`curl -X DELETE …/v1/api-keys/scout-ui-operator`).
 Rotation is in section 11.
 
 ## 3. Sign in, change the bootstrap password, add users
 
-1. Open the console and sign in with `UI_BOOTSTRAP_ADMIN_EMAIL` /
-   `UI_BOOTSTRAP_ADMIN_PASSWORD`. The bootstrap account is created with
-   `must_change_password = true`, so you land on `/account/password`: enter the
-   temporary password and a new one. Until you do, every other page answers
-   `403 password_change_required`.
+1. Open the console and sign in (**E-mail**, **Password**, **Sign in**) with
+   `UI_BOOTSTRAP_ADMIN_EMAIL` / `UI_BOOTSTRAP_ADMIN_PASSWORD`. The bootstrap account is
+   created with `must_change_password = true`, so you land on `/account/password`
+   ("Choose a new password"): fill **Current password** (the temporary one), **New
+   password** (at least 12 characters) and **Repeat new password**, then **Change
+   password**. Until you do, every other page answers `403 password_change_required`.
+   Later password changes: account menu (sidebar footer) › **Change password**.
 2. Remove `UI_BOOTSTRAP_ADMIN_PASSWORD` from `.env` (it is only read while `ui.users`
    is empty).
 3. Add colleagues under **Settings › Users** (`/settings/users`, the tab appears for
-   admins only): **Create user** → e-mail, name, role and a temporary password (at
-   least 12 characters) → the account is created with `must_change_password`, so the
-   colleague signs in once with the temporary password and is taken to
-   `/account/password`. Roles: `viewer` (read everything, download per-job CSVs),
-   `operator` (viewer + create runs, cancel/resume/retry, Scouts, Data Sources, dataset
-   exports), `admin` (operator + users, pipeline API keys).
-   - **Edit** changes the name or the role; **Reset password** sets a new temporary
-     password, forces a change at the next sign-in and ends the user's other sessions;
-     **Disable** signs the account out everywhere and blocks sign-in until **Enable**.
+   admins only): **Create user** → **E-mail**, **Name**, **Role** and **Temporary
+   password** (at least 12 characters) → **Create user**. The account is created with
+   `must_change_password`, so the colleague signs in once with the temporary password
+   and is taken to `/account/password`. Roles: `viewer` (read everything, download
+   per-job CSVs), `operator` (viewer + create runs, cancel/resume/retry, Scouts, Data
+   Sources, dataset exports), `admin` (operator + users, pipeline API keys).
+   - **Edit** changes the name or the role (**Save changes**); **Reset password** sets a
+     new temporary password, forces a change at the next sign-in and ends the user's
+     other sessions; **Disable** (confirm with **Disable user**) signs the account out
+     everywhere and blocks sign-in until **Enable**.
    - The BFF refuses to disable or demote the account you are signed in with
      (`409 self_protection`), so there is always one working admin; the Disable button
      is greyed out on your own row.
-   - The table shows the role tag, creation date, last login and a "must change
-     password" tag until the first password change.
+   - The table shows the role tag, creation date, last login and the state (Active /
+     Disabled, plus a "must change password" tag until the first password change).
 4. Rate limits protect sign-in: 10 failed attempts per e-mail in 15 minutes or 60 per
    IP per hour answer `429 too_many_attempts`; wait or have an admin reset the password.
-   Sessions expire after 12 hours idle or 7 days; Sign out (sidebar footer) ends one
-   immediately.
+   Sessions expire after 12 hours idle or 7 days; **Sign out** (account menu in the
+   sidebar footer) ends one immediately.
 
 Preferences (theme, density, UTC or local time, landing page) are per user under
-Settings › Preferences.
+Settings › Preferences (section 10.6).
 
 ## 4. Launch a run
 
 Runs are created from **Jobs › New run** (`/jobs/new`; operators and admins only — viewers
 do not see the button). One form covers the three job kinds of the pipeline API:
 
-1. **Mode** (segmented control at the top of the *Target* card):
+1. **Mode** — the toggle group "How should the pipeline find articles?" at the top of the
+   *Target* card: **Location + industries**, **Site URL** or **Seeds from Data Sources**.
    - *Location + industries* — the finder searches the web for local news sites per
-     industry and explores the top `sites` of each. Fill the **State**, the **County**
-     (always required: HQ scope and entity flags are derived relative to it), check the
-     **Location phrase** the finder will use (pre-filled as "Orange County, FL", edit it
-     if the local press uses another name) and add **Industries** from the NAICS catalog
-     (type, pick from the list, Backspace removes the last token). The *fan-out preview*
-     lists one row per industry: **every industry becomes its own job**, all of them
-     share one batch id.
-   - *Site URL* — one job that explores a single site; paste its address.
-   - *Seeds from Data Sources* — one job whose site runs are the ticked active sources
-     of that county (`/sources`); all of them are ticked by default. Industries are
-     optional here and only label the job.
-2. **Sources** (location mode only): keep the finder, or switch to the curated seeds of
-   the county — the card shows how many active Data Sources match; the option is
-   disabled when there is none.
-3. **Settings**: *Hide/Show advanced* toggles the grid — days to look back, sites per
-   job, site timeout (0 = none), max runtime, memory mode and re-analysis. The values
+     industry and explores the top `sites` of each. Choose the **State**, type the
+     **County** (always required: HQ scope and entity flags are derived relative to it),
+     check the **Location phrase for the finder** (pre-filled as "Orange County, FL"
+     from the county and state; edit it if the local press uses another name) and add
+     **Industries** from the NAICS catalog (type in "Add an industry…", pick from the
+     list, Backspace on the empty input removes the last token). The *fan-out preview*
+     ("This will create N jobs") lists one row per industry: **every industry becomes
+     its own job**, all of them share one batch id.
+   - *Site URL* — one job that explores a single site; paste its address into **Site URL**.
+   - *Seeds from Data Sources* — one job whose site runs are the ticked active sources of
+     that county (`/sources`); tick them one by one or use **Select all** / **Select
+     none**. **Industries (optional)** only label the job.
+2. **Sources** (location mode only): **Let the finder search and rank sites**, or **Use
+   the curated seeds for this county** — the card shows how many active Data Sources
+   match the county (and the chosen industries); the option is disabled when there is
+   none. Curated seeds resolve to a `seeds` job (ADR-UI-010).
+3. **Settings**: **Hide advanced** / **Show advanced** toggles the grid — **Days to look
+   back**, **Sites per job**, **Site timeout (s)** (0 = no per-site limit), **Max runtime
+   (s)**, **Memory mode** (`full`, `pages_only`, `off`) and **Re-analysis** (reuse
+   summaries on a matching prompt version, or re-analyse every article). The values
    shown are the platform defaults; what you see is what is saved with the job.
-4. The sticky **Summary** shows the resolved kind, the jobs the batch will create, the
-   sources, the prompt version the API stamps on new jobs (that of the most recent job)
-   and an **estimated cost per job** (`GET /app/estimate`: the pipeline's figure when it
-   has one, otherwise the median of the last 10 completed runs of the same kind and
-   industry; "—" until a run of that kind has completed).
-5. Tick **Save as Scout** and give it a name to keep the setup for later runs (`Jobs ›
-   Scouts`); *Save Scout without running* stores it without creating jobs.
-6. Press **Create N jobs**. Each leg is one `POST /v1/jobs`; the runs appear under
-   `/jobs` within seconds with a *batch n of N* chip. When a leg fails (the API refused
-   it), a dialog lists the outcome per leg with a **Retry** for the failed ones — the
-   created runs are already queued.
+4. The sticky **Summary** shows the resolved **Kind**, **County · State**, **Jobs to
+   create**, **Sources**, the **Prompt version** the API stamps on new jobs (that of the
+   most recent job) and the **Estimated cost** per job (`GET /app/estimate`: the
+   pipeline's figure when it has one, otherwise the median of the last 10 completed runs
+   of the same kind and industry; "—" until a run of that kind has completed).
+5. Tick **Save as Scout** and give it a **Scout name** to keep the setup for later runs
+   (section 7); **Save Scout without running** stores it without creating jobs.
+6. Press **Create N jobs**. Each leg is one `POST /v1/jobs`; a toast confirms "Created N
+   jobs" and you land on **Runs**, where the jobs appear within seconds with a *batch n
+   of N* chip. When a leg fails (the API refused it), the dialog "Some jobs were not
+   created" lists the outcome per leg with a **Retry** for the failed ones — the created
+   runs are already queued (**Stay here** / **Go to Runs**).
 
-Shortcuts: a run's **⋯ › Re-run** / the `[▶ Re-run]` row button opens the form pre-filled
-from that job (`/jobs/new?from=<jobId>`); a Data Source's "run with this seed" opens it
-in Seeds mode with that source ticked (`/jobs/new?mode=seeds&source=<id>`); a Scout's
-Edit opens it with **Run Scout** (runs the setup *as saved*) and **Save changes**.
+Shortcuts: a finished run's **Re-run** row button (completed, failed or cancelled runs)
+opens the form pre-filled from that job (`/jobs/new?from=<jobId>`); a Data Source's
+⋯ › **Run a seed job** opens it in Seeds mode with that source ticked
+(`/jobs/new?mode=seeds&source=<id>`); a Scout's **Edit** opens it with **Run Scout**
+(runs the setup *as saved*) and **Save changes**; **New Scout** in the Jobs header opens
+the form with *Save as Scout* already ticked.
 
 ## 5. Watch a run and read results
 
-**Jobs › Runs** (`/jobs`) lists every job of the API, newest first, with the stage bar,
-sites done / total, articles, signals, cost and duration (from `GET /app/jobs/progress`,
-refreshed every 5 s while any listed run is still working, every 30 s otherwise). The
-toolbar filters by status, state, county, industry and creation date (*Created* defaults
-to the last 7 days; *Custom range* opens two date inputs — leave both empty to list every
-run), the search box narrows the loaded page by county, industry, domain or id, and
-*Export CSV* downloads the loaded page. The industry filter runs in the browser until the
-pipeline API gains the `industry` filter (B3). `?scout=<id>` shows the runs of one Scout.
+**Jobs › Runs** (`/jobs`) lists every job of the API, newest first — columns **Job**,
+**Status**, **Stages** (the stage bar), **Sites** (done / total), **Articles**,
+**Signals**, **Cost** and **Started** (start time and duration), from
+`GET /app/jobs/progress`, refreshed every 5 s while any listed run is still working,
+every 30 s otherwise. The toolbar filters by **Status**, **State**, **County**,
+**Industry** and **Created** (defaults to *Last 7 days*; *Custom range* opens **Created
+from** / **Created until** — leave both empty to list every run), the search box narrows
+the loaded page by county, industry, domain or id, and **Export CSV** downloads the
+loaded page. The industry filter runs in the browser until the pipeline API gains the
+`industry` filter (B3; the select says so). `?scout=<id>` shows the runs of one Scout.
 
-Open a run to reach the **Job › Overview**: the *Pipeline progress* card shows the five
+Open a run to reach the **Job › Overview**: the **Pipeline progress** card shows the five
 stages (Finding → Finalizing) with their durations and facts, the counters (seeds,
 sections, pages, links, articles, summaries, companies, signals), the cost so far with
 tokens, the elapsed time with the deadline and the task counts; it refreshes every 5 s
-("Live · refreshed N s ago") until the job is terminal. Below it: the **Site runs**
-table (*Work items* opens the discovery work of one site, *Exploration* how the
-Sections agent explored it, with the transcript when one was saved), **Cost by stage**
-from the model-call ledger (plus the proxy traffic) and the **Settings** saved with the
-job.
+("Live · refreshed N s ago") until the job is terminal ("Final"). Below it: the **Site
+runs** table (**Work items** opens the discovery work of one site, **Exploration** how
+the Sections agent explored it, with the transcript when one was saved), **Cost by
+stage** from the model-call ledger and the **Settings** saved with the job.
 
-The results tabs come first — **Signals**, **Companies** (one row per mention; switch to
-*One row per company* for the job's company flags), **Summaries** (the analysis of each
-article; *Record* opens the full row and, on demand, the raw record JSON) and
-**Articles** (*Saved text* streams the stored text; a 410 means it expired) — then the
-operations tabs **Site runs** (with the finder's judged sources and ranking for
-location jobs), **Sections**, **Tasks** and **Events** (as the API pages them: oldest
-first). Every tab keeps its filters, density, columns and page in the URL, so a link
-reproduces exactly what you see, and *Export CSV* downloads the matching
-`/v1/jobs/{id}/export/<table>.csv`.
+The job header carries the id with a copy button, the kind, prompt and creator, the
+Scout / run / batch of the job, and the actions **Cancel run**, **Resume**, **Export
+CSV** (one CSV per table) and ⋯ (**Copy job id**, **Copy link to this job**, **Open API
+record**).
+
+The results tabs come first — **Signals**, **Companies** (one row per mention; switch
+**One row per company** for the job's company flags), **Summaries** (the analysis of each
+article; **Record** opens the full row and, on demand, the raw record JSON) and
+**Articles** (**Saved text** streams the stored text; "The saved text has expired" means
+the artifact retention removed it) — then the operations tabs **Site runs** (with the
+finder's judged sources and ranking for location jobs), **Sections**, **Tasks** and
+**Events** (as the API pages them: oldest first). Every tab keeps its filters, density,
+columns and page in the URL, so a link reproduces exactly what you see, and **Export
+CSV** downloads the matching `/v1/jobs/{id}/export/<table>.csv`.
 
 ## 6. Retry a dead task / resume a partial run
 
 A task that failed `max_attempts` times is **dead**; the job then finishes as *partial*.
 On the job's **Tasks** tab (`/jobs/<id>/tasks`) the status chips count the tasks, the
-table shows them as a tree (`parent_task_id`; untick *Show as tree* for a flat list
+table shows them as a tree (`parent_task_id`; untick **Show as tree** for a flat list
 sorted by id) and dead rows carry a red last error and a tonal **Retry** button
-(operators only). *Details* opens the task's payload, result and error. **Retry all
-dead** re-queues every dead task of the job in one go (`POST /app/jobs/{id}/retry-dead`:
-forwarded to the pipeline when it has the route, otherwise one `POST /v1/tasks/{id}/retry`
-per dead task — tasks that changed state meanwhile are reported as skipped). A retry
-resets the attempts to 0; the job returns to *analysing*.
+(operators only). **Details** opens the task's payload, result and error (with its own
+**Retry**). **Retry all dead** re-queues every dead task of the job in one go
+(`POST /app/jobs/{id}/retry-dead`: forwarded to the pipeline when it has the route,
+otherwise one `POST /v1/tasks/{id}/retry` per dead task — tasks that changed state
+meanwhile are reported as skipped in the toast). A retry resets the attempts to 0; the
+job returns to *analysing*.
 
-A *partial* (or failed / cancelled) job is **resumed** from the Runs row (`[↺ Resume]`)
-or the job header: the dialog takes the resume options of the API — a new site timeout,
-the memory mode, *re-analyse every article*, *re-run enrichment* and *refetch dead
-articles* — and leaves the saved settings alone when a field is empty. **Cancel** (Runs
-row or `Cancel run` in the header) asks for confirmation; running tasks stop after their
-current step and the run can be resumed later.
+A *partial* job is **resumed** from the Runs row (**Resume**) or the job header
+(**Resume**); failed and cancelled runs resume from the row's ⋯ › **Resume with options**
+or the header. The dialog "Resume this run?" takes the resume options of the API —
+**Site timeout (s)**, **Memory mode**, **Re-analyse every article (reanalyze)**, **Re-run
+company enrichment (reenrich)** and **Refetch dead articles (refetch_dead_articles)** —
+and leaves the saved settings alone when a field is empty ("keep saved"). **Cancel**
+(Runs row) or **Cancel run** (header) asks "Cancel this run?" → **Cancel run**; queued
+tasks are dropped, running tasks stop after their current step and the run can be
+resumed later.
 
 ## 7. Scouts
 
@@ -205,29 +225,33 @@ industries, where the sites come from (the finder or your curated Data Sources) 
 settings overrides — that you run again and again from **Jobs › Scouts**
 (`/jobs/scouts`). Operators and admins can create and run Scouts; viewers see the list.
 
-1. **Create one.** Fill in **Jobs › New run**, tick *Save as Scout*, give it a name and
-   create the jobs (`New Scout` in the Jobs header opens the form with the box already
-   ticked). Names are unique; `409 scout_exists` means the name is taken, archived
-   Scouts included.
-2. **Run it.** `Run` on the Scout row shows "This will create N jobs for …": one API job
-   per industry for location Scouts, a single job for site-URL and seed Scouts. The jobs
-   are created with `client_reference = ui:<batch id>:<industry slug>` (`:0` for the
-   single-job kinds), so they stay linked to the Scout and to each other. The toast's
-   *View runs* opens `/jobs?scout=<id>`; the Runs list shows a "batch n of N" chip on
-   each job. A leg the API rejects (for example `422`) is recorded on the batch with its
-   error and the other legs still run; when the API cannot be reached at all the run
-   answers `502 pipeline_api_unavailable` and nothing is created.
-3. **Read the row.** *Sources* reads "Finder · top N sites" (the `sites` setting) or
+1. **Create one.** Fill in **Jobs › New run**, tick **Save as Scout**, give it a name and
+   create the jobs (**New Scout** in the Jobs header opens the form with the box already
+   ticked; **Save Scout without running** stores it without a run). Names are unique;
+   `409 scout_exists` means the name is taken, archived Scouts included.
+2. **Run it.** **Run** on the Scout row asks "Run <name>?" — "This will create N jobs for
+   <name> (<county>, <state>)…" — and **Create N jobs** starts one API job per industry
+   for location Scouts, a single job for site-URL and seed Scouts. The jobs are created
+   with `client_reference = ui:<batch id>:<industry slug>` (`:0` for the single-job
+   kinds), so they stay linked to the Scout and to each other. The toast's **View runs**
+   opens `/jobs?scout=<id>`; the Runs list shows a "batch n of N" chip on each job of a
+   multi-job batch. A leg the API rejects (for example `422`) is recorded on the batch
+   with its error and the other legs still run; when the API cannot be reached at all
+   the run answers `502 pipeline_api_unavailable` and nothing is created.
+3. **Read the row.** **Sources** reads "Finder · top N sites" (the `sites` setting) or
    "N seeds from Data Sources" (the active sources matching the county, state and any of
-   the Scout's industries at that moment — new sources are picked up automatically).
-   *Last run* is the status of the newest batch (the furthest stage while any job runs;
-   Completed / Partial / Failed once all finished) with its age; *Runs* counts the
-   batches; *Signals (last run)* sums the jobs' signal counts (refreshed every 30 s).
-4. **Edit, duplicate, archive.** `Edit` (and the name link) opens the form with the
-   Scout loaded (`/jobs/new?scout=<id>`); the ⋯ menu offers *View runs*, *Duplicate*
-   (`…&duplicate=1`, a copy to save under a new name) and *Archive*. Archiving hides the
-   Scout (`DELETE /app/scouts/{id}` keeps the row with `archived_at`); its runs stay
-   under Runs and `GET /app/scouts?archived=true` still lists it.
+   the Scout's industries at that moment — new sources are picked up automatically);
+   **Schedule** is always "Manual" (no scheduler yet). **Last run** is the status of the
+   newest batch (the furthest stage while any job runs; Completed / Partial / Failed once
+   all finished) with its age; **Runs** counts the batches; **Signals (last run)** sums
+   the jobs' signal counts (refreshed every 30 s).
+4. **Edit, duplicate, archive.** **Edit** (and the name link) opens the form with the
+   Scout loaded (`/jobs/new?scout=<id>`) and the buttons **Run Scout** / **Save changes**;
+   the ⋯ menu offers **View runs**, **Duplicate** (`…&duplicate=1` — the same setup as
+   a new Scout named "<name> (copy)", with **Save as Scout** pre-checked; nothing changes
+   on the original), **Edit** and **Archive** (confirm with **Archive**). Archiving hides the Scout
+   (`DELETE /app/scouts/{id}` keeps the row with `archived_at`); its runs stay under
+   Runs and `GET /app/scouts?archived=true` still lists it.
 5. **Seed Scouts need sources.** A seed Scout with no active source for its county and
    state answers `422 no_active_sources`: add or restore a source first (section 8).
 
@@ -239,18 +263,22 @@ every call needs the session cookie plus `X-Requested-With: scout` and `X-CSRF-T
 ## 8. Data Sources
 
 **Data Sources** (`/sources`) is the curated list of local news sites per county and
-state. Seed runs (New run › *Seeds from Data Sources*, seed Scouts, the ⋯ › *Run a seed
-job* on a row) explore exactly these sites; the finder never needs them but keeps
-suggesting new ones. Operators and admins curate; viewers read and export.
+state. Seed runs (New run › *Seeds from Data Sources*, seed Scouts, the row's ⋯ › **Run a
+seed job**) explore exactly these sites; the finder never needs them but keeps
+suggesting new ones. Operators and admins curate; viewers read and export. The tiles
+at the top count **Active sources**, **Promoted from the finder**, **Median precision ·
+last run** and **Removed**.
 
-1. **Add a site.** `Add source`: name, URL (`https://` is added when missing; the domain
-   is the host without `www.`), county (with or without the word "County"), state
-   (2-letter code or full name) and optional industries from the NAICS catalog — leave
-   industries empty to match every industry. A domain can be listed once per county
-   and state (`409 source_exists`).
-2. **Import a CSV.** `Import CSV` takes a file with the header
-   `name,url,county,state,industries` (any column order; `industries` optional and
-   `;`-separated, for example `Construction;Manufacturing`; states as codes or names):
+1. **Add a site.** **Add source** → **Name**, **URL** (`https://` is added when missing;
+   the domain is the host without `www.`), **County** (with or without the word
+   "County"), **State** (2-letter code or full name) and optional **Industries** from the
+   NAICS catalog — leave industries empty to match every industry. A domain can be
+   listed once per county and state (`409 source_exists`). The row's ⋯ menu has **Edit**
+   (dialog "Edit source") and **Copy URL**.
+2. **Import a CSV.** **Import CSV** ("Import sources from CSV") takes a file with the
+   header `name,url,county,state,industries` (any column order; `industries` optional
+   and `;`-separated, for example `Construction;Manufacturing`; states as codes or
+   names), then **Import**:
 
    ```csv
    name,url,county,state,industries
@@ -261,24 +289,26 @@ suggesting new ones. Operators and admins curate; viewers read and export.
    Limits: 1 MB and 2,000 rows. The result lists what was imported and every skipped
    row with its line number and reason (missing name or county, invalid URL, unknown
    state, duplicate inside the file, already listed for that county and state).
-   Imported rows carry the origin `csv`; *Download the CSV template* in the dialog gives
-   the header line to start from.
-3. **Promote a finder suggestion.** The card *Suggested by the finder* lists domains the
+   Imported rows carry the origin `csv`; **Download the CSV template** in the dialog
+   gives the header line to start from.
+3. **Promote a finder suggestion.** The card **Suggested by the finder** lists domains the
    finder kept recently that are not in your list: the judged-domain memory with the
    verdict `keep` (for "<County> County, <State>" and "<County>, <ST>") and the rankings
    of the last five location-industry jobs of that county and state (chosen or not, with
-   tier and rank), de-duplicated by domain and refreshed every minute. *Add to sources*
-   opens the dialog pre-filled; the source keeps the finder's tier, rank, reason, judged
-   date and job as its `finder` facts (origin `finder`). *Dismiss* hides a domain for
-   that county and state for good (`ui.dismissed_suggestions`). The State / County /
-   Industry filters of the toolbar narrow the suggestions too.
-4. **Remove and restore.** `Remove` is a soft delete: the row keeps its history under
-   *Status: removed* and `Restore` brings it back. Removed sources are never seeded.
-5. **Precision.** "Precision · last run" (accepted articles ÷ candidate links of the
-   latest job that used the site) and the *Median precision* tile need the pipeline's
-   `GET /v1/sources/stats` (PR B2). Until it is deployed the column shows "—" with the
-   note "needs pipeline API update (B2)"; everything else works.
-6. **Export.** `Export CSV` downloads the rows currently listed (filters applied) with
+   tier and rank), de-duplicated by domain (candidates cached for 60 s by the console;
+   listed and dismissed domains drop out at once). **Add to sources** opens the dialog
+   pre-filled; the source keeps the finder's tier, rank, reason, judged date and job as
+   its `finder` facts (origin `finder`). **Dismiss** hides a domain for that county and
+   state for good (`ui.dismissed_suggestions`). The **State** / **County** / **Industry**
+   filters of the toolbar narrow the suggestions too.
+4. **Remove and restore.** **Remove** (confirm "Remove <name>?" → **Remove**) is a soft
+   delete: the row keeps its history under **Status** `removed` (or `all`) and
+   **Restore** brings it back. Removed sources are never seeded.
+5. **Precision.** **Precision · last run** (accepted articles ÷ candidate links of the
+   latest job that used the site) and the **Median precision · last run** tile need the
+   pipeline's `GET /v1/sources/stats` (PR B2). Until it is deployed the column shows "—"
+   with the note "needs pipeline API update (B2)"; everything else works.
+6. **Export.** **Export CSV** downloads the rows currently listed (filters applied) with
    their industries, origin, finder facts and precision.
 
 Scripts use `GET /app/sources?county=&state=&industry=&origin=&status=active|removed|all&q=`,
@@ -297,12 +327,13 @@ same table, columns and drawer serve a single run's **Signals** tab (`/jobs/<id>
    evidence, the HQ city/state, the company industry and revenue bin, the job's location
    and the job id (click it to open the run).
 2. Type in the search box to match company names, evidence, signal titles or domains.
-3. Click **+ Add filter** and pick a field: state, county, job industry, company industry,
-   signal (the catalog of `signals.json`), materiality, revenue bin, org kind, HQ scope, a
-   date range (with "Last 7 days" / "Last 30 days" presets), a job id, a company key or a
-   batch id. Every active filter becomes a chip; click a chip's × to drop it, **Clear all**
-   to start over. Filters, the open drawer, the page and the columns live in the URL, so
-   the address bar is a shareable link.
+3. Click **Add filter** and pick a field: **State**, **County**, **Job industry**,
+   **Company industry**, **Signal** (the catalog of `signals.json`), **Materiality**,
+   **Revenue bin**, **Org kind**, **HQ scope**, **Date** (a range with the "Last 7 days" /
+   "Last 30 days" presets), **Job id**, **Company key** or **Batch id**. Every active
+   filter becomes a chip; click a chip's × to drop it, **Clear all** to start over.
+   Filters, the open drawer, the page and the columns live in the URL, so the address
+   bar is a shareable link.
 4. The line at the right of the chips ("128 signals · 61 companies · 9 jobs") and the
    **By materiality** strip (split bar, counts, top signal) describe the whole filtered
    set, not only the page.
@@ -311,15 +342,16 @@ same table, columns and drawer serve a single run's **Signals** tab (`/jobs/<id>
    screens; the chooser remembers the choice in the URL).
 
 **Read a signal.** Click a company name, a row or the › at the end of a row. The drawer
-shows the verbatim evidence with its checks (verbatim match, name grounded), the role and
-the confidence meter; the article (title link, domain, publication date, when the run
-accepted it, the article id, the main idea of the summary) with **Open article** (new tab),
-**Saved text** (the text the pipeline saved; "expired" when the artifact retention removed
-it) and **Summary record** (the full analysis record); the company profile from the
-enrichment flags (org kind, HQ scope, entity flag, industry, revenue bin, enrichment source)
-with **Across jobs** counts and **Open profile** (that company's signals across runs); and
-the job with its status. **Copy link** copies the drawer's URL, **Export row** downloads
-that one signal as CSV, **‹ ›** step through the loaded rows, `Esc` closes.
+shows the **Evidence** with its checks (verbatim match, name grounded), the role and the
+confidence meter; the **Article** (title link, domain, publication date, when the run
+accepted it, the article id, the main idea of the summary) with **Open article** (new
+tab), **Saved text** (the text the pipeline saved; "expired" when the artifact retention
+removed it) and **Summary record** (the full analysis record); the **Company profile**
+from the enrichment flags (org kind, HQ scope, entity flag, industry, revenue bin,
+enrichment source) with the **Across jobs** counts and **Open profile** (that company's
+signals across runs); and the **Job** with its status. **Copy link** copies the drawer's
+URL, **Export row** downloads that one signal as CSV, ‹ › step through the loaded rows,
+`Esc` closes.
 
 **Export.** **Export CSV** in the header downloads the filtered set
 (`/app/signals/export.csv?…`, the pipeline `signals.csv` columns plus
@@ -328,48 +360,52 @@ that run's table straight from the pipeline API.
 
 **Saved views.**
 1. Set the filters and columns you want, click **Save view**, give it a name and tick
-   **Share with everyone** if the whole team should see it. The view is stored by the
-   console (`ui.saved_views`); names are unique per account and screen.
+   **Share with everyone** if the whole team should see it, then **Save view**. The view
+   is stored by the console (`ui.saved_views`); names are unique per account and screen.
 2. Pick a view from **View: …** in the toolbar to apply it (`?view=<id>` in the URL);
    changing a filter afterwards detaches the URL from the view again.
 3. **Manage views…** (last entry of the select) renames, shares/unshares and deletes views.
    Only the owner (or an admin) can change a view; shared views are read-only for others.
 
-**Until the pipeline's cross-job read (B1) is deployed** the console shows a note: the
-explorer merges the signals of the 20 most recent runs that match the state, county, job
-industry, job or batch filters (30 s cache; a run with more than 1,000 signals is cut at
-1,000 and flagged). Older runs stay reachable through their own Signals tab or by filtering
-on their job id. Once `GET /v1/signals` exists the note disappears on the next capability
-probe (`GET /app/capabilities`) without a redeploy.
+**Until the pipeline's cross-job read (B1) is deployed** the console shows the banner
+"Showing signals from N most recent matching jobs — the cross-job read (B1) is not
+deployed yet": the explorer merges the signals of the 20 most recent runs that match
+the state, county, job industry, job or batch filters (30 s cache; a run with more than
+1,000 signals is cut at 1,000 and flagged). Older runs stay reachable through their own
+Signals tab or by filtering on their job id. Once `GET /v1/signals` exists the banner
+disappears on the next capability probe (`GET /app/capabilities`) without a redeploy.
 
 ## 10. Settings
 
-**Settings** (`/settings`, opens on Workers & health) holds the operations and
-platform pages. Everything on them comes from the pipeline API through the BFF; rows
-that the API does not expose yet are marked "not exposed by the API" rather than
-invented.
+**Settings** (`/settings`, opens on **Workers & health**) holds the operations and
+platform pages: **API keys** · **Workers & health** · **Stats & costs** · **Exports** ·
+**System** · **Preferences** and, for admins, **Users**. Everything on them comes from the
+pipeline API through the BFF; rows that the API does not expose yet are marked "not
+exposed by the API" rather than invented.
 
-**Overview first.** The home page (`/`) shows four tiles — running jobs (with queued /
-finalizing counts and the number of Scouts behind them), signals of the last 7 days
-with the delta against the previous 7 days, today's model + proxy cost with the delta
-against yesterday ("—" plus a warning when a call lacked pricing), and dead tasks with
-the number new since yesterday — then the active runs (link to each job, batch tag,
-stages, sites, signals, cost), the five most recent signals (each opens the explorer
-drawer), the **Needs attention** card (dead tasks → the job's Tasks tab, partial and
-failed runs of the last 7 days → the job, slow or missing worker heartbeats → the
-worker's row, and "Pipeline API is not ready" → System) and the workers by role.
-Tiles refresh every 30 s, runs and attention every 5 s; **Refresh** refetches
+**Overview first.** The home page (`/`) shows four tiles — **Running jobs** (with queued /
+finalizing counts and the number of Scouts behind them), **Signals · last 7 days** with
+the delta against the previous 7 days, **Model + proxy cost · today** with the delta
+against yesterday ("—" plus a warning when a call lacked pricing), and **Dead tasks**
+with the number new since yesterday — then **Active runs** (link to each job, batch tag,
+stages, sites, signals, cost), **Recent signals** (the five newest; each opens the
+explorer drawer), the **Needs attention** card (dead tasks → the job's Tasks tab,
+partial and failed runs of the last 7 days → the job, slow or missing worker heartbeats
+→ the worker's row, and "Pipeline API is not ready" → System) and the **Workers** by
+role. Tiles refresh every 30 s, runs and attention every 5 s; **Refresh** refetches
 everything at once.
 
 ### 10.1 API keys (`/settings/keys`, admin)
 
-1. **Create key** → name (`A–Z a–z 0–9 _ . -`, unique) and role (`reader` for GET
-   routes and per-job CSVs, `operator` for mutations) → **Create key**.
-2. The dialog shows the plaintext **once**: copy it with the copy button and store
-   it before clicking **I stored it**. It is never shown again and never stored in the
-   browser (only the name, role and creation time are remembered in this browser's
-   local storage).
-3. **Revoke** (any key, by name) → confirm. Clients using the key lose access at once.
+1. **Create key** → dialog "Create API key": **Name** (`A–Z a–z 0–9 _ . -`, unique) and
+   **Role** (`reader` for GET routes and per-job CSVs, `operator` for mutations) →
+   **Create key**.
+2. The dialog "Key created" shows the plaintext **once**: copy it with the copy button
+   and store it before clicking **I stored it**. It is never shown again and never
+   stored in the browser (only the name, role and creation time are remembered in this
+   browser's local storage).
+3. **Revoke** (any key, by name) → "Revoke key <name>?" → **Revoke key**. Clients using
+   the key lose access at once.
 4. The table lists every key once the pipeline exposes `GET /v1/api-keys` (B4);
    until then it shows the keys created in this browser and says so. Operators and
    viewers see an explanation instead of the controls. The console's own two keys
@@ -377,14 +413,14 @@ everything at once.
 
 ### 10.2 Workers & health (`/settings/workers`)
 
-- **Health tiles.** *API* (database, artifact store and migrations checks plus the
-  pipeline version, from the pipeline's `/readyz` and `/openapi.json`), *Proxy* (from
+- **Health tiles.** **API** (Database, Artifact store and Migrations checks plus the
+  pipeline version, from the pipeline's `/readyz` and `/openapi.json`), **Proxy** (from
   the crawl workers' `proxy_ok` / `proxy_checked_at`: "US exit verified" when every
-  checked crawl worker is ok; zone and traffic are not exposed), *Queue* (queued,
-  running, failed · retrying, dead — from `GET /v1/tasks` when B3 is deployed, else
-  summed from the progress counters of the 20 most recent running jobs, in which case
-  the failed count reads "unknown without B3"; **Open dead tasks** lists the partial
-  runs) and *Storage* (every row "not exposed by the API").
+  checked crawl worker is ok; zone and traffic are "not exposed by the API"), **Queue**
+  (Queued, Running, Failed · retrying, Dead — from `GET /v1/tasks` when B3 is deployed,
+  else summed from the progress counters of the 20 most recent running jobs, in which
+  case the failed count reads "unknown without B3"; **Open dead tasks** lists the partial
+  runs) and **Storage** (every row "not exposed by the API").
 - **Workers table.** One row per instance: role, version, started, last heartbeat
   (amber "Slow heartbeat" after 30 s, red "Missing" after 90 s, "Gone" once the
   pipeline retires it), current tasks, proxy and status. **Logs** and **Drain** are
@@ -394,14 +430,14 @@ everything at once.
 - **Dead tasks by category** sums the `failures` of `GET /v1/stats/daily` over the
   last 7 days; **Maintenance schedule** is the plan's static table (sweep_jobs 60 s,
   expire_artifacts hourly, purge_work_items daily 03:00 UTC, backup_database daily
-  02:00 UTC, export_dataset on demand) — results are not exposed, check the
-  maintenance worker's logs.
+  02:00 UTC, export_dataset on demand) — results are not exposed ("result not
+  exposed"), check the maintenance worker's logs.
 
 ### 10.3 Stats & costs (`/settings/stats`)
 
-Three 14-day sparklines (jobs, signals, model + proxy cost) over the daily table of
-`GET /v1/stats/daily`, newest first: jobs, site runs, articles, companies, signals,
-tokens in/out, cost (an **incomplete** tag marks days with unpriced calls — the
+Three 14-day sparklines (**Jobs**, **Signals**, **Model + proxy cost**) over the daily
+table of `GET /v1/stats/daily`, newest first: jobs, site runs, articles, companies,
+signals, tokens in/out, cost (an **incomplete** tag marks days with unpriced calls — the
 figure is the known cost) and a **failures** disclosure with the categories. **Load
 more** follows the API's cursor 30 days at a time; **Export CSV** downloads the loaded
 rows (every column, failures as `category: n; …`).
@@ -421,20 +457,22 @@ rows (every column, failures as `category: n; …`).
 
 ### 10.5 System (`/settings/system`)
 
-Versions and readiness in two cards (the BFF: version, Alembic head, start time,
-last capability probe; the pipeline: host, Ready / Not ready pill, version, prompt
-version of the most recent job, every `/readyz` check), the table of optional pipeline
-routes (B1–B4) with what each unlocks and the fallback in use until it is deployed, and
-the list of what the API does not expose yet (model prices, proxy zone and traffic,
-storage, maintenance results). **Refresh** re-reads the pipeline; the capability probe
-itself runs every `UI_CAPABILITY_REFRESH_SECONDS` (default 300 s).
+Versions and readiness in two cards (**Scout BFF**: version, Alembic head, start time,
+last capability probe; **Pipeline API**: host, Ready / Not ready pill, version, prompt
+version of the most recent job, every `/readyz` check), the table **Optional pipeline
+routes** (B1–B4) with what each unlocks and the fallback in use until it is deployed,
+and the list **Not exposed by the pipeline API yet** (model prices, proxy zone and
+traffic, storage, maintenance results). **Refresh** re-reads the pipeline; the
+capability probe itself runs at startup and every `UI_CAPABILITY_REFRESH_SECONDS`
+(default 300 s).
 
 ### 10.6 Preferences (`/settings/preferences`)
 
-Theme (system / light / dark), density (comfortable / compact rows), time display
-(UTC with the local time in tooltips, or local) and the landing page after sign-in.
-Every choice applies immediately, is saved to your account (`PUT /app/prefs`) and
-confirmed with a toast; it follows you to any browser you sign in from.
+**Theme** (System / Light / Dark), **Density** (Comfortable / Compact rows), **Time
+display** (UTC with the local time in tooltips, or Local) and the **Landing page** after
+sign-in (Overview, Jobs › Runs or Signals). Every choice applies immediately, is saved
+to your account (`PUT /app/prefs`) and confirmed with a toast; it follows you to any
+browser you sign in from.
 
 ### 10.7 Users (`/settings/users`, admin)
 
@@ -470,8 +508,8 @@ curl -sS -X DELETE http://127.0.0.1:8000/v1/api-keys/scout-ui-operator -H "X-API
 curl -sS -X DELETE http://127.0.0.1:8000/v1/api-keys/scout-ui-reader -H "X-API-Key: $OPERATOR_KEY"
 ```
 
-(An admin can do the same from Settings › API keys once that screen exists; listing
-existing keys needs the pipeline update B4.)
+(An admin can create and revoke the same keys from Settings › API keys, section 10.1;
+listing the existing keys there needs the pipeline update B4.)
 
 **Rotate `SESSION_SECRET`.** Set a new `openssl rand -hex 32` value and `dcu up -d ui`.
 Every user is signed out and signs in again; nothing else changes.
@@ -506,30 +544,83 @@ the mockup:
 
 ```bash
 cd web && pnpm install --frozen-lockfile && pnpm dev:mock      # http://localhost:5173
-# sign in with admin@sympera.ai / scout-admin or viewer@sympera.ai / scout-viewer
+# sign in with admin@sympera.ai / scout-admin, operator@sympera.ai / scout-operator,
+# viewer@sympera.ai / scout-viewer or newcomer@sympera.ai / scout-newcomer (forced password change)
 ```
 
-**SPA + local BFF against the pipeline's Postgres and API.** Start `postgres` and `api`
-from the pipeline repo (`docker compose up -d postgres api` — ports 5432 and 8000 are
-bound to 127.0.0.1), then at the root of this repo:
+**Full local stack: PostgreSQL + pipeline API + BFF + SPA, no containers.** This is the
+setup that was walked through end to end on 2026-10-04 (`README.md` › What was
+verified). You need a PostgreSQL 16 you can reach with an owner role (a local server, or
+the pipeline's `docker compose up -d postgres`), the pipeline repo on branch
+`feature/platform-and-api`, and this repo.
 
-```bash
-cp .env.ui.example .env.ui
-# set: UI_DATABASE_URL=postgresql+psycopg://article_owner:<POSTGRES_PASSWORD>@127.0.0.1:5432/article_pipeline
-#      UI_DATABASE_PASSWORD=<pw for app_ui>  PIPELINE_API_URL=http://127.0.0.1:8000
-#      PIPELINE_OPERATOR_KEY / PIPELINE_READER_KEY (section 2)  SESSION_SECRET=<32+ chars>
-#      UI_BOOTSTRAP_ADMIN_EMAIL / _PASSWORD  UI_SECURE_COOKIES=false  LOG_FORMAT=console
-uv sync --frozen
-uv run python -m scout_bff.bootstrap            # schema ui, roles, migrations, first admin (owner URL)
-# now switch UI_DATABASE_URL in .env.ui to postgresql+psycopg://app_ui:<pw>@127.0.0.1:5432/article_pipeline
-uv run uvicorn scout_bff.app:app --reload --port 8080
-cd web && pnpm dev                              # proxies /app, /v1, /healthz, /readyz to :8080
-```
+1. **Bootstrap the pipeline's schemas and roles**, in the pipeline repo, with these
+   variables in its environment: `DATABASE_URL` (the **owner** URL),
+   `ARTIFACT_STORE_URL=file:///<an existing folder>`, the six `*_DATABASE_PASSWORD`
+   variables of the pipeline's settings (each at least 20 characters) and
+   `API_BOOTSTRAP_KEY`:
+
+   ```bash
+   uv run python -m cli.bootstrap
+   ```
+
+2. **Start the pipeline API** (same repo) with `DATABASE_URL` switched to the `app_api`
+   login that bootstrap created; it listens on `:8000`:
+
+   ```bash
+   uv run python -m cli.run api
+   curl --fail http://localhost:8000/readyz
+   ```
+
+3. **Create the two console keys** with `POST /v1/api-keys` exactly as in section 2
+   (`http://localhost:8000`, `X-API-Key: $API_BOOTSTRAP_KEY`); keep both plaintext keys.
+4. **Configure the BFF**, at the root of this repo: `cp .env.ui.example .env.ui` and set
+
+   ```bash
+   UI_DATABASE_URL=postgresql+psycopg://<owner>:<password>@localhost:5432/<database>   # owner URL, for bootstrap
+   UI_DATABASE_PASSWORD=<new password for app_ui>
+   PIPELINE_API_URL=http://localhost:8000
+   PIPELINE_OPERATOR_KEY=<operator key from step 3>
+   PIPELINE_READER_KEY=<reader key from step 3>
+   SESSION_SECRET=<openssl rand -hex 32>
+   UI_SECURE_COOKIES=false
+   UI_BOOTSTRAP_ADMIN_EMAIL=you@sympera.ai
+   UI_BOOTSTRAP_ADMIN_PASSWORD=<temporary password, at least 12 characters>
+   LOG_FORMAT=console
+   ```
+
+5. **Bootstrap the `ui` schema and the first admin** (owner URL), then switch the URL to
+   the `app_ui` login for serving:
+
+   ```bash
+   uv sync --frozen
+   uv run python -m scout_bff.bootstrap        # schema ui, roles svc_ui/app_ui, migrations, first admin
+   # now set UI_DATABASE_URL=postgresql+psycopg://app_ui:<UI_DATABASE_PASSWORD>@localhost:5432/<database> in .env.ui
+   ```
+
+6. **Run the BFF** on `:8080`:
+
+   ```bash
+   uv run uvicorn scout_bff.app:app --port 8080     # add --reload while editing the BFF
+   curl --fail http://localhost:8080/readyz
+   ```
+
+7. **Run the SPA**, one of two ways:
+   - development: `cd web && pnpm dev` — Vite on `http://localhost:5173` proxies `/app`,
+     `/v1`, `/healthz` and `/readyz` to `:8080`;
+   - as deployed: `cd web && pnpm build`, then copy `web/dist` to `bff/scout_bff/static`
+     (`rm -rf bff/scout_bff/static && cp -R web/dist bff/scout_bff/static`), restart the
+     BFF (the folder is mounted at startup) and open `http://localhost:8080` — the BFF
+     serves the built SPA itself (this is what the Docker image does).
+
+8. **Sign in** with the bootstrap admin, change the password when asked (section 3) and
+   create a run (section 4).
 
 Checks before a commit: `cd web && pnpm check && pnpm build` (and `pnpm e2e` when routes
-change); at the root `uv run ruff check . && uv run ruff format --check .`,
-`uv run lint-imports`, `uv run pytest -q` (integration tests need
-`UI_TEST_DATABASE_URL` pointing at a disposable database, for example
+change; it builds the mock variant into `web/dist-mock`); at the root
+`uv run ruff check . && uv run ruff format --check .`, `uv run lint-imports`,
+`uv run pytest -q` (integration tests need `UI_TEST_DATABASE_URL` pointing at a
+disposable database, for example
 `postgresql+psycopg://scout_test:scout_test@localhost:5432/scout_test`).
 
 ## 13. Troubleshooting
@@ -538,16 +629,16 @@ change); at the root `uv run ruff check . && uv run ruff format --check .`,
 |---|---|---|
 | `dcu up` stops at `ui_migrate` | `dcu logs ui_migrate` | set `UI_DATABASE_PASSWORD`; make sure `POSTGRES_PASSWORD` matches the running database and the pipeline's `migrate` finished (`dcu ps`) |
 | `ui` restarts in a loop | `dcu logs ui` | a required variable is missing (`PIPELINE_*_KEY`, `SESSION_SECRET` ≥ 32 chars) or `UI_DATABASE_URL` cannot log in (`UI_DATABASE_PASSWORD` changed without re-running `ui_migrate`) |
-| `/readyz` → `database: fail` | `dcu exec postgres psql -U article_owner -d article_pipeline -c '\du app_ui'` | re-run `dcu up -d ui_migrate` (recreates/alters the role), then `dcu up -d ui` |
-| `/readyz` → `migrations: fail` | `dcu logs ui_migrate` | re-run `ui_migrate`; the version table is `ui.alembic_version` |
-| `/readyz` → `pipeline_api: fail` | `curl http://127.0.0.1:8000/readyz`; `dcu ps api` | fix the pipeline API first; the console recovers on the next probe |
+| `/readyz` → `database: false` | `dcu exec postgres psql -U article_owner -d article_pipeline -c '\du app_ui'` | re-run `dcu up -d ui_migrate` (recreates/alters the role), then `dcu up -d ui` |
+| `/readyz` → `migrations: false` | `dcu logs ui_migrate` | re-run `ui_migrate`; the version table is `ui.alembic_version` |
+| `/readyz` → `pipeline_api: false` | `curl http://127.0.0.1:8000/readyz`; `dcu ps api` | fix the pipeline API first; the console recovers on the next probe |
 | Sign-in succeeds but the next request is `401 not_authenticated` | the cookie was dropped | plain `http://` on a non-localhost address needs `UI_SECURE_COOKIES=false` (dev only) — or use the HTTPS host |
 | `403 csrf_failed` | the request lacks `X-Requested-With: scout` or `X-CSRF-Token` | the SPA always sends both; scripts must copy `csrf_token` from `GET /app/auth/me` |
 | `403 password_change_required` everywhere | the account must change its password | open `/account/password` |
 | `429 too_many_attempts` | too many failed sign-ins | wait 15 minutes (per e-mail) / 1 hour (per IP) or have an admin reset the password |
-| `503 pipeline_api_unavailable` | `PIPELINE_API_URL`, `dcu ps api` | the API is down or unreachable from the `ui` container (connect timeout 5 s, 3 retries on GET) |
+| `503 pipeline_api_unavailable` / `504 pipeline_api_timeout` | `PIPELINE_API_URL`, `dcu ps api` | the API is down or unreachable from the `ui` container (connect timeout 5 s, 3 attempts on GET) or did not answer within 30 s |
 | `404 not_proxied` | the path or method is not in the `/v1` allowlist | only the pipeline routes listed in `docs/api/pipeline-routes.txt` are proxied, with role checks |
-| Note "needs pipeline API update (B1…B4)" | `GET /app/capabilities` | expected until the backend PRs land; the screen works in degraded mode (`README.md` › Troubleshooting) |
+| Note "needs pipeline API update (B1…B4)" | `GET /app/capabilities`, Settings › System | expected until the backend PRs land; the screen works in degraded mode (`README.md` › Troubleshooting) |
 | Caddy fails to start | `dcu logs caddy` | the pipeline's Caddyfile imports `/etc/caddy/Caddyfile.ui` but the project was started without `compose.ui.yaml`; start with both files or use `import /etc/caddy/Caddyfile.ui*` |
 | Browser warns about the certificate on `scout.localhost` | Caddy's internal CA | expected for `*.localhost`; use a real hostname with DNS pointing at the machine for Let's Encrypt |
 | Where are the logs? | `dcu logs -f ui` | one JSON line per request / proxied call: `user_id, role, method, path, status, duration_ms` — never a key |

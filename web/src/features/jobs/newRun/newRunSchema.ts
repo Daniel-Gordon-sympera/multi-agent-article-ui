@@ -295,11 +295,22 @@ export function failedLegs(batch: Batch | null): BatchJob[] {
 
 /** Which pre-fill wins on `/jobs/new`: `?scout=` → `?from=` → `?source=` → the defaults. */
 export function initialValuesFor(
-  search: { scout?: string; from?: string; source?: string; mode?: RunMode; scoutMode?: "save" },
+  search: {
+    scout?: string;
+    duplicate?: number;
+    from?: string;
+    source?: string;
+    mode?: RunMode;
+    scoutMode?: "save";
+  },
   scout: Scout | null | undefined,
   job: JobRecord | null | undefined,
   source: Source | null | undefined,
 ): NewRunValues {
+  if (search.scout && scout && search.duplicate) {
+    // Duplicate: the saved setup as a starting point for a new Scout, not an edit of it.
+    return { ...valuesFromScout(scout), save_as_scout: true, scout_name: `${scout.name} (copy)` };
+  }
   if (search.scout && scout) return valuesFromScout(scout);
   if (search.from && job) return valuesFromJob(job);
   if (search.source && source) return valuesFromSource(source);

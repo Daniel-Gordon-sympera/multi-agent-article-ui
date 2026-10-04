@@ -2,10 +2,28 @@
 
 ADR-UI-001 … 006 are the decisions of the approved plan (`docs/plan/07-ui-service-plan.md`
 §15), restated with their context and consequences; 007 and 008 were taken while turning
-the plan into the engineering contract and the mockup spec. Add a new record (next number,
-same three parts) whenever a durable choice is made; never rewrite history — supersede.
+the plan into the engineering contract and the mockup spec; 009 … 013 were taken by the
+feature work (Jobs, Scouts + Sources, Signals, Overview + Settings). Add a new record
+(next number, same three parts) whenever a durable choice is made; never rewrite
+history — supersede.
 
 Status legend: **accepted** (in force) · **superseded by ADR-UI-nnn**.
+
+| ADR | Decision | Status |
+|---|---|---|
+| [001](#adr-ui-001--spa--python-bff-over-a-node-full-stack-framework) | SPA + Python BFF over a Node full-stack framework | accepted |
+| [002](#adr-ui-002--ui-state-in-a-ui-schema-of-the-pipeline-database) | UI state in a `ui` schema of the pipeline database | accepted |
+| [003](#adr-ui-003--local-accounts-with-server-sessions-pipeline-keys-never-leave-the-bff) | Local accounts with server sessions; pipeline keys never leave the BFF | accepted |
+| [004](#adr-ui-004--missing-aggregates-are-added-to-the-pipeline-api-not-computed-in-the-bff) | Missing aggregates are added to the pipeline API, not computed in the BFF | accepted |
+| [005](#adr-ui-005--polling-with-etag-first-sse-when-a-trigger-fires) | Polling with ETag first; SSE when a trigger fires | accepted |
+| [006](#adr-ui-006--scouts-batches-and-data-sources-are-ui-concepts) | Scouts, batches and Data Sources are UI concepts | accepted |
+| [007](#adr-ui-007--capability-probing-and-bounded-bff-fallbacks-for-b1b4) | Capability probing and bounded BFF fallbacks for B1–B4 | accepted |
+| [008](#adr-ui-008--materiality-pill-rendered-as-drawn-high--amber) | Materiality pill rendered as drawn (High = amber) | accepted, open for Daniel's confirmation |
+| [009](#adr-ui-009--table-columns-are-module-constants-live-facts-reach-cells-through-a-context) | Table columns are module constants; live facts reach cells through a context | accepted |
+| [010](#adr-ui-010--new-run-form-curated-seeds-resolve-to-a-seeds-job-settings-are-sent-as-shown) | New run form: curated seeds resolve to a `seeds` job; settings are sent as shown | accepted |
+| [011](#adr-ui-011--fan-out-seed-composition-and-suggestion-rules-of-the-scoutssources-bff) | Fan-out, seed composition and suggestion rules of the Scouts/Sources BFF | accepted |
+| [012](#adr-ui-012--cross-job-signals-one-column-registry-offset-cursors-for-the-fallback-detail-for-the-drawer) | Cross-job signals: one column registry, offset cursors for the fallback, `?detail=` for the drawer | accepted |
+| [013](#adr-ui-013--dashboard-aggregates-short-ttl-caches-honest-gaps-browser-local-registries) | Dashboard aggregates: short TTL caches, honest gaps, browser-local registries | accepted |
 
 ---
 

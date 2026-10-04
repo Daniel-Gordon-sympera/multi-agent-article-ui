@@ -4,9 +4,10 @@
 Sympera Scout is the operator console of the news multi-agent article pipeline (`multi-agent-article`). It replaces `curl`, `psql` and `python -m cli.main` for the people who run the pipeline: launch and watch runs, inspect every job (stages, site runs, tasks, costs), reach every result (signals with evidence, companies with flags, articles with saved text), curate data sources and manage access.
 
 * **Shape:** one Docker image = a React SPA (Vite, TypeScript strict, TanStack Router/Query/Table, shadcn/ui on Tailwind v4) served by a Python FastAPI BFF (`bff/scout_bff`). The browser talks to exactly one origin, the BFF (`/`, `/app/*`, `/v1/*`, `/healthz`, `/readyz`).
-* **Input:** the pipeline API (`GET/POST /v1/*`, `X-API-Key`, keyset pagination `{items, next_cursor}`, RFC 9457 problems) — the single source of truth for jobs and results. 34 routes exist today (`docs/api/pipeline-routes.txt`); four additions B1–B4 are pending and treated as optional capabilities.
+* **Input:** the pipeline API (`GET/POST /v1/*`, `X-API-Key`, keyset pagination `{items, next_cursor}`, RFC 9457 problems) — the single source of truth for jobs and results. 33 `/v1` routes plus `/healthz` and `/readyz` exist today (`docs/api/pipeline-routes.txt`); four additions B1–B4 are pending and treated as optional capabilities.
 * **Output / own state:** schema `ui` in the pipeline's PostgreSQL (users, sessions, scouts, batches, sources, saved views, preferences, audit log). The UI stores references to pipeline rows (job ids, article ids, company keys, domains), never copies of result data, except the finder facts a promoted source keeps.
 * **Audience:** operators first (Daniel and engineers); kept easy and light. Version **0.1.0**.
+* **Status:** phases U0–U6 of `docs/plan/07-ui-service-plan.md` §13 are built and merged on `main`; only "deploy to the VM" and Daniel's day of real jobs through the UI remain (`README.md` › Status and What was verified). Every screen exists; B1–B4 fallbacks are documented in `README.md` › Troubleshooting.
 
 ## 2. Core Tradeoffs & Guardrails
 * **Granular files:** max **400 lines** per file (TypeScript and Python). Split before you reach it.
@@ -21,14 +22,14 @@ Sympera Scout is the operator console of the news multi-agent article pipeline (
 * **Approved plan:** `docs/plan/07-ui-service-plan.md` (architecture §3, layout §5, security §10, deployment §11, phases §13, ADRs §15); design decisions and tokens: `docs/plan/06-ui-service-design.md`.
 * **Mockup spec:** `docs/design/mockup-spec.md` (tokens, every screen, sample data for fixtures, component inventory, open questions).
 * **Pipeline API:** `docs/api/openapi-pipeline.json` and `docs/api/pipeline-routes.txt` (branch `feature/platform-and-api`).
-* **Decisions and operations:** `docs/dev/decisions.md` (ADR-UI-001…008), `docs/dev/runbook.md`, `README.md`, `HOWTO.md`.
+* **Decisions and operations:** `docs/dev/decisions.md` (ADR-UI-001…013), `docs/dev/runbook.md`, `README.md`, `HOWTO.md`.
 * **External:** TanStack Router/Query/Table, shadcn/ui, Tailwind CSS v4, FastAPI, SQLAlchemy 2 Core, Alembic, pydantic-settings, Playwright, MSW 2.
 
 ## 4. Development & Operational Commands
 *Run these exact commands when instructed to build, run, or test (contract §3):*
 * **Install:** `cd web && pnpm install --frozen-lockfile` (pnpm 10, Node 22) and, at the root, `uv sync --frozen` (Python 3.12).
-* **Run the SPA:** `pnpm dev` (Vite on :5173, proxies `/app`, `/v1`, `/healthz`, `/readyz` to `http://localhost:8080`; `VITE_BFF_URL` overrides) · `pnpm dev:mock` (MSW fixtures, no backend) · `pnpm build` (`tsc -b && vite build` → `web/dist`) · `pnpm preview:mock`.
-* **Run the BFF:** `uv run uvicorn scout_bff.app:app --reload --port 8080` (serves `bff/scout_bff/static` when present; reads `.env.ui` when present).
+* **Run the SPA:** `pnpm dev` (Vite on :5173, proxies `/app`, `/v1`, `/healthz`, `/readyz` to `http://localhost:8080`; `VITE_BFF_URL` overrides) · `pnpm dev:mock` (MSW fixtures, no backend; accounts `admin@sympera.ai / scout-admin`, `operator@sympera.ai / scout-operator`, `viewer@sympera.ai / scout-viewer`, `newcomer@sympera.ai / scout-newcomer` with a forced password change) · `pnpm build` (`pnpm gen:routes && tsc -b && vite build` → `web/dist`, the real build: never contains the MSW worker, fonts emitted as files because the CSP is `font-src 'self'`) · `pnpm preview:mock` (mock build into `web/dist-mock`, served on :4173; what `pnpm e2e` uses).
+* **Run the BFF:** `uv run uvicorn scout_bff.app:app --reload --port 8080` (serves `bff/scout_bff/static` when present — copy `web/dist` there to serve the built SPA, as the Docker image does; reads `.env.ui` when present). `python -m scout_bff` runs uvicorn on `UI_PORT` (default 8080).
 * **Database migrations:** Alembic history in `bff/scout_bff/migrations` (version table in schema `ui`); applied by `uv run python -m scout_bff.bootstrap` (owner `UI_DATABASE_URL`; creates schema, roles `svc_ui`/`app_ui`, grants, the first admin; idempotent). In Docker the one-shot `ui_migrate` service runs it on every `up`.
 * **API types:** `uv run python -m scout_bff.openapi > docs/api/openapi-bff.json` then `cd web && pnpm gen:api` (regenerates `src/api/pipeline.gen.ts` and `src/api/bff.gen.ts`; never hand-edit generated files).
 * **Docker (Daniel's machine; registries are unreachable from the cloud sandbox):** from the pipeline repo, `docker compose -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml up -d --build`; image `scout-ui:${UI_IMAGE_TAG:-local}`; variables in `.env.ui.example`.
@@ -38,7 +39,7 @@ Sympera Scout is the operator console of the news multi-agent article pipeline (
 * **On every change (the same checks CI runs):** `cd web && pnpm check` (typecheck, ESLint, Prettier, Vitest) and `pnpm build`; at the root `uv run ruff check . && uv run ruff format --check .`, `uv run lint-imports`, `uv run pytest -q`.
 * **Route or shell changes:** `cd web && pnpm e2e` (Playwright against `preview:mock`, with axe checks).
 * **BFF integration tests:** need `UI_TEST_DATABASE_URL` (owner URL of a disposable database); skipped with a reason when unset. The pipeline API is always a `respx` stub (`tests/pipeline_stub.py`); the SPA always runs on MSW fixtures. **Never the network, never a live pipeline, never a live database in tests.**
-* **Before merge / big changes:** the Docker image builds (`docker build .`), `docker compose … config` is valid, and a real sign-in → run → results walk-through on Daniel's machine when the change touches auth, proxy or deployment.
+* **Before merge / big changes:** the Docker image builds (`docker build --check .` works in the sandbox; `docker build .` and `compose … up --build` need Daniel's machine because container registries are blocked here), `docker compose … config` is valid, and a real sign-in → run → results walk-through against the real pipeline API when the change touches auth, proxy or deployment (`README.md` › What was verified describes the last one).
 
 ## 6. Github Rules
 1. **Working repo:** `multi-agent-articles-ui` (private) under the `Daniel-Gordon-sympera` GitHub account.
@@ -66,7 +67,7 @@ Full spec: `docs/dev/engineering-contract.md` (binding) and `docs/plan/07-ui-ser
 - CI: GitHub Actions `ci.yml` — web (check + build), bff (ruff, lint-imports, pytest with Postgres 16), e2e (Playwright mock mode), image (docker build, no push).
 
 ### Agent Rules
-- **Ownership (contract §6).** Foundation: A1 owns `web/`; A2 owns `bff/`, `tests/`, `pyproject.toml`, `uv.lock`, `alembic.ini`; A3 owns the root ops/docs files (`Dockerfile`, `.dockerignore`, `compose.ui.yaml`, `deploy/`, `.env.ui.example`, `.github/`, `.gitignore`, `.editorconfig`, `AGENTS.md`, `CLAUDE.md`, `README.md`, `HOWTO.md`, `docs/dev/decisions.md`, `docs/dev/runbook.md`). Feature agents own `web/src/features/<area>/`, `web/src/routes/_app/<area>…`, `web/src/mocks/handlers/<area>.ts`, `web/src/mocks/fixtures/<area>.ts`, `bff/scout_bff/<aggregate>/`, `tests/**/test_<area>_*.py`, and their HOWTO/README sections.
+- **Ownership (contract §6–7).** The foundation phase (A1–A3) and the feature phase (B1 Jobs, B2 Scouts + Sources, B3 Signals, B4 Overview + Settings) are complete and merged; the map below is kept as history and future work follows the same rules. Foundation: A1 owned `web/`; A2 owned `bff/`, `tests/`, `pyproject.toml`, `uv.lock`, `alembic.ini`; A3 owned the root ops/docs files (`Dockerfile`, `.dockerignore`, `compose.ui.yaml`, `deploy/`, `.env.ui.example`, `.github/`, `.gitignore`, `.editorconfig`, `AGENTS.md`, `CLAUDE.md`, `README.md`, `HOWTO.md`, `docs/dev/decisions.md`, `docs/dev/runbook.md`). Feature work owns `web/src/features/<area>/`, `web/src/routes/_app/<area>…`, `web/src/mocks/handlers/<area>.ts`, `web/src/mocks/fixtures/<area>.ts`, `bff/scout_bff/<aggregate>/`, `tests/**/test_<area>_*.py`, and the HOWTO/README sections of that area.
 - **Shared files** (`web/src/components/`, `api/`, `lib/`, `app/`, `bff/scout_bff/app.py`, `settings.py`, `migrations/`) take **additive** changes only (new exports, new optional props); never rename or change existing behaviour — report the need instead.
 - **Generated files** (`routeTree.gen.ts`, `pipeline.gen.ts`, `bff.gen.ts`, `mockServiceWorker.js`, `uv.lock`, `pnpm-lock.yaml`) are regenerated, never hand-edited.
 - DO NOT add a model call, a direct pipeline-database connection or a generic web search anywhere in this repository; the BFF reaches the pipeline only through `PIPELINE_API_URL`.

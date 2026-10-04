@@ -6,6 +6,7 @@ import {
   tableSearchSchema,
   densitySchema,
   listParam,
+  positiveIntParam,
 } from "@/lib/url";
 
 /** `YYYY-MM-DD` or nothing (custom "Created" range bounds). */
@@ -38,6 +39,8 @@ export const scoutsSearchSchema = z.object({
 
 export const newRunSearchSchema = z.object({
   scout: optionalString,
+  /** With `?scout=`: start a new Scout from that setup instead of editing it (`?duplicate=1`). */
+  duplicate: positiveIntParam,
   mode: optionalEnum(["location_industry", "url", "seeds"]),
   scoutMode: optionalEnum(["save"]),
   /** Pre-fill from an existing job (Re-run). */

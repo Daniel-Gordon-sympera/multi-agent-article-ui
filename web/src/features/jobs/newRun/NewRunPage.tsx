@@ -68,14 +68,15 @@ export function NewRunPage({ search }: { search: NewRunSearch }) {
     );
   }
 
-  const title = search.scout && scout.data ? `Scout · ${scout.data.name}` : "New run";
+  const editing = Boolean(search.scout && scout.data && !search.duplicate);
+  const title = editing && scout.data ? `Scout · ${scout.data.name}` : "New run";
   return (
     <>
       <PageHeader
-        crumbs={crumbs(search.scout ? "Scout" : "New run")}
+        crumbs={crumbs(editing ? "Scout" : "New run")}
         title={title}
         subtitle={
-          search.scout
+          editing
             ? "Edit the saved setup, run it as it is saved, or save your changes for the next run"
             : "Launch one job per industry, or save the setup as a Scout to run again later"
         }
@@ -96,9 +97,9 @@ export function NewRunPage({ search }: { search: NewRunSearch }) {
         </div>
       ) : (
         <NewRunForm
-          key={`${search.scout ?? ""}|${search.from ?? ""}|${search.source ?? ""}|${search.mode ?? ""}`}
+          key={`${search.scout ?? ""}|${search.duplicate ?? ""}|${search.from ?? ""}|${search.source ?? ""}|${search.mode ?? ""}`}
           initial={initial}
-          scoutId={search.scout && scout.data ? scout.data.id : undefined}
+          scoutId={editing && scout.data ? scout.data.id : undefined}
         />
       )}
     </>

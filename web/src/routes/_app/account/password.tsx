@@ -32,7 +32,7 @@ function PasswordPage() {
           "Change password",
         ]}
         title="Change password"
-        subtitle="Signed in as the account below; other sessions stay signed in."
+        subtitle="Signed in as the account below; every other session of this account is signed out once the password changes."
       />
       <section className="card max-w-[440px] p-6">
         <p className="mb-4 text-[13px] text-muted">{user?.email}</p>
