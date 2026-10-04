@@ -1,6 +1,7 @@
 /**
  * `/v1/jobs*` — list with exact-match filters and keyset pagination, detail with ETag/304,
- * summary (202 live / 200 stored), the per-job sub-lists, create/cancel/resume, task retry.
+ * summary (202 live / 200 stored), the per-job sub-lists, create/cancel/resume and the CSV
+ * exports. Site-run and task handlers live in `jobsOps.ts`, the `/app` aggregates in `jobsApp.ts`.
  */
 import { http, HttpResponse } from "msw";
 import type { CreateJobInput, JobDetail, LiveJobSummary, ResumeJobInput } from "@/api/types/jobs";
@@ -16,6 +17,8 @@ import {
 } from "@/mocks/lib/paging";
 import { notFound, problem } from "@/mocks/lib/problem";
 import { guard } from "@/mocks/lib/session";
+import { jobAppHandlers } from "./jobsApp";
+import { jobOpsHandlers } from "./jobsOps";
 
 export function findJob(id: string | readonly string[] | undefined): JobDetail | undefined {
   const needle = String(id ?? "");
@@ -67,7 +70,7 @@ function subList<T extends object>(
   });
 }
 
-export const jobHandlers = [
+const coreJobHandlers = [
   http.get("/v1/jobs", ({ request }) => {
     const { error } = guard(request);
     if (error) return error;
@@ -228,6 +231,10 @@ export const jobHandlers = [
     if (body.site_timeout !== undefined && body.site_timeout !== null)
       job.settings.site_timeout = body.site_timeout;
     if (body.memory_mode) job.settings.memory_mode = body.memory_mode;
+    if (body.reanalyze !== undefined) job.settings.reanalyze = body.reanalyze;
+    if (body.reenrich !== undefined) job.settings.reenrich = body.reenrich;
+    if (body.refetch_dead_articles !== undefined)
+      job.settings.refetch_dead_articles = body.refetch_dead_articles;
     job.status = job.progress.articles > 0 ? "analysing" : "exploring";
     job.stop_reason = null;
     job.finished_at = null;
@@ -309,78 +316,6 @@ export const jobHandlers = [
       },
     });
   }),
-
-  http.post("/v1/tasks/:taskId/retry", ({ request, params }) => {
-    const { error } = guard(request, { minRole: "operator" });
-    if (error) return error;
-    const task = db.tasks.find((t) => String(t.id) === String(params.taskId));
-    if (!task) return notFound("Task");
-    if (task.status !== "dead")
-      return problem(409, "task_not_dead", "Only dead tasks can be retried");
-    task.status = "queued";
-    task.attempts = 0;
-    task.last_error = null;
-    task.error_category = null;
-    task.run_after = new Date().toISOString();
-    const job = db.jobs.find((j) => j.id === task.job_id);
-    if (job) {
-      job.progress.tasks_dead = Math.max(0, job.progress.tasks_dead - 1);
-      job.progress.tasks_pending += 1;
-      if (job.status === "partial") job.status = "analysing";
-    }
-    return HttpResponse.json({ task_id: task.id, status: "queued", attempts: 0 }, { status: 202 });
-  }),
-
-  http.get("/v1/site-runs/:siteRunId/exploration", ({ request, params }) => {
-    const { error } = guard(request);
-    if (error) return error;
-    const run = db.siteRuns.find((r) => r.id === params.siteRunId);
-    if (!run) return notFound("Site run");
-    return HttpResponse.json({
-      site_run_id: run.id,
-      domain: run.domain,
-      seed_url: run.seed_url,
-      origin: run.rank === 1 ? "memory" : "agent",
-      memory_source: null,
-      model: "deepseek-v4-pro",
-      prompt_version: PROMPT_VERSION,
-      started_at: run.started_at,
-      finished_at: run.started_at ? addSeconds(run.started_at, 240) : null,
-      outcome: run.status === "no_sections" ? "completed" : "completed",
-      steps: 14,
-      input_tokens: 31_000,
-      output_tokens: 2_400,
-      kept: run.stats.sections ?? 0,
-      skipped: 4,
-      transcript_sha: `tr-${run.id.slice(-4)}`,
-      error: null,
-    });
-  }),
-
-  http.get("/v1/site-runs/:siteRunId/work", ({ request, params }) => {
-    const { error } = guard(request);
-    if (error) return error;
-    const run = db.siteRuns.find((r) => r.id === params.siteRunId);
-    if (!run) return notFound("Site run");
-    const url = new URL(request.url);
-    const rejected = rejectUnknownFilters(url, ["stage", "outcome", "created_after"]);
-    if (rejected) return rejected;
-    const rows = Array.from({ length: Math.min(20, run.stats.pages ?? 0) }, (_, i) => ({
-      site_run_id: run.id,
-      work_key: `w-${run.id.slice(-4)}-${i}`,
-      stage: i % 5 === 0 ? "listing" : "candidate",
-      candidate: { url: `${run.seed_url}/page/${i}` },
-      outcome: i % 7 === 0 ? "rejected" : "completed",
-      error_category: "",
-      attempts: 1,
-      discovery_sequence: i + 1,
-      result: { rows: { pages: 1, links: 12, articles: i % 3 === 0 ? 1 : 0 } },
-      snapshot_id: 600_000 + i,
-      created_at: addSeconds(run.started_at ?? new Date().toISOString(), i * 30),
-      updated_at: addSeconds(run.started_at ?? new Date().toISOString(), i * 30 + 10),
-    }));
-    return HttpResponse.json(
-      paginate(applyExactFilters(rows, url, ["stage", "outcome"]), url, (r) => r.work_key),
-    );
-  }),
 ];
+
+export const jobHandlers = [...coreJobHandlers, ...jobOpsHandlers, ...jobAppHandlers];

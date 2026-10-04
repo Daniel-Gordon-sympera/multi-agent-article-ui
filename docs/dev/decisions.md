@@ -181,3 +181,50 @@ with the warn status, so a High pill and a "Retry in …" pill look alike in col
 pills differ in text and the status pill carries a dot, so meaning is never colour-only.
 If Daniel prefers the legend rule, switch High to brand-700 text on brand-200 background
 in the variant map (one line) and supersede this record.
+
+## ADR-UI-009 — Table columns are module constants; live facts reach cells through a context
+
+**Status:** accepted (2026-10-04).
+
+**Context.** TanStack Table renders a column's `cell` through `flexRender`, which treats a
+function-valued `cell` as a React component type. When a screen rebuilds its column array
+on every render (for example to close over polled progress, a ticking clock or mutation
+handlers), every cell receives a *new* component type and React remounts the whole cell
+subtree: confirm dialogs close by themselves on the next 5 s poll, loading spinners
+flicker and focus is lost. The Runs table hit exactly this.
+
+**Decision.** Column definitions of the jobs screens are module-level constants
+(`RUNS_COLUMNS`, `SITE_RUN_COLUMNS`, `TASK_COLUMNS`, …). Cells are named components that
+read whatever changes while the table is on screen — polled snapshots, batch memberships,
+the clock, the operator's role, handlers — from a small React context created with
+`features/jobs/shared/columnContext.ts` and provided by the page around `<DataTable>`.
+Column builders that only close over stable values (a job id, a memoised handler) may
+stay memoised functions.
+
+**Consequences.** Dialog and button state survive polling; one `useMemo` per page holds
+the context value. Other feature agents building live tables should follow the same
+pattern (or memoise the column array on genuinely stable inputs only).
+
+## ADR-UI-010 — New run form: curated seeds resolve to a `seeds` job; settings are sent as shown
+
+**Status:** accepted (2026-10-04).
+
+**Context.** The mockup's New run form has a *Mode* control (location + industries ·
+site URL · seeds from Data Sources) and, in location mode, a *Sources* choice (finder or
+the county's curated seeds). The pipeline API only knows the kinds `location_industry`,
+`seeds` and `url`, and the BFF fan-out (contract §4.5) sends one leg per industry for
+`location_industry` and a single leg for the other kinds. The contract also says the
+batch `settings` are "overrides only".
+
+**Decision.** Location + *curated seeds* resolves to `kind = "seeds"` with the active Data
+Sources of the county (filtered by the chosen industries) as the seed list — one job, the
+industries kept as labels; *Seeds from Data Sources* mode is the same kind with an
+explicit tick list; a saved Scout with `kind = "seeds"` reopens as location mode + curated
+seeds (a Scout stores no tick list). The six advanced settings are sent exactly as the
+form shows them (the platform defaults pre-filled), so the operator never gets a job whose
+saved settings differ from what the Summary card displayed.
+
+**Consequences.** `legsOf()` and `resolvedKind()` in `features/jobs/newRun/newRunSchema.ts`
+are the single source of the fan-out preview, the Summary card and the request body.
+Changing the platform defaults requires updating `DEFAULT_SETTINGS` there (or, later,
+reading them from `GET /app/system`).

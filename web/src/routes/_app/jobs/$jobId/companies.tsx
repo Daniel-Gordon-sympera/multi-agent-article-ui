@@ -1,17 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LaterPhaseNotice } from "@/features/placeholder/LaterPhaseNotice";
+import { CompaniesTab } from "@/features/jobs/results/CompaniesTab";
+import { useTabHandlers } from "@/features/jobs/shared/useTabHandlers";
+import {
+  companiesTabSearchSchema,
+  type CompaniesTabSearch,
+} from "@/features/jobs/tabSearchSchemas";
 
 function JobCompaniesTab() {
-  return (
-    <section aria-labelledby="job-tab-companies-title" className="flex flex-col gap-4">
-      <h2 id="job-tab-companies-title" className="text-card-title text-ink">
-        Companies
-      </h2>
-      <LaterPhaseNotice screen="Companies and their enrichment flags" />
-    </section>
-  );
+  const { jobId } = Route.useParams();
+  const search = Route.useSearch();
+  const handlers = useTabHandlers<CompaniesTabSearch>(Route.useNavigate());
+  return <CompaniesTab jobId={jobId} search={search} {...handlers} />;
 }
 
 export const Route = createFileRoute("/_app/jobs/$jobId/companies")({
+  validateSearch: companiesTabSearchSchema,
   component: JobCompaniesTab,
 });

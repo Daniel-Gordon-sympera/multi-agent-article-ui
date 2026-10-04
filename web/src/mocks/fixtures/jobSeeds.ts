@@ -16,6 +16,8 @@ export interface JobSeed {
   startedAt?: string | null;
   durationSeconds?: number | null;
   progress: Partial<Omit<JobProgress, "job_id">>;
+  /** Site runs finished so far (mockup §4.1 "Sites" column); the total is `progress.seeds`. */
+  sitesDone?: number;
   costs?: JobCost[];
   costUsd?: number;
   tokens?: number;
@@ -25,6 +27,7 @@ export interface JobSeed {
 export const JOB_SEEDS: JobSeed[] = [
   {
     id: JOB_IDS.orangeConstruction,
+    sitesDone: 5,
     kind: "location_industry",
     input: { location: "Orlando, FL", industry: "Construction" },
     county: "Orange",
@@ -50,6 +53,7 @@ export const JOB_SEEDS: JobSeed[] = [
   },
   {
     id: JOB_IDS.orangeManufacturing,
+    sitesDone: 3,
     kind: "location_industry",
     input: { location: "Orlando, FL", industry: "Manufacturing" },
     county: "Orange",
@@ -75,6 +79,7 @@ export const JOB_SEEDS: JobSeed[] = [
   },
   {
     id: JOB_IDS.orangeWholesale,
+    sitesDone: 0,
     kind: "location_industry",
     input: { location: "Orlando, FL", industry: "Wholesale Trade" },
     county: "Orange",
@@ -89,6 +94,7 @@ export const JOB_SEEDS: JobSeed[] = [
   },
   {
     id: JOB_IDS.jeffersonConstruction,
+    sitesDone: 2,
     kind: "seeds",
     input: {
       seeds: [
@@ -131,6 +137,7 @@ export const JOB_SEEDS: JobSeed[] = [
   },
   {
     id: JOB_IDS.maricopaRetail,
+    sitesDone: 3,
     kind: "seeds",
     input: {
       seeds: [
@@ -161,6 +168,7 @@ export const JOB_SEEDS: JobSeed[] = [
   },
   {
     id: JOB_IDS.fultonWholesale,
+    sitesDone: 5,
     kind: "location_industry",
     input: { location: "Atlanta, GA", industry: "Wholesale Trade" },
     county: "Fulton",
@@ -184,6 +192,7 @@ export const JOB_SEEDS: JobSeed[] = [
   },
   {
     id: JOB_IDS.cookUtilities,
+    sitesDone: 0,
     kind: "location_industry",
     input: { location: "Chicago, IL", industry: "Utilities" },
     county: "Cook",
@@ -199,6 +208,7 @@ export const JOB_SEEDS: JobSeed[] = [
   },
   {
     id: JOB_IDS.harrisManufacturingEarlier,
+    sitesDone: 5,
     kind: "location_industry",
     input: { location: "Houston, TX", industry: "Manufacturing" },
     county: "Harris",

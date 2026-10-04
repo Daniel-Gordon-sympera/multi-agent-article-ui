@@ -1,17 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LaterPhaseNotice } from "@/features/placeholder/LaterPhaseNotice";
+import { ArticlesTab } from "@/features/jobs/results/ArticlesTab";
+import { useTabHandlers } from "@/features/jobs/shared/useTabHandlers";
+import { articlesTabSearchSchema, type ArticlesTabSearch } from "@/features/jobs/tabSearchSchemas";
 
 function JobArticlesTab() {
-  return (
-    <section aria-labelledby="job-tab-articles-title" className="flex flex-col gap-4">
-      <h2 id="job-tab-articles-title" className="text-card-title text-ink">
-        Articles
-      </h2>
-      <LaterPhaseNotice screen="Accepted articles and their saved text" />
-    </section>
-  );
+  const { jobId } = Route.useParams();
+  const search = Route.useSearch();
+  const handlers = useTabHandlers<ArticlesTabSearch>(Route.useNavigate());
+  return <ArticlesTab jobId={jobId} search={search} {...handlers} />;
 }
 
 export const Route = createFileRoute("/_app/jobs/$jobId/articles")({
+  validateSearch: articlesTabSearchSchema,
   component: JobArticlesTab,
 });

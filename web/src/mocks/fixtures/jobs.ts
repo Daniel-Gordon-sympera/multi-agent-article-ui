@@ -152,3 +152,18 @@ function buildJob(seed: JobSeed): JobDetail {
 export function buildJobFixtures(): JobDetail[] {
   return seeds.map(buildJob);
 }
+
+export interface JobSiteCounts {
+  done: number;
+  total: number;
+}
+
+/** "Sites done / total" of the fixture jobs (mockup §4.1), served by `/app/jobs/progress`. */
+export function buildJobSiteCounts(): Record<string, JobSiteCounts> {
+  const counts: Record<string, JobSiteCounts> = {};
+  for (const seed of seeds) {
+    if (seed.sitesDone === undefined) continue;
+    counts[seed.id] = { done: seed.sitesDone, total: seed.progress.seeds ?? 0 };
+  }
+  return counts;
+}

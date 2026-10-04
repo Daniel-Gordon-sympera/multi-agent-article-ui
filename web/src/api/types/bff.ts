@@ -382,6 +382,8 @@ export interface CrossJobSignalsPage {
 export interface RetryDeadResult {
   retried: number;
   task_ids: number[];
+  /** Dead tasks the API refused (`409`) during the per-task fallback loop. */
+  skipped_task_ids?: number[];
 }
 
 export type Estimate =

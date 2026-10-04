@@ -1,18 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { JobsPageHeader } from "@/features/jobs/JobsPageHeader";
+import { RunsPage } from "@/features/jobs/runs/RunsPage";
 import { jobsSearchSchema } from "@/features/jobs/searchSchemas";
-import { LaterPhaseNotice } from "@/features/placeholder/LaterPhaseNotice";
 
-function RunsPage() {
-  return (
-    <>
-      <JobsPageHeader />
-      <LaterPhaseNotice screen="The Runs table with its filters and row actions" />
-    </>
-  );
+function RunsRoute() {
+  const search = Route.useSearch();
+  return <RunsPage search={search} />;
 }
 
 export const Route = createFileRoute("/_app/jobs/")({
   validateSearch: jobsSearchSchema,
-  component: RunsPage,
+  component: RunsRoute,
 });

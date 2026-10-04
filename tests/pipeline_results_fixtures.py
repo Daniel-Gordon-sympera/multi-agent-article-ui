@@ -6,6 +6,7 @@ from copy import deepcopy
 from typing import Any
 
 from tests.pipeline_fixtures import JOB_ANALYSING, JOB_COMPLETED, JOBS, TASKS
+from tests.pipeline_jobs_fixtures import SITE_RUNS
 
 
 def _signal(
@@ -227,5 +228,6 @@ def fresh_state() -> dict[str, Any]:
         "daily": deepcopy(DAILY_STATS),
         "finder_memory": deepcopy(FINDER_MEMORY),
         "rankings": deepcopy(RANKINGS),
+        "site_runs": deepcopy(SITE_RUNS),
         "api_keys": {},
     }

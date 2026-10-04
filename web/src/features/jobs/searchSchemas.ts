@@ -8,13 +8,24 @@ import {
   listParam,
 } from "@/lib/url";
 
+/** `YYYY-MM-DD` or nothing (custom "Created" range bounds). */
+const optionalIsoDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .optional()
+  .catch(undefined);
+
 export const jobsSearchSchema = tableSearchSchema.extend({
   status: optionalString,
   state: optionalString,
   county: optionalString,
   industry: optionalString,
   created: optionalEnum(["today", "7d", "30d", "custom"]),
+  created_after: optionalIsoDate,
+  created_before: optionalIsoDate,
   q: optionalString,
+  /** `?scout=<id>` lists the runs of one Scout (cross-feature link contract §7). */
+  scout: optionalString,
 });
 
 export const scoutsSearchSchema = z.object({
@@ -29,6 +40,10 @@ export const newRunSearchSchema = z.object({
   scout: optionalString,
   mode: optionalEnum(["location_industry", "url", "seeds"]),
   scoutMode: optionalEnum(["save"]),
+  /** Pre-fill from an existing job (Re-run). */
+  from: optionalString,
+  /** Pre-select one Data Source in Seeds mode (`?mode=seeds&source=<id>`). */
+  source: optionalString,
 });
 
 export type JobsSearch = z.infer<typeof jobsSearchSchema>;

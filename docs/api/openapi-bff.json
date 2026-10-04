@@ -307,6 +307,185 @@
         }
       }
     },
+    "/app/estimate": {
+      "get": {
+        "tags": [
+          "estimate"
+        ],
+        "summary": "Estimate",
+        "description": "`{median_cost_usd, p90_cost_usd, samples, basis}` or `{samples: 0}`.",
+        "operationId": "estimate_app_estimate_get",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "location_industry",
+                "seeds",
+                "url"
+              ],
+              "type": "string",
+              "default": "location_industry",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "sites",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 1000,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sites"
+            }
+          },
+          {
+            "name": "industry",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Industry"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Estimate App Estimate Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/jobs/progress": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Jobs Progress",
+        "description": "`{[job_id]: {status, progress, cost_usd, sites_total, sites_done, duration_seconds}}`.",
+        "operationId": "jobs_progress_app_jobs_progress_get",
+        "parameters": [
+          {
+            "name": "job_ids",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated job ids (at most 50)",
+              "default": "",
+              "title": "Job Ids"
+            },
+            "description": "Comma-separated job ids (at most 50)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Jobs Progress App Jobs Progress Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/jobs/{job_id}/retry-dead": {
+      "post": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Retry Dead",
+        "description": "Re-queue every dead task of the job \u2192 `{retried, task_ids, skipped_task_ids}`.",
+        "operationId": "retry_dead_app_jobs__job_id__retry_dead_post",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Retry Dead App Jobs  Job Id  Retry Dead Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/{path}": {
       "get": {
         "tags": [

@@ -1,17 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LaterPhaseNotice } from "@/features/placeholder/LaterPhaseNotice";
+import { useTabHandlers } from "@/features/jobs/shared/useTabHandlers";
+import { tasksTabSearchSchema, type TasksTabSearch } from "@/features/jobs/tabSearchSchemas";
+import { TasksTab } from "@/features/jobs/tasks/TasksTab";
 
 function JobTasksTab() {
-  return (
-    <section aria-labelledby="job-tab-tasks-title" className="flex flex-col gap-4">
-      <h2 id="job-tab-tasks-title" className="text-card-title text-ink">
-        Tasks
-      </h2>
-      <LaterPhaseNotice screen="The task tree with retry for dead tasks" />
-    </section>
-  );
+  const { jobId } = Route.useParams();
+  const search = Route.useSearch();
+  const handlers = useTabHandlers<TasksTabSearch>(Route.useNavigate());
+  return <TasksTab jobId={jobId} search={search} {...handlers} />;
 }
 
 export const Route = createFileRoute("/_app/jobs/$jobId/tasks")({
+  validateSearch: tasksTabSearchSchema,
   component: JobTasksTab,
 });
