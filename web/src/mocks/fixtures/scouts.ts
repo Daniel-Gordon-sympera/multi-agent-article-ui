@@ -1,7 +1,55 @@
-/** The 5 Scouts of mockup-spec §4.4 with their last-run facts. */
-import type { ScoutWithRuns } from "@/api/types/bff";
+/**
+ * The 5 Scouts of mockup-spec §4.4 with their last-run facts, and the batches behind those
+ * runs (the main job is batch 1 of 3 of "Orange County builders" run 7).
+ */
+import type { Batch, ScoutWithRuns } from "@/api/types/bff";
 import { daysAgo, minutesAgo } from "./clock";
 import { BATCH_ID, JOB_IDS, SCOUT_IDS } from "./jobs";
+
+/** A batch as the mock BFF stores it: the contract's `Batch` plus its job ids in order. */
+export interface MockBatch extends Batch {
+  job_ids: string[];
+}
+
+/** `ui:<batch>:<slug>` — the same slug rule as the BFF (`batches/naming.py`). */
+export function slugIndustry(value: string | null): string {
+  return value
+    ? value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "")
+    : "0";
+}
+
+/** One stored batch per Scout last run, so `/app/batches?job_ids=` labels the fixture jobs. */
+export function buildBatchFixtures(
+  scouts: readonly ScoutWithRuns[] = buildScoutFixtures(),
+): MockBatch[] {
+  return scouts.flatMap((scout) => {
+    const run = scout.last_run;
+    if (!run) return [];
+    const leg = (industry: string | null) =>
+      scout.kind === "location_industry" ? slugIndustry(industry) : "0";
+    return [
+      {
+        id: run.batch_id,
+        scout_id: scout.id,
+        scout_name: scout.name,
+        run_number: run.run_number,
+        created_at: run.created_at,
+        jobs: run.jobs.map((job, index) => ({
+          position: index + 1,
+          industry: job.industry,
+          job_id: job.job_id,
+          client_reference: `ui:${run.batch_id}:${leg(job.industry)}`,
+          status: job.status,
+          error: null,
+        })),
+        job_ids: run.jobs.map((job) => job.job_id),
+      },
+    ];
+  });
+}
 
 export function buildScoutFixtures(): ScoutWithRuns[] {
   const base = {

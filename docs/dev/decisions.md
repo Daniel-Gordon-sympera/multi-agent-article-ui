@@ -228,3 +228,42 @@ saved settings differ from what the Summary card displayed.
 are the single source of the fan-out preview, the Summary card and the request body.
 Changing the platform defaults requires updating `DEFAULT_SETTINGS` there (or, later,
 reading them from `GET /app/system`).
+
+## ADR-UI-011 — Fan-out, seed composition and suggestion rules of the Scouts/Sources BFF
+
+**Status:** accepted (2026-10-04, feature agent B2).
+
+**Context.** Contract §4.5 fixes the shape of a batch but leaves three behaviours open:
+what happens when the pipeline API cannot be reached part-way through a fan-out, which
+curated sources a seed run takes, and how finder suggestions are attributed to a county
+when no location filter is given.
+
+**Decision.**
+1. **Fan-out is one transaction.** `ui.batches` + `ui.batch_jobs` (and a `save_as_scout`
+   Scout) are written in the same transaction as the leg submissions. Legs are submitted
+   in order; a `4xx` leg is recorded with its problem and the batch still answers `201`;
+   a `409` whose body carries `job_id` is recorded as that job. The first connection
+   error or timeout stops the remaining legs (they are recorded as "not attempted"), and
+   when **no** leg was attempted the transaction rolls back and the call answers
+   `502 pipeline_api_unavailable` — nothing half-created survives. Optional
+   `client_reference_suffix` appends `:<slug(suffix)>` to every leg reference, which keeps
+   the `ui:<batch>:` prefix intact for B3's filter.
+2. **Seeds = active sources of the county and state** (county compared without the
+   word "County"), narrowed to the Scout's industries when it lists any; a source with
+   no industries matches every industry. Explicit `seeds` in a `BatchInput` win. No
+   match → `422 no_active_sources` before any API call.
+3. **Suggestions carry the county and state they were found for.** With a location
+   filter the BFF asks the judged-domain memory for both spellings ("Orange County,
+   Florida", "Orange, FL") and reads the rankings of the last five location-industry
+   jobs of that location. Without a filter the locations come from the recent jobs and
+   the active sources (at most ten), so a suggestion is never attributed to a location
+   the finder did not judge it for. Candidates are cached 60 s per query; listed and
+   dismissed domains are removed live, so a promote or dismiss takes effect at once.
+   Precision (`GET /v1/sources/stats`) is fetched per distinct domain, cached 60 s,
+   and the median is taken over the active sources only.
+
+**Consequences.** Batches are either fully recorded or absent; operators can retry a
+run safely. Seed Scouts follow the curated list without re-saving the Scout. Suggestion
+lists stay bounded (≤ 2 memory calls per location, ≤ 5 ranking reads) and attribution is
+exact. Revisit the seed rule if sources gain a per-industry weighting, and the location
+derivation when B3's `client_reference_prefix` filter makes batch-level queries cheap.

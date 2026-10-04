@@ -1,39 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, Upload } from "lucide-react";
-import { useSession } from "@/app/providers/SessionProvider";
-import { Button } from "@/components/Button";
-import { PageHeader } from "@/components/PageHeader";
-import { sourcesSearchSchema } from "@/features/sources/searchSchema";
-import { LaterPhaseNotice } from "@/features/placeholder/LaterPhaseNotice";
+import { useCallback } from "react";
+import { sourcesSearchSchema, type SourcesSearch } from "@/features/sources/searchSchema";
+import { SourcesPage } from "@/features/sources/SourcesPage";
+import { patchSearch } from "@/lib/url";
 
-function SourcesPage() {
-  const { can } = useSession();
-  return (
-    <>
-      <PageHeader
-        title="Data Sources"
-        subtitle="Curated news sites used as seeds, fed by what the finder discovers"
-        actions={
-          can("operate") ? (
-            <>
-              <Button variant="primary" disabled>
-                <Plus aria-hidden />
-                Add source
-              </Button>
-              <Button variant="secondary" disabled>
-                <Upload aria-hidden />
-                Import CSV
-              </Button>
-            </>
-          ) : undefined
-        }
-      />
-      <LaterPhaseNotice screen="The curated source list, its tiles and the finder suggestions" />
-    </>
+function SourcesRoute() {
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const onSearchChange = useCallback(
+    (patch: Partial<SourcesSearch>) =>
+      void navigate({ search: (previous) => patchSearch(previous, patch), replace: true }),
+    [navigate],
   );
+  return <SourcesPage search={search} onSearchChange={onSearchChange} />;
 }
 
 export const Route = createFileRoute("/_app/sources")({
   validateSearch: sourcesSearchSchema,
-  component: SourcesPage,
+  component: SourcesRoute,
 });

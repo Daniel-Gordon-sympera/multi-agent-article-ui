@@ -1,18 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { JobsPageHeader } from "@/features/jobs/JobsPageHeader";
-import { scoutsSearchSchema } from "@/features/jobs/searchSchemas";
-import { LaterPhaseNotice } from "@/features/placeholder/LaterPhaseNotice";
+import { useCallback } from "react";
+import { scoutsSearchSchema, type ScoutsSearch } from "@/features/jobs/searchSchemas";
+import { ScoutsPage } from "@/features/scouts/ScoutsPage";
+import { patchSearch } from "@/lib/url";
 
-function ScoutsPage() {
-  return (
-    <>
-      <JobsPageHeader />
-      <LaterPhaseNotice screen="The Scouts table (saved setups, last run, Run / Edit actions)" />
-    </>
+function ScoutsRoute() {
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const onSearchChange = useCallback(
+    (patch: Partial<ScoutsSearch>) =>
+      void navigate({ search: (previous) => patchSearch(previous, patch), replace: true }),
+    [navigate],
   );
+  return <ScoutsPage search={search} onSearchChange={onSearchChange} />;
 }
 
 export const Route = createFileRoute("/_app/jobs/scouts")({
   validateSearch: scoutsSearchSchema,
-  component: ScoutsPage,
+  component: ScoutsRoute,
 });

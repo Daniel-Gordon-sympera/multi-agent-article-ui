@@ -66,13 +66,13 @@ creates one job per industry (a **batch**, coupled to the API only through
 | Change password (forced after bootstrap or admin reset) | `/account/password` | U1 | planned |
 | Overview — tiles, active runs, needs attention, workers, recent signals | `/` | U5 | planned |
 | Jobs › Runs — filters, polling, cancel / resume, batch chips | `/jobs` | U2 | done — progress columns from `GET /app/jobs/progress`; industry filter is client-side until B3 |
-| Jobs › Scouts — saved setups, run, history | `/jobs/scouts` | U3 | planned |
+| Jobs › Scouts — saved setups, run (fan-out to one job per industry), last run + signals, edit / duplicate / archive | `/jobs/scouts` | U3 | done (B2) — the Runs filter `/jobs?scout=` and the `duplicate`/`source` form params are URL contracts for B1 |
 | New run / Scout — mode tabs, fan-out preview, advanced settings, save as Scout | `/jobs/new` | U2 (form) · U3 (Scouts) | done — `?scout=` edits / runs a Scout, `?from=` re-runs a job, `?mode=seeds&source=` pre-ticks a seed; estimate degrades to the last 10 completed runs without B2 |
 | Job › Overview — header, stepper, counters, site runs, cost by stage, settings | `/jobs/$jobId` | U2 | done — stage durations from the job's tasks and site runs; "—" where the API has no fact |
 | Job › Signals · Companies (flags switch) · Summaries · Articles | `/jobs/$jobId/{signals,companies,summaries,articles}` | U2 | Companies, Summaries, Articles done (Signals: B3) — keyset paging, URL-bound filters, CSV per table |
 | Job › Site runs (+ finder sources and ranking) · Sections · Tasks (tree, retry, retry all dead) · Events | `/jobs/$jobId/{site-runs,sections,tasks,events}` | U2 | done — retry-all-dead loops per task without B3; events are paged oldest first (API order) |
 | Signals explorer — filters, chips, saved views, column chooser, drawer, CSV | `/signals` (`?signal=` opens the drawer) | U4 | planned |
-| Data Sources — curated list, CSV import, finder suggestions, promote | `/sources` | U3 | planned |
+| Data Sources — curated list, add / edit / remove / restore, CSV import, finder suggestions, promote / dismiss, CSV export | `/sources` | U3 | done (B2) — precision column and median tile degrade to "needs pipeline API update (B2)" until `GET /v1/sources/stats` exists |
 | Settings › API keys (admin) · Workers & health · Stats & costs · Exports · System · Preferences · Users (admin) | `/settings/{keys,workers,stats,exports,system,preferences,users}` | U5 | planned |
 
 ## Quick start (Docker)
