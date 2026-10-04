@@ -20,7 +20,7 @@ gate is met.
 - [ ] **U1 — BFF core.** Settings, db, Alembic `ui` schema + roles + bootstrap admin, auth/sessions/CSRF, users, `/v1` proxy with allowlist and streaming, health, structlog, pytest suite. Gate: sign-in against the real API; `curl` through the proxy returns the API's responses with no key in the browser.
 - [ ] **U2 — jobs.** Runs list, New run form with fan-out, job detail (header, stepper, overview, results tabs, operations tabs, retry / retry-all-dead), Export CSV menu. Gate: a real Orlando job created, watched and exported from the UI (needs B3, B4).
 - [ ] **U3 — Scouts and Data Sources.** Scouts CRUD + Run + history; sources CRUD, CSV import, suggestions + promote, seeds jobs, precision column. Gate: a 3-industry Scout creates 3 jobs; a promoted domain seeds a run (needs B2).
-- [ ] **U4 — Signals explorer.** Cross-job list, filter bar + chips, saved views, column chooser + density, detail drawer, filtered CSV export. Gate: the mockup's filters answer in < 1 s on the dev database (needs B1).
+- [x] **U4 — Signals explorer.** Cross-job list, filter bar + chips, saved views, column chooser + density, detail drawer, filtered CSV export (built; runs in the bounded fallback until B1 lands). Gate: the mockup's filters answer in < 1 s on the dev database (needs B1).
 - [ ] **U5 — Overview and Settings.** Tiles, attention, workers, recent signals; API keys, Workers & health, Stats & costs, Exports, System, Preferences, Users. Gate: every mockup screen exists with live data.
 - [ ] **U6 — harden and release.** Playwright + axe suite, dark theme pass, empty/error/loading audit, README + runbook, version 0.1.0, image tag, deploy to the VM. Gate: e2e green in CI; Daniel runs a day of real jobs through the UI only.
 
@@ -69,9 +69,10 @@ creates one job per industry (a **batch**, coupled to the API only through
 | Jobs › Scouts — saved setups, run (fan-out to one job per industry), last run + signals, edit / duplicate / archive | `/jobs/scouts` | U3 | done (B2) — the Runs filter `/jobs?scout=` and the `duplicate`/`source` form params are URL contracts for B1 |
 | New run / Scout — mode tabs, fan-out preview, advanced settings, save as Scout | `/jobs/new` | U2 (form) · U3 (Scouts) | done — `?scout=` edits / runs a Scout, `?from=` re-runs a job, `?mode=seeds&source=` pre-ticks a seed; estimate degrades to the last 10 completed runs without B2 |
 | Job › Overview — header, stepper, counters, site runs, cost by stage, settings | `/jobs/$jobId` | U2 | done — stage durations from the job's tasks and site runs; "—" where the API has no fact |
-| Job › Signals · Companies (flags switch) · Summaries · Articles | `/jobs/$jobId/{signals,companies,summaries,articles}` | U2 | Companies, Summaries, Articles done (Signals: B3) — keyset paging, URL-bound filters, CSV per table |
+| Job › Signals (shared SignalsTable + drawer, server filters, `signals.csv`) | `/jobs/$jobId/signals` (`?detail=` opens the drawer) | U2 | done |
+| Job › Companies (flags switch) · Summaries · Articles | `/jobs/$jobId/{companies,summaries,articles}` | U2 | done — keyset paging, URL-bound filters, CSV per table |
 | Job › Site runs (+ finder sources and ranking) · Sections · Tasks (tree, retry, retry all dead) · Events | `/jobs/$jobId/{site-runs,sections,tasks,events}` | U2 | done — retry-all-dead loops per task without B3; events are paged oldest first (API order) |
-| Signals explorer — filters, chips, saved views, column chooser, drawer, CSV | `/signals` (`?signal=` opens the drawer) | U4 | planned |
+| Signals explorer — filters, chips, saved views, column chooser, drawer, CSV | `/signals` (`?detail=` opens the drawer) | U4 | done (degraded without B1: merges the 20 most recent matching jobs, see ADR-UI-009) |
 | Data Sources — curated list, add / edit / remove / restore, CSV import, finder suggestions, promote / dismiss, CSV export | `/sources` | U3 | done (B2) — precision column and median tile degrade to "needs pipeline API update (B2)" until `GET /v1/sources/stats` exists |
 | Settings › API keys (admin) · Workers & health · Stats & costs · Exports · System · Preferences · Users (admin) | `/settings/{keys,workers,stats,exports,system,preferences,users}` | U5 | planned |
 
