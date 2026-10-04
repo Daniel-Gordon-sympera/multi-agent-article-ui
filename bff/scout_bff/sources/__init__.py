@@ -1,0 +1,1 @@
+"""Aggregate `sources`: filled by feature agent A5 (scouts and sources); routes: GET/POST /app/sources, PATCH/DELETE /app/sources/{id}, restore, import, suggestions, promote, dismiss (contract §4.3)."""

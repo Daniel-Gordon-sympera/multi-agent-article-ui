@@ -1,0 +1,84 @@
+# Sympera Scout — Compose override for the pipeline project (article-pipeline).
+#
+# This file is never used alone. Run it from the pipeline repository, next to
+# its compose.yaml, with the UI repository checked out as a sibling folder:
+#
+#   docker compose -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml up -d --build
+#
+# Relative paths below (build context, Caddyfile mount) resolve against the
+# directory of the FIRST compose file, i.e. the pipeline repository.
+# Variables come from the pipeline's .env (see .env.ui.example for the UI ones).
+#
+# Services added: ui_migrate (one-shot schema/roles/admin bootstrap), ui (the BFF
+# serving the SPA). Service extended: caddy (UI_DOMAIN + the UI site block).
+
+name: article-pipeline   # must equal the pipeline's project name so both files form one project
+
+x-logging: &logging
+  driver: json-file
+  options: {max-size: "50m", max-file: "5"}
+
+# Settings() of the BFF requires these even for the one-shot bootstrap (settings.py
+# has no defaults for them), so both services receive them.
+x-ui-environment: &ui_environment
+  PIPELINE_API_URL: http://api:8000
+  PIPELINE_OPERATOR_KEY: ${PIPELINE_OPERATOR_KEY:?Set PIPELINE_OPERATOR_KEY}
+  PIPELINE_READER_KEY: ${PIPELINE_READER_KEY:?Set PIPELINE_READER_KEY}
+  SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET}
+  UI_PUBLIC_URL: ${UI_PUBLIC_URL:-https://${UI_DOMAIN:-scout.localhost}}
+  UI_SECURE_COOKIES: ${UI_SECURE_COOKIES:-true}
+  LOG_FORMAT: json
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+services:
+  ui_migrate:
+    image: scout-ui:${UI_IMAGE_TAG:-local}
+    build: ../multi-agent-articles-ui
+    # Creates schema `ui`, roles svc_ui/app_ui and their grants (owner
+    # connection), runs `alembic upgrade head`, creates the first admin when
+    # ui.users is empty. Idempotent: safe to re-run on every `up`.
+    entrypoint: ["/app/.venv/bin/python", "-m", "scout_bff.bootstrap"]
+    environment:
+      <<: *ui_environment
+      UI_DATABASE_URL: postgresql+psycopg://article_owner:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres/article_pipeline
+      UI_DATABASE_PASSWORD: ${UI_DATABASE_PASSWORD:?Set UI_DATABASE_PASSWORD}
+      UI_BOOTSTRAP_ADMIN_EMAIL: ${UI_BOOTSTRAP_ADMIN_EMAIL:-}
+      UI_BOOTSTRAP_ADMIN_PASSWORD: ${UI_BOOTSTRAP_ADMIN_PASSWORD:-}
+    logging: *logging
+    depends_on:
+      postgres: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}   # the pipeline's own schemas first
+
+  ui:
+    image: scout-ui:${UI_IMAGE_TAG:-local}
+    build: ../multi-agent-articles-ui
+    restart: unless-stopped
+    environment:
+      <<: *ui_environment
+      UI_DATABASE_URL: postgresql+psycopg://app_ui:${UI_DATABASE_PASSWORD:?Set UI_DATABASE_PASSWORD}@postgres/article_pipeline
+    ports: ["127.0.0.1:${UI_PORT:-8080}:8080"]   # direct access without Caddy (http://127.0.0.1:8080)
+    logging: *logging
+    depends_on:
+      ui_migrate: {condition: service_completed_successfully}
+      api: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "/app/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/readyz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  caddy:
+    environment:
+      UI_DOMAIN: ${UI_DOMAIN:-scout.localhost}
+    volumes:
+      # Option A (default, plan §11): the UI site block is mounted next to the
+      # pipeline's Caddyfile, which must contain the line
+      #     import /etc/caddy/Caddyfile.ui
+      # (one-line change in the pipeline repo's deploy/Caddyfile).
+      - ../multi-agent-articles-ui/deploy/Caddyfile.ui:/etc/caddy/Caddyfile.ui:ro
+      # Option B: no change in the pipeline repo — replace its Caddyfile with the
+      # complete one from this repo (API host + UI host). Uncomment the line
+      # below; a mount with the same container path overrides the base entry.
+      # - ../multi-agent-articles-ui/deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on: [api, ui]

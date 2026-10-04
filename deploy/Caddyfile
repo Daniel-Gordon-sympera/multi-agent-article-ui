@@ -1,0 +1,17 @@
+# Sympera Scout — complete Caddyfile serving BOTH hosts (option B in README).
+#
+# Use this when the pipeline repo's deploy/Caddyfile cannot be changed: mount it
+# over /etc/caddy/Caddyfile (see the commented line in compose.ui.yaml). The API
+# block mirrors the pipeline's own deploy/Caddyfile verbatim; the UI block is
+# imported from Caddyfile.ui so that there is one definition of it.
+#
+# API_DOMAIN defaults to "localhost" like the pipeline, UI_DOMAIN to
+# "scout.localhost"; both come from the caddy service's environment.
+
+# The pipeline API, exactly as in multi-agent-article/deploy/Caddyfile.
+{$API_DOMAIN:localhost} {
+    reverse_proxy api:8000
+}
+
+# The operator console (UI_DOMAIN → ui:8080).
+import /etc/caddy/Caddyfile.ui

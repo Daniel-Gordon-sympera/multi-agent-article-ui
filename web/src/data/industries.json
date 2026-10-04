@@ -1,0 +1,682 @@
+{
+  "industries": [
+    {
+      "label": "Agriculture, Forestry, Fishing and Hunting",
+      "code": "11",
+      "full": "Agriculture, Forestry, Fishing and Hunting (11)"
+    },
+    {
+      "label": "Mining",
+      "code": "21",
+      "full": "Mining (21)"
+    },
+    {
+      "label": "Utilities",
+      "code": "22",
+      "full": "Utilities (22)"
+    },
+    {
+      "label": "Construction",
+      "code": "23",
+      "full": "Construction (23)"
+    },
+    {
+      "label": "Manufacturing",
+      "code": "31-33",
+      "full": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Wholesale Trade",
+      "code": "42",
+      "full": "Wholesale Trade (42)"
+    },
+    {
+      "label": "Retail Trade",
+      "code": "44-45",
+      "full": "Retail Trade (44-45)"
+    },
+    {
+      "label": "Transportation and Warehousing",
+      "code": "48-49",
+      "full": "Transportation and Warehousing (48-49)"
+    },
+    {
+      "label": "Information",
+      "code": "51",
+      "full": "Information (51)"
+    },
+    {
+      "label": "Finance and Insurance",
+      "code": "52",
+      "full": "Finance and Insurance (52)"
+    },
+    {
+      "label": "Real Estate Rental and Leasing",
+      "code": "53",
+      "full": "Real Estate Rental and Leasing (53)"
+    },
+    {
+      "label": "Professional, Scientific, and Technical Services",
+      "code": "54",
+      "full": "Professional, Scientific, and Technical Services (54)"
+    },
+    {
+      "label": "Management of Companies and Enterprises",
+      "code": "55",
+      "full": "Management of Companies and Enterprises (55)"
+    },
+    {
+      "label": "Administrative and Support and Waste Management and Remediation Services",
+      "code": "56",
+      "full": "Administrative and Support and Waste Management and Remediation Services (56)"
+    },
+    {
+      "label": "Educational Services",
+      "code": "61",
+      "full": "Educational Services (61)"
+    },
+    {
+      "label": "Health Care and Social Assistance",
+      "code": "62",
+      "full": "Health Care and Social Assistance (62)"
+    },
+    {
+      "label": "Arts, Entertainment, and Recreation",
+      "code": "71",
+      "full": "Arts, Entertainment, and Recreation (71)"
+    },
+    {
+      "label": "Accommodation and Food Services",
+      "code": "72",
+      "full": "Accommodation and Food Services (72)"
+    },
+    {
+      "label": "Other Services (except Public Administration)",
+      "code": "81",
+      "full": "Other Services (except Public Administration) (81)"
+    },
+    {
+      "label": "Public Administration",
+      "code": "92",
+      "full": "Public Administration (92)"
+    }
+  ],
+  "sub_industries": [
+    {
+      "label": "Crop Production",
+      "code": "111",
+      "full": "Crop Production (111)",
+      "parent": "Agriculture, Forestry, Fishing and Hunting (11)"
+    },
+    {
+      "label": "Animal Production and Aquaculture",
+      "code": "112",
+      "full": "Animal Production and Aquaculture (112)",
+      "parent": "Agriculture, Forestry, Fishing and Hunting (11)"
+    },
+    {
+      "label": "Forestry and Logging",
+      "code": "113",
+      "full": "Forestry and Logging (113)",
+      "parent": "Agriculture, Forestry, Fishing and Hunting (11)"
+    },
+    {
+      "label": "Fishing, Hunting and Trapping",
+      "code": "114",
+      "full": "Fishing, Hunting and Trapping (114)",
+      "parent": "Agriculture, Forestry, Fishing and Hunting (11)"
+    },
+    {
+      "label": "Support Activities for Agriculture and Forestry",
+      "code": "115",
+      "full": "Support Activities for Agriculture and Forestry (115)",
+      "parent": "Agriculture, Forestry, Fishing and Hunting (11)"
+    },
+    {
+      "label": "Oil and Gas Extraction",
+      "code": "211",
+      "full": "Oil and Gas Extraction (211)",
+      "parent": "Mining (21)"
+    },
+    {
+      "label": "Mining (except Oil and Gas)",
+      "code": "212",
+      "full": "Mining (except Oil and Gas) (212)",
+      "parent": "Mining (21)"
+    },
+    {
+      "label": "Support Activities for Mining",
+      "code": "213",
+      "full": "Support Activities for Mining (213)",
+      "parent": "Mining (21)"
+    },
+    {
+      "label": "Utilities",
+      "code": "221",
+      "full": "Utilities (221)",
+      "parent": "Utilities (22)"
+    },
+    {
+      "label": "Construction of Buildings",
+      "code": "236",
+      "full": "Construction of Buildings (236)",
+      "parent": "Construction (23)"
+    },
+    {
+      "label": "Heavy and Civil Engineering Construction",
+      "code": "237",
+      "full": "Heavy and Civil Engineering Construction (237)",
+      "parent": "Construction (23)"
+    },
+    {
+      "label": "Specialty Trade Contractors",
+      "code": "238",
+      "full": "Specialty Trade Contractors (238)",
+      "parent": "Construction (23)"
+    },
+    {
+      "label": "Food Manufacturing",
+      "code": "311",
+      "full": "Food Manufacturing (311)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Beverage and Tobacco Product Manufacturing",
+      "code": "312",
+      "full": "Beverage and Tobacco Product Manufacturing (312)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Textile Mills",
+      "code": "313",
+      "full": "Textile Mills (313)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Textile Product Mills",
+      "code": "314",
+      "full": "Textile Product Mills (314)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Apparel Manufacturing",
+      "code": "315",
+      "full": "Apparel Manufacturing (315)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Leather and Allied Product Manufacturing",
+      "code": "316",
+      "full": "Leather and Allied Product Manufacturing (316)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Wood Product Manufacturing",
+      "code": "321",
+      "full": "Wood Product Manufacturing (321)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Paper Manufacturing",
+      "code": "322",
+      "full": "Paper Manufacturing (322)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Printing and Related Support Activities",
+      "code": "323",
+      "full": "Printing and Related Support Activities (323)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Petroleum and Coal Products Manufacturing",
+      "code": "324",
+      "full": "Petroleum and Coal Products Manufacturing (324)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Chemical Manufacturing",
+      "code": "325",
+      "full": "Chemical Manufacturing (325)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Plastics and Rubber Products Manufacturing",
+      "code": "326",
+      "full": "Plastics and Rubber Products Manufacturing (326)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Nonmetallic Mineral Product Manufacturing",
+      "code": "327",
+      "full": "Nonmetallic Mineral Product Manufacturing (327)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Primary Metal Manufacturing",
+      "code": "331",
+      "full": "Primary Metal Manufacturing (331)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Fabricated Metal Product Manufacturing",
+      "code": "332",
+      "full": "Fabricated Metal Product Manufacturing (332)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Machinery Manufacturing",
+      "code": "333",
+      "full": "Machinery Manufacturing (333)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Computer and Electronic Product Manufacturing",
+      "code": "334",
+      "full": "Computer and Electronic Product Manufacturing (334)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Electrical Equipment, Appliance, and Component Manufacturing",
+      "code": "335",
+      "full": "Electrical Equipment, Appliance, and Component Manufacturing (335)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Transportation Equipment Manufacturing",
+      "code": "336",
+      "full": "Transportation Equipment Manufacturing (336)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Furniture and Related Product Manufacturing",
+      "code": "337",
+      "full": "Furniture and Related Product Manufacturing (337)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Miscellaneous Manufacturing",
+      "code": "339",
+      "full": "Miscellaneous Manufacturing (339)",
+      "parent": "Manufacturing (31-33)"
+    },
+    {
+      "label": "Merchant Wholesalers, Durable Goods",
+      "code": "423",
+      "full": "Merchant Wholesalers, Durable Goods (423)",
+      "parent": "Wholesale Trade (42)"
+    },
+    {
+      "label": "Merchant Wholesalers, Nondurable Goods",
+      "code": "424",
+      "full": "Merchant Wholesalers, Nondurable Goods (424)",
+      "parent": "Wholesale Trade (42)"
+    },
+    {
+      "label": "Wholesale Trade Agents and Brokers",
+      "code": "425",
+      "full": "Wholesale Trade Agents and Brokers (425)",
+      "parent": "Wholesale Trade (42)"
+    },
+    {
+      "label": "Motor Vehicle and Parts Dealers",
+      "code": "441",
+      "full": "Motor Vehicle and Parts Dealers (441)",
+      "parent": "Retail Trade (44-45)"
+    },
+    {
+      "label": "Building Material and Garden Equipment and Supplies Dealers",
+      "code": "444",
+      "full": "Building Material and Garden Equipment and Supplies Dealers (444)",
+      "parent": "Retail Trade (44-45)"
+    },
+    {
+      "label": "Food and Beverage Retailers",
+      "code": "445",
+      "full": "Food and Beverage Retailers (445)",
+      "parent": "Retail Trade (44-45)"
+    },
+    {
+      "label": "Furniture, Home Furnishings, Electronics, and Appliance Retailers",
+      "code": "449",
+      "full": "Furniture, Home Furnishings, Electronics, and Appliance Retailers (449)",
+      "parent": "Retail Trade (44-45)"
+    },
+    {
+      "label": "General Merchandise Retailers",
+      "code": "455",
+      "full": "General Merchandise Retailers (455)",
+      "parent": "Retail Trade (44-45)"
+    },
+    {
+      "label": "Health and Personal Care Retailers",
+      "code": "456",
+      "full": "Health and Personal Care Retailers (456)",
+      "parent": "Retail Trade (44-45)"
+    },
+    {
+      "label": "Gasoline Stations and Fuel Dealers",
+      "code": "457",
+      "full": "Gasoline Stations and Fuel Dealers (457)",
+      "parent": "Retail Trade (44-45)"
+    },
+    {
+      "label": "Clothing, Clothing Accessories, Shoe, and Jewelry Retailers",
+      "code": "458",
+      "full": "Clothing, Clothing Accessories, Shoe, and Jewelry Retailers (458)",
+      "parent": "Retail Trade (44-45)"
+    },
+    {
+      "label": "Sporting Goods, Hobby, Musical Instrument, Book, and Miscellaneous Retailers",
+      "code": "459",
+      "full": "Sporting Goods, Hobby, Musical Instrument, Book, and Miscellaneous Retailers (459)",
+      "parent": "Retail Trade (44-45)"
+    },
+    {
+      "label": "Air Transportation",
+      "code": "481",
+      "full": "Air Transportation (481)",
+      "parent": "Transportation and Warehousing (48-49)"
+    },
+    {
+      "label": "Rail Transportation",
+      "code": "482",
+      "full": "Rail Transportation (482)",
+      "parent": "Transportation and Warehousing (48-49)"
+    },
+    {
+      "label": "Water Transportation",
+      "code": "483",
+      "full": "Water Transportation (483)",
+      "parent": "Transportation and Warehousing (48-49)"
+    },
+    {
+      "label": "Truck Transportation",
+      "code": "484",
+      "full": "Truck Transportation (484)",
+      "parent": "Transportation and Warehousing (48-49)"
+    },
+    {
+      "label": "Transit and Ground Passenger Transportation",
+      "code": "485",
+      "full": "Transit and Ground Passenger Transportation (485)",
+      "parent": "Transportation and Warehousing (48-49)"
+    },
+    {
+      "label": "Pipeline Transportation",
+      "code": "486",
+      "full": "Pipeline Transportation (486)",
+      "parent": "Transportation and Warehousing (48-49)"
+    },
+    {
+      "label": "Scenic and Sightseeing Transportation",
+      "code": "487",
+      "full": "Scenic and Sightseeing Transportation (487)",
+      "parent": "Transportation and Warehousing (48-49)"
+    },
+    {
+      "label": "Support Activities for Transportation",
+      "code": "488",
+      "full": "Support Activities for Transportation (488)",
+      "parent": "Transportation and Warehousing (48-49)"
+    },
+    {
+      "label": "Postal Service",
+      "code": "491",
+      "full": "Postal Service (491)",
+      "parent": "Transportation and Warehousing (48-49)"
+    },
+    {
+      "label": "Couriers and Messengers",
+      "code": "492",
+      "full": "Couriers and Messengers (492)",
+      "parent": "Transportation and Warehousing (48-49)"
+    },
+    {
+      "label": "Warehousing and Storage",
+      "code": "493",
+      "full": "Warehousing and Storage (493)",
+      "parent": "Transportation and Warehousing (48-49)"
+    },
+    {
+      "label": "Motion Picture and Sound Recording Industries",
+      "code": "512",
+      "full": "Motion Picture and Sound Recording Industries (512)",
+      "parent": "Information (51)"
+    },
+    {
+      "label": "Publishing Industries",
+      "code": "513",
+      "full": "Publishing Industries (513)",
+      "parent": "Information (51)"
+    },
+    {
+      "label": "Broadcasting and Content Providers",
+      "code": "516",
+      "full": "Broadcasting and Content Providers (516)",
+      "parent": "Information (51)"
+    },
+    {
+      "label": "Telecommunications",
+      "code": "517",
+      "full": "Telecommunications (517)",
+      "parent": "Information (51)"
+    },
+    {
+      "label": "Computing Infrastructure Providers, Data Processing, Web Hosting, and Related Services",
+      "code": "518",
+      "full": "Computing Infrastructure Providers, Data Processing, Web Hosting, and Related Services (518)",
+      "parent": "Information (51)"
+    },
+    {
+      "label": "Web Search Portals, Libraries, Archives, and Other Information Services",
+      "code": "519",
+      "full": "Web Search Portals, Libraries, Archives, and Other Information Services (519)",
+      "parent": "Information (51)"
+    },
+    {
+      "label": "Monetary Authorities-Central Bank",
+      "code": "521",
+      "full": "Monetary Authorities-Central Bank (521)",
+      "parent": "Finance and Insurance (52)"
+    },
+    {
+      "label": "Credit Intermediation and Related Activities",
+      "code": "522",
+      "full": "Credit Intermediation and Related Activities (522)",
+      "parent": "Finance and Insurance (52)"
+    },
+    {
+      "label": "Securities, Commodity Contracts, and Other Financial Investments and Related Activities",
+      "code": "523",
+      "full": "Securities, Commodity Contracts, and Other Financial Investments and Related Activities (523)",
+      "parent": "Finance and Insurance (52)"
+    },
+    {
+      "label": "Insurance Carriers and Related Activities",
+      "code": "524",
+      "full": "Insurance Carriers and Related Activities (524)",
+      "parent": "Finance and Insurance (52)"
+    },
+    {
+      "label": "Funds, Trusts, and Other Financial Vehicles",
+      "code": "525",
+      "full": "Funds, Trusts, and Other Financial Vehicles (525)",
+      "parent": "Finance and Insurance (52)"
+    },
+    {
+      "label": "Real Estate",
+      "code": "531",
+      "full": "Real Estate (531)",
+      "parent": "Real Estate Rental and Leasing (53)"
+    },
+    {
+      "label": "Rental and Leasing Services",
+      "code": "532",
+      "full": "Rental and Leasing Services (532)",
+      "parent": "Real Estate Rental and Leasing (53)"
+    },
+    {
+      "label": "Lessors of Nonfinancial Intangible Assets (except Copyrighted Works)",
+      "code": "533",
+      "full": "Lessors of Nonfinancial Intangible Assets (except Copyrighted Works) (533)",
+      "parent": "Real Estate Rental and Leasing (53)"
+    },
+    {
+      "label": "Professional, Scientific, and Technical Services",
+      "code": "541",
+      "full": "Professional, Scientific, and Technical Services (541)",
+      "parent": "Professional, Scientific, and Technical Services (54)"
+    },
+    {
+      "label": "Management of Companies and Enterprises",
+      "code": "551",
+      "full": "Management of Companies and Enterprises (551)",
+      "parent": "Management of Companies and Enterprises (55)"
+    },
+    {
+      "label": "Administrative and Support Services",
+      "code": "561",
+      "full": "Administrative and Support Services (561)",
+      "parent": "Administrative and Support and Waste Management and Remediation Services (56)"
+    },
+    {
+      "label": "Waste Management and Remediation Services",
+      "code": "562",
+      "full": "Waste Management and Remediation Services (562)",
+      "parent": "Administrative and Support and Waste Management and Remediation Services (56)"
+    },
+    {
+      "label": "Educational Services",
+      "code": "611",
+      "full": "Educational Services (611)",
+      "parent": "Educational Services (61)"
+    },
+    {
+      "label": "Ambulatory Health Care Services",
+      "code": "621",
+      "full": "Ambulatory Health Care Services (621)",
+      "parent": "Health Care and Social Assistance (62)"
+    },
+    {
+      "label": "Hospitals",
+      "code": "622",
+      "full": "Hospitals (622)",
+      "parent": "Health Care and Social Assistance (62)"
+    },
+    {
+      "label": "Nursing and Residential Care Facilities",
+      "code": "623",
+      "full": "Nursing and Residential Care Facilities (623)",
+      "parent": "Health Care and Social Assistance (62)"
+    },
+    {
+      "label": "Social Assistance",
+      "code": "624",
+      "full": "Social Assistance (624)",
+      "parent": "Health Care and Social Assistance (62)"
+    },
+    {
+      "label": "Performing Arts, Spectator Sports, and Related Industries",
+      "code": "711",
+      "full": "Performing Arts, Spectator Sports, and Related Industries (711)",
+      "parent": "Arts, Entertainment, and Recreation (71)"
+    },
+    {
+      "label": "Museums, Historical Sites, and Similar Institutions",
+      "code": "712",
+      "full": "Museums, Historical Sites, and Similar Institutions (712)",
+      "parent": "Arts, Entertainment, and Recreation (71)"
+    },
+    {
+      "label": "Amusement, Gambling, and Recreation Industries",
+      "code": "713",
+      "full": "Amusement, Gambling, and Recreation Industries (713)",
+      "parent": "Arts, Entertainment, and Recreation (71)"
+    },
+    {
+      "label": "Accommodation",
+      "code": "721",
+      "full": "Accommodation (721)",
+      "parent": "Accommodation and Food Services (72)"
+    },
+    {
+      "label": "Food Services and Drinking Places",
+      "code": "722",
+      "full": "Food Services and Drinking Places (722)",
+      "parent": "Accommodation and Food Services (72)"
+    },
+    {
+      "label": "Repair and Maintenance",
+      "code": "811",
+      "full": "Repair and Maintenance (811)",
+      "parent": "Other Services (except Public Administration) (81)"
+    },
+    {
+      "label": "Personal and Laundry Services",
+      "code": "812",
+      "full": "Personal and Laundry Services (812)",
+      "parent": "Other Services (except Public Administration) (81)"
+    },
+    {
+      "label": "Religious, Grantmaking, Civic, Professional, and Similar Organizations",
+      "code": "813",
+      "full": "Religious, Grantmaking, Civic, Professional, and Similar Organizations (813)",
+      "parent": "Other Services (except Public Administration) (81)"
+    },
+    {
+      "label": "Private Households",
+      "code": "814",
+      "full": "Private Households (814)",
+      "parent": "Other Services (except Public Administration) (81)"
+    },
+    {
+      "label": "Executive, Legislative, and Other General Government Support",
+      "code": "921",
+      "full": "Executive, Legislative, and Other General Government Support (921)",
+      "parent": "Public Administration (92)"
+    },
+    {
+      "label": "Justice, Public Order, and Safety Activities",
+      "code": "922",
+      "full": "Justice, Public Order, and Safety Activities (922)",
+      "parent": "Public Administration (92)"
+    },
+    {
+      "label": "Administration of Human Resource Programs",
+      "code": "923",
+      "full": "Administration of Human Resource Programs (923)",
+      "parent": "Public Administration (92)"
+    },
+    {
+      "label": "Administration of Environmental Quality Programs",
+      "code": "924",
+      "full": "Administration of Environmental Quality Programs (924)",
+      "parent": "Public Administration (92)"
+    },
+    {
+      "label": "Administration of Housing Programs, Urban Planning, and Community Development",
+      "code": "925",
+      "full": "Administration of Housing Programs, Urban Planning, and Community Development (925)",
+      "parent": "Public Administration (92)"
+    },
+    {
+      "label": "Administration of Economic Programs",
+      "code": "926",
+      "full": "Administration of Economic Programs (926)",
+      "parent": "Public Administration (92)"
+    },
+    {
+      "label": "Space Research and Technology",
+      "code": "927",
+      "full": "Space Research and Technology (927)",
+      "parent": "Public Administration (92)"
+    },
+    {
+      "label": "National Security and International Affairs",
+      "code": "928",
+      "full": "National Security and International Affairs (928)",
+      "parent": "Public Administration (92)"
+    }
+  ]
+}

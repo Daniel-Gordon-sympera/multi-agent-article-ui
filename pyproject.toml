@@ -1,0 +1,60 @@
+[project]
+name = "scout-bff"
+version = "0.1.0"
+description = "Sympera Scout BFF: sessions, UI-owned aggregates and the /v1 reverse proxy."
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.34,<1",
+  "httpx>=0.28,<1",
+  "sqlalchemy[asyncio]>=2.0,<2.1",
+  "psycopg[binary,pool]>=3.2,<4",
+  "alembic>=1.15,<2",
+  "pydantic>=2.10,<3",
+  "pydantic-settings>=2.8,<3",
+  "structlog>=25,<27",
+  "argon2-cffi>=23,<26",
+  "itsdangerous>=2,<3",
+  "python-multipart>=0.0.20,<1",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8,<10",
+  "pytest-asyncio>=1,<2",
+  "respx>=0.22,<1",
+  "asgi-lifespan>=2,<3",
+  "ruff>=0.11,<1",
+  "import-linter>=2,<3",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["bff/scout_bff"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+extend-exclude = ["web"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["scout_bff", "tests"]
+
+[tool.importlinter]
+root_packages = ["scout_bff"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "The BFF never imports the pipeline repository's packages"
+type = "forbidden"
+source_modules = ["scout_bff"]
+forbidden_modules = ["api", "core", "services", "pipeline"]

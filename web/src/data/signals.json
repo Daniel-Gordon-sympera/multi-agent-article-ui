@@ -1,0 +1,285 @@
+{
+  "version": "2026-09-30.1",
+  "signals": [
+    {
+      "key": "Hiring",
+      "title": "General Hiring Activity",
+      "summary": "Company is undertaking general hiring, indicating potential growth or operational needs.",
+      "priority": "Medium",
+      "groups": ["HI"]
+    },
+    {
+      "key": "Mass_Hiring",
+      "title": "Mass Hiring",
+      "summary": "Company is undertaking mass hiring drive, indicating potential growth or operational needs.",
+      "priority": "Medium",
+      "groups": ["HI"]
+    },
+    {
+      "key": "Capacity_Expansion",
+      "title": "Operational Capacity Expansion",
+      "summary": "Company is expanding its operational capacity, such as adding a new production line or warehouse.",
+      "priority": "High",
+      "groups": ["GI"]
+    },
+    {
+      "key": "New_Product_Or_Service",
+      "title": "New Product or Service Launch",
+      "summary": "Company is launching a new product line or a significant new service offering.",
+      "priority": "High",
+      "groups": ["GI"]
+    },
+    {
+      "key": "Marketing",
+      "title": "Major Marketing Campaign",
+      "summary": "Company is launching a significant, large-scale marketing campaign to drive growth.",
+      "priority": "Low",
+      "groups": ["GI"]
+    },
+    {
+      "key": "New_Location_Office",
+      "title": "New Office or Location Opening",
+      "summary": "Company is opening a new location, indicating geographic expansion.",
+      "priority": "High",
+      "groups": ["NLO"]
+    },
+    {
+      "key": "Contract_Pipeline",
+      "title": "Contract Pipeline Activity",
+      "summary": "Company has activity in its contract pipeline, indicating future revenue potential.",
+      "priority": "Medium",
+      "groups": ["CP"]
+    },
+    {
+      "key": "Major_Contract_Award",
+      "title": "Major Contract Awarded",
+      "summary": "Company has been awarded a significant new contract, boosting revenue visibility.",
+      "priority": "High",
+      "groups": ["CP"]
+    },
+    {
+      "key": "Leadership_Changes",
+      "title": "Leadership Changes",
+      "summary": "Significant changes in the company's leadership structure including executive transitions, C-level appointments, and leadership team reshuffles, signaling potential strategic shifts.",
+      "priority": "High",
+      "groups": ["LC"]
+    },
+    {
+      "key": "Executive_Recognition",
+      "title": "Executive Recognition or Award",
+      "summary": "A key executive at the company has received a personal award or professional recognition.",
+      "priority": "Medium",
+      "groups": ["AR"]
+    },
+    {
+      "key": "Industry_Award",
+      "title": "Industry Award or Recognition",
+      "summary": "Company has won or was a finalist for a significant industry award, validating its market position.",
+      "priority": "High",
+      "groups": ["AR"]
+    },
+    {
+      "key": "Community_Engagement",
+      "title": "Community Engagement",
+      "summary": "Company is engaging with the community through events, partnerships, or other initiatives.",
+      "priority": "Medium",
+      "groups": ["COMMUNITY"]
+    },
+    {
+      "key": "Partnership",
+      "title": "New Partnership",
+      "summary": "Company has formed a new partnership, joint venture, or collaboration.",
+      "priority": "High",
+      "groups": ["P"]
+    },
+    {
+      "key": "Partnership_Renewal",
+      "title": "Partnership Renewal",
+      "summary": "Renewal or extension of an existing partnership agreement.",
+      "priority": "Medium",
+      "groups": ["P"]
+    },
+    {
+      "key": "Partnership_Milestone",
+      "title": "Partnership Milestone",
+      "summary": "Anniversary, multi-year celebration, growth milestone, or recognition tied to an existing partnership.",
+      "priority": "High",
+      "groups": ["P"]
+    },
+    {
+      "key": "Service_Information",
+      "title": "Service Information",
+      "summary": "Company is providing information about its services, treatments, or patient care.",
+      "priority": "Low",
+      "groups": ["SI"]
+    },
+    {
+      "key": "Customer_Feedback",
+      "title": "Customer Feedback",
+      "summary": "Company is receiving public customer feedback through reviews, ratings, testimonials, or other customer engagement activities.",
+      "priority": "Medium",
+      "groups": ["CF"]
+    },
+    {
+      "key": "Regulatory_Milestone",
+      "title": "Regulatory Milestone Achieved",
+      "summary": "Company has achieved a significant regulatory milestone, including FDA clearances, certifications, compliance achievements, or other regulatory approvals.",
+      "priority": "High",
+      "groups": ["RM"]
+    },
+    {
+      "key": "Credit_and_Lending",
+      "title": "Credit and Lending Activity",
+      "summary": "News related to the company's credit and lending activities.",
+      "priority": "Medium",
+      "groups": ["CL"]
+    },
+    {
+      "key": "Promotional_Activities",
+      "title": "Promotional Activities",
+      "summary": "Company is conducting promotional activities including product campaigns, events, social media offers, or other marketing initiatives to drive sales and customer engagement.",
+      "priority": "Medium",
+      "groups": ["PA"]
+    },
+    {
+      "key": "Company_Reputation",
+      "title": "Company Reputation",
+      "summary": "Company is receiving positive media coverage, executive appearances, or other public recognition that enhances brand reputation and market position.",
+      "priority": "Medium",
+      "groups": ["CR"]
+    },
+    {
+      "key": "Speaking_Engagement",
+      "title": "Speaking Engagement",
+      "summary": "Company representatives are involved in speaking activities or executive appearances.",
+      "priority": "Low",
+      "groups": ["SE"]
+    },
+    {
+      "key": "Past_Engagements",
+      "title": "Past Speaking Engagements",
+      "summary": "Company representatives have recently participated in speaking engagements, podcasts, or other executive appearances, showcasing established thought leadership.",
+      "priority": "Medium",
+      "groups": ["SE"]
+    },
+    {
+      "key": "Future_Engagements",
+      "title": "Upcoming Speaking Engagements",
+      "summary": "Company representatives are scheduled for upcoming speaking engagements, conferences, or executive appearances, providing high-value outreach opportunities.",
+      "priority": "High",
+      "groups": ["SE"]
+    },
+    {
+      "key": "Operations_Management",
+      "title": "Operations Management",
+      "summary": "Company is pursuing operational improvements including process automation, cost management, efficiency initiatives, and digital transformation to enhance scalability and resilience.",
+      "priority": "Medium",
+      "groups": ["OM"]
+    },
+    {
+      "key": "Operations_Milestone",
+      "title": "Operations Milestone",
+      "summary": "Announcement of a completed project, operational upgrade, or infrastructure implementation indicates a milestone in operational execution and capacity enhancement.",
+      "priority": "High",
+      "groups": ["OM"]
+    },
+    {
+      "key": "Research_and_Development",
+      "title": "Research and Development",
+      "summary": "Company invests in research and development activities including technology innovation, product development, and IP creation to drive innovation and future growth.",
+      "priority": "Medium",
+      "groups": ["RD"]
+    },
+    {
+      "key": "Major_Win",
+      "title": "Major Win",
+      "summary": "Company secures a significant victory that is not a standard contract award, including litigation successes, regulatory/legal wins, patent protections, exclusivity rights, or decisive competitive outcomes.",
+      "priority": "High",
+      "groups": ["MAJOR_WIN"]
+    },
+    {
+      "key": "CAPITAL_RAISE",
+      "title": "Capital Raise",
+      "summary": "Startup raises $10 m Series A\u2014deposit and lending opportunities.",
+      "priority": "High",
+      "groups": ["GE"]
+    },
+    {
+      "key": "PRODUCT_OR_SERVICE_DIFFERENTIATION",
+      "title": "Product or Service Differentiation",
+      "summary": "Introduced enhanced offerings that differentiate the company`s products or services in the market.",
+      "priority": "High",
+      "groups": ["GE"]
+    },
+    {
+      "key": "Groundbreaking",
+      "title": "Groundbreaking Ceremony",
+      "summary": "Company is holding a groundbreaking ceremony for a new construction project, indicating the start of significant development activity.",
+      "priority": "High",
+      "groups": ["CON"]
+    },
+    {
+      "key": "Project_Completion",
+      "title": "Project Completion",
+      "summary": "Company has completed a significant construction project, indicating successful execution and potential for new opportunities.",
+      "priority": "High",
+      "groups": ["CON"]
+    },
+    {
+      "key": "Active_Construction_Projects",
+      "title": "Active Construction Projects",
+      "summary": "Company is engaged in multiple active construction projects, indicating robust operational activity and market presence.",
+      "priority": "Medium",
+      "groups": ["CON"]
+    },
+    {
+      "key": "Newly_Available_Projects",
+      "title": "Newly Available Real Estate Projects",
+      "summary": "New real estate projects have become available in the market, indicating potential investment or development opportunities.",
+      "priority": "High",
+      "groups": ["REALTY"]
+    },
+    {
+      "key": "New_Tenant_Announcement",
+      "title": "New Tenant Announcement",
+      "summary": "A property owner has announced the signing of a new tenant, indicating successful leasing activity and increased occupancy.",
+      "priority": "High",
+      "groups": ["REALTY"]
+    },
+    {
+      "key": "Active_Real_Estate_Projects",
+      "title": "Active Real Estate Projects",
+      "summary": "There are ongoing real estate projects in the market, indicating active development and investment opportunities.",
+      "priority": "Medium",
+      "groups": ["REALTY"]
+    },
+    {
+      "key": "Closed_Deal",
+      "title": "Closed Deal",
+      "summary": "Commercial real estate transaction completed, signaling active deal flow and liquidity event.",
+      "priority": "High",
+      "groups": ["REALTY"]
+    },
+    {
+      "key": "Acquisition",
+      "title": "Acquisition",
+      "summary": "Company is involved in acquisition activity, indicating growth and market expansion.",
+      "priority": "High",
+      "groups": ["ACQ"]
+    },
+    {
+      "key": "Growth_Capital_Raised",
+      "title": "Growth Capital Raised",
+      "summary": "The company secured external funding (Series A/B or growth capital) to accelerate expansion, product development, or operational scaling.",
+      "priority": "High",
+      "groups": ["GE"]
+    },
+    {
+      "key": "Active_Projects",
+      "title": "Active Projects",
+      "summary": "There are ongoing projects underway, indicating active execution, resource allocation, and forward momentum in a given initiative or sector.",
+      "priority": "Medium",
+      "groups": ["AP"]
+    }
+  ]
+}

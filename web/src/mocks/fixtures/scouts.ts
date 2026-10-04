@@ -1,0 +1,178 @@
+/** The 5 Scouts of mockup-spec §4.4 with their last-run facts. */
+import type { ScoutWithRuns } from "@/api/types/bff";
+import { daysAgo, minutesAgo } from "./clock";
+import { BATCH_ID, JOB_IDS, SCOUT_IDS } from "./jobs";
+
+export function buildScoutFixtures(): ScoutWithRuns[] {
+  const base = {
+    created_by: "u-0001-admin",
+    archived_at: null,
+    settings: {
+      days: 30,
+      sites: 5,
+      site_timeout: 0,
+      max_runtime: 18000,
+      memory_mode: "full" as const,
+      reanalyze: false,
+    },
+  };
+  return [
+    {
+      ...base,
+      id: SCOUT_IDS.orangeBuilders,
+      name: "Orange County builders",
+      kind: "location_industry",
+      county: "Orange",
+      state_code: "FL",
+      location: "Orlando, FL",
+      url: null,
+      industries: ["Construction", "Manufacturing", "Wholesale Trade"],
+      source_mode: "finder",
+      created_at: daysAgo(40),
+      updated_at: daysAgo(2),
+      runs_count: 7,
+      last_run: {
+        batch_id: BATCH_ID,
+        run_number: 7,
+        created_at: minutesAgo(29),
+        jobs: [
+          {
+            job_id: JOB_IDS.orangeConstruction,
+            industry: "Construction",
+            status: "analysing",
+            signals: 24,
+          },
+          {
+            job_id: JOB_IDS.orangeManufacturing,
+            industry: "Manufacturing",
+            status: "discovering",
+            signals: 3,
+          },
+          {
+            job_id: JOB_IDS.orangeWholesale,
+            industry: "Wholesale Trade",
+            status: "exploring",
+            signals: null,
+          },
+        ],
+      },
+      signals_last_run: 24,
+    },
+    {
+      ...base,
+      id: SCOUT_IDS.denverConstruction,
+      name: "Denver metro construction",
+      kind: "seeds",
+      county: "Jefferson",
+      state_code: "CO",
+      location: "Denver, CO",
+      url: null,
+      industries: ["Construction"],
+      source_mode: "seeds",
+      created_at: daysAgo(25),
+      updated_at: daysAgo(5),
+      runs_count: 3,
+      last_run: {
+        batch_id: "7b1f3c9e-2d4a-4e6b-8c0d-1f2a3b4c5d70",
+        run_number: 3,
+        created_at: minutesAgo(43),
+        jobs: [
+          {
+            job_id: JOB_IDS.jeffersonConstruction,
+            industry: "Construction",
+            status: "discovering",
+            signals: 6,
+          },
+        ],
+      },
+      signals_last_run: 6,
+    },
+    {
+      ...base,
+      id: SCOUT_IDS.houstonManufacturing,
+      name: "Houston manufacturing",
+      kind: "location_industry",
+      county: "Harris",
+      state_code: "TX",
+      location: "Houston, TX",
+      url: null,
+      industries: ["Manufacturing"],
+      source_mode: "finder",
+      created_at: daysAgo(12),
+      updated_at: daysAgo(12),
+      runs_count: 2,
+      last_run: {
+        batch_id: "7b1f3c9e-2d4a-4e6b-8c0d-1f2a3b4c5d71",
+        run_number: 2,
+        created_at: minutesAgo(2),
+        jobs: [
+          {
+            job_id: JOB_IDS.harrisManufacturingQueued,
+            industry: "Manufacturing",
+            status: "queued",
+            signals: null,
+          },
+        ],
+      },
+      signals_last_run: null,
+    },
+    {
+      ...base,
+      id: SCOUT_IDS.phoenixRetail,
+      name: "Phoenix retail",
+      kind: "seeds",
+      county: "Maricopa",
+      state_code: "AZ",
+      location: "Phoenix, AZ",
+      url: null,
+      industries: ["Retail Trade"],
+      source_mode: "seeds",
+      created_at: daysAgo(35),
+      updated_at: daysAgo(9),
+      runs_count: 5,
+      last_run: {
+        batch_id: "7b1f3c9e-2d4a-4e6b-8c0d-1f2a3b4c5d72",
+        run_number: 5,
+        created_at: daysAgo(1, 16, 10),
+        jobs: [
+          {
+            job_id: JOB_IDS.maricopaRetail,
+            industry: "Retail Trade",
+            status: "partial",
+            signals: 9,
+          },
+        ],
+      },
+      signals_last_run: 9,
+    },
+    {
+      ...base,
+      id: SCOUT_IDS.atlantaWholesale,
+      name: "Atlanta wholesale",
+      kind: "location_industry",
+      county: "Fulton",
+      state_code: "GA",
+      location: "Atlanta, GA",
+      url: null,
+      industries: ["Wholesale Trade"],
+      source_mode: "finder",
+      created_at: daysAgo(28),
+      updated_at: daysAgo(14),
+      runs_count: 4,
+      last_run: {
+        batch_id: "7b1f3c9e-2d4a-4e6b-8c0d-1f2a3b4c5d73",
+        run_number: 4,
+        created_at: daysAgo(2, 9, 30),
+        jobs: [
+          {
+            job_id: JOB_IDS.fultonWholesale,
+            industry: "Wholesale Trade",
+            status: "completed",
+            signals: 18,
+          },
+        ],
+      },
+      signals_last_run: 18,
+    },
+  ];
+}

@@ -1,0 +1,35 @@
+GET /healthz
+GET /readyz
+POST /v1/api-keys
+DELETE /v1/api-keys/{name}
+GET /v1/articles/{article_id}  ?include
+GET /v1/articles/{article_id}/summaries  ?limit,after,include,prompt_version
+GET /v1/artifacts/{kind}/{sha}
+GET /v1/companies/{company_key}  ?limit,after,state,signals_after,articles_after
+POST /v1/exports
+GET /v1/exports/{export_id}
+GET /v1/finder/memory  ?limit,after,location,industry,domain,verdict,created_after
+POST /v1/jobs
+GET /v1/jobs  ?limit,after,status,county,state,created_after,created_before
+GET /v1/jobs/{job_id}
+GET /v1/jobs/{job_id}/articles  ?limit,after,domain,origin,created_after
+POST /v1/jobs/{job_id}/cancel
+GET /v1/jobs/{job_id}/companies  ?limit,after,company_key,org_kind,hq_scope,industry
+GET /v1/jobs/{job_id}/events  ?limit,after,stage,event,status,created_after
+GET /v1/jobs/{job_id}/export/{table}.csv
+GET /v1/jobs/{job_id}/flags  ?limit,after,org_kind,hq_scope,revenue_bin
+GET /v1/jobs/{job_id}/ranking  ?limit,after,tier,chosen
+POST /v1/jobs/{job_id}/resume
+GET /v1/jobs/{job_id}/sections  ?limit,after,kept,origin
+GET /v1/jobs/{job_id}/signals  ?limit,after,signal,materiality,company_key,hq_scope,org_kind
+GET /v1/jobs/{job_id}/site-runs  ?limit,after,status
+GET /v1/jobs/{job_id}/sources  ?limit,after,verdict,origin
+GET /v1/jobs/{job_id}/summaries  ?limit,after,include,industry,materiality,signal
+GET /v1/jobs/{job_id}/summary
+GET /v1/jobs/{job_id}/tasks  ?limit,after,status,kind,created_after
+GET /v1/site-runs/{site_run_id}/exploration
+GET /v1/site-runs/{site_run_id}/work  ?limit,after,stage,outcome,created_after
+GET /v1/stats/daily  ?limit,after,created_after
+POST /v1/tasks/{task_id}/retry
+GET /v1/urls  ?limit,after,domain,classification,created_after
+GET /v1/workers  ?limit,after,role

@@ -1,0 +1,15 @@
+# Sympera Scout — the UI site block for the pipeline's Caddy.
+#
+# Mounted by compose.ui.yaml at /etc/caddy/Caddyfile.ui and pulled into the
+# pipeline's Caddyfile with:   import /etc/caddy/Caddyfile.ui
+# UI_DOMAIN comes from the caddy service's environment (default scout.localhost;
+# Caddy issues an internally-signed certificate for *.localhost names and a
+# Let's Encrypt certificate for a public hostname pointing at this machine).
+#
+# The browser talks only to this host; the BFF behind it serves the SPA, /app/*
+# and the /v1/* proxy, so no CORS and no API key ever reach the browser.
+
+{$UI_DOMAIN:scout.localhost} {
+    encode zstd gzip
+    reverse_proxy ui:8080
+}

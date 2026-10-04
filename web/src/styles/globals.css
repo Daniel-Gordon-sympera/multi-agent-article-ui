@@ -1,0 +1,343 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/*
+ * Sympera Scout design tokens — engineering contract §5.4, mockup-spec §1.
+ * Light values are the mockup's; dark values come from plan 07 §6.3.
+ * Tailwind reads the semantic names through `@theme inline`, so the same
+ * utility (`bg-surface`, `text-muted`, `bg-brand-100`, …) works in both themes.
+ */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  color-scheme: light;
+
+  --page: #f6f5fc;
+  --surface: #ffffff;
+  --surface-2: #faf9fe;
+  --border: #e7e4f3;
+  --border-strong: #d9d5ea;
+  --ink: #1c1a33;
+  --ink-2: #4b4a63;
+  --muted: #6e6a8a;
+  --faint: #9c9bb3;
+
+  --brand-50: #f5f1ff;
+  --brand-100: #eee8ff;
+  --brand-200: #dcd2ff;
+  --brand-300: #c5a9ff;
+  --brand-400: #a98bf5;
+  --brand-500: #8b6ce8;
+  --brand-600: #6e51d6;
+  --brand-700: #5a3fbe;
+  --ring: #b2b2fe;
+
+  --status-running-fg: #1d4ed8;
+  --status-running-bg: #dbeafe;
+  --status-done-fg: #15803d;
+  --status-done-bg: #dcfce7;
+  --status-warn-fg: #92400e;
+  --status-warn-bg: #fef3c7;
+  --status-fail-fg: #b91c1c;
+  --status-fail-bg: #fee2e2;
+  --status-neutral-fg: #4b4a63;
+  --status-neutral-bg: #ecebf3;
+
+  --chart-line-muted: #b8b4cf;
+  --overlay: rgba(28, 26, 51, 0.22);
+  --shadow-card: 0 1px 2px rgba(28, 26, 51, 0.04);
+  --shadow-primary: 0 1px 2px rgba(110, 81, 214, 0.18);
+  --shadow-segment: 0 1px 2px rgba(28, 26, 51, 0.08);
+  --shadow-drawer: -12px 0 32px rgba(28, 26, 51, 0.12);
+  --shadow-popover: 0 8px 24px rgba(28, 26, 51, 0.12);
+
+  /* density (comfortable) — `html[data-density="compact"]` overrides */
+  --row-h: 48px;
+  --row-h-2: 72px;
+  --cell-py: 10px;
+
+  --sidebar-w: 240px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --page: #141320;
+  --surface: #1c1b2a;
+  --surface-2: #232235;
+  --border: #2e2d44;
+  --border-strong: #3a3956;
+  --ink: #f3f1fa;
+  --ink-2: #c9c6da;
+  --muted: #9a96b3;
+  --faint: #6f6c8a;
+
+  --brand-50: #221e3a;
+  --brand-100: #2a2550;
+  --brand-200: #3a3270;
+  --brand-300: #b9a1f5;
+  --brand-400: #9f86ef;
+  --brand-500: #a892f2;
+  --brand-600: #b2b2fe;
+  --brand-700: #c5b5ff;
+  --ring: #b2b2fe;
+
+  --status-running-fg: #93c5fd;
+  --status-running-bg: #1e2a4a;
+  --status-done-fg: #86efac;
+  --status-done-bg: #14301f;
+  --status-warn-fg: #fcd34d;
+  --status-warn-bg: #3a2a0e;
+  --status-fail-fg: #fca5a5;
+  --status-fail-bg: #3f1414;
+  --status-neutral-fg: #c9c6da;
+  --status-neutral-bg: #2a2940;
+
+  --chart-line-muted: #4f4c6a;
+  --overlay: rgba(0, 0, 0, 0.55);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-primary: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-segment: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-drawer: -12px 0 32px rgba(0, 0, 0, 0.5);
+  --shadow-popover: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+html[data-density="compact"] {
+  --row-h: 36px;
+  --row-h-2: 56px;
+  --cell-py: 6px;
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-ring: var(--ring);
+
+  --color-status-running-fg: var(--status-running-fg);
+  --color-status-running-bg: var(--status-running-bg);
+  --color-status-done-fg: var(--status-done-fg);
+  --color-status-done-bg: var(--status-done-bg);
+  --color-status-warn-fg: var(--status-warn-fg);
+  --color-status-warn-bg: var(--status-warn-bg);
+  --color-status-fail-fg: var(--status-fail-fg);
+  --color-status-fail-bg: var(--status-fail-bg);
+  --color-status-neutral-fg: var(--status-neutral-fg);
+  --color-status-neutral-bg: var(--status-neutral-bg);
+  --color-chart-line-muted: var(--chart-line-muted);
+  --color-overlay: var(--overlay);
+
+  --font-sans: "Plus Jakarta Sans Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-card: 12px;
+  --radius-banner: 10px;
+  --radius-control: 8px;
+  --radius-segment: 7px;
+  --radius-tag: 6px;
+  --radius-kbd: 5px;
+  --radius-bar: 3px;
+  --radius-pill: 999px;
+
+  --shadow-card: var(--shadow-card);
+  --shadow-primary: var(--shadow-primary);
+  --shadow-segment: var(--shadow-segment);
+  --shadow-drawer: var(--shadow-drawer);
+  --shadow-popover: var(--shadow-popover);
+
+  --spacing-row: var(--row-h);
+  --spacing-row-2: var(--row-h-2);
+  --spacing-sidebar: var(--sidebar-w);
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--ink);
+    background: var(--page);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100vh;
+    background: var(--page);
+    color: var(--ink);
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  a {
+    color: var(--brand-600);
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--brand-700);
+    text-decoration: underline;
+  }
+  nav a:hover {
+    text-decoration: none;
+  }
+
+  button {
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+  }
+  button:disabled {
+    cursor: default;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--faint);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--ink);
+    font-weight: 700;
+  }
+
+  code,
+  kbd,
+  pre,
+  samp {
+    font-family: var(--font-mono);
+  }
+
+  /* scrollbars — thin, border-coloured, in both themes */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility text-page-title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+@utility text-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+@utility text-table-head {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+@utility text-section-head {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* mockup §1.6: hovering a button darkens it slightly */
+@utility hover-dim {
+  &:hover:not(:disabled) {
+    filter: brightness(0.97);
+  }
+}
+
+@utility card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+/* visually-hidden helper that stays keyboard reachable */
+@utility sr-only-focusable {
+  &:not(:focus):not(:focus-within) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+/* DataTable row heights: comfortable by default, compact through the html attribute or the
+   table's own data-density (URL `density` param). The component sets the two custom
+   properties per table from its `rowHeight` prop. */
+@layer components {
+  .data-table {
+    --table-row: var(--table-row-comfortable, var(--row-h));
+    --cell-py: 10px;
+  }
+  html[data-density="compact"] .data-table:not([data-density="comfortable"]),
+  .data-table[data-density="compact"] {
+    --table-row: var(--table-row-compact, 36px);
+    --cell-py: 6px;
+  }
+  .data-table .data-table-row {
+    height: var(--table-row);
+  }
+  .data-table .data-table-row td {
+    padding-top: var(--cell-py);
+    padding-bottom: var(--cell-py);
+  }
+}

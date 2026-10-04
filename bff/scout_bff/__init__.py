@@ -1,0 +1,1 @@
+"""Sympera Scout BFF package."""

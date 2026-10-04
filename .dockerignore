@@ -1,0 +1,49 @@
+# Build context for the Dockerfile: only what the two stages need.
+# Needed: web/ (sources, lockfile, configs), pyproject.toml, uv.lock,
+# alembic.ini, bff/. Everything else stays out of the context.
+
+# version control, agents, editors
+.git
+.gitignore
+.gitattributes
+.github
+.editorconfig
+.scratch
+.DS_Store
+.idea
+.vscode
+
+# documentation (not needed by the build; pyproject must not reference README.md)
+docs
+*.md
+
+# secrets and local configuration
+.env
+.env.*
+
+# ops files (not part of the image)
+compose.ui.yaml
+deploy
+Dockerfile
+.dockerignore
+
+# Node build output and caches (rebuilt inside the image)
+**/node_modules
+web/dist
+web/.vite
+web/test-results
+web/playwright-report
+web/blob-report
+web/coverage
+
+# Python environments, caches and tests (the image runs no tests)
+.venv
+**/__pycache__
+**/*.py[cod]
+.pytest_cache
+.ruff_cache
+.mypy_cache
+tests
+
+# the SPA build is copied from the web stage, never from the host
+bff/scout_bff/static
