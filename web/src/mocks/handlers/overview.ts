@@ -4,14 +4,14 @@
  * no earlier handler (B3's) did — with the mockup's recent-signals order and `limit` semantics.
  */
 import { http, HttpResponse } from "msw";
+import type { AttentionItem } from "@/api/types/bff";
 import type {
   ActiveRun,
-  AttentionItem,
   OverviewCost,
   OverviewDeadTasks,
   OverviewSignals,
   OverviewSummary,
-} from "@/api/types/bff";
+} from "@/api/types/overview";
 import type { JobDetail } from "@/api/types/jobs";
 import type { DailyStats } from "@/api/types/stats";
 import { db } from "@/mocks/db";

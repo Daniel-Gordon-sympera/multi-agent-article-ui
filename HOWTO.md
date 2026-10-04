@@ -84,12 +84,21 @@ Rotation is in section 11.
    `403 password_change_required`.
 2. Remove `UI_BOOTSTRAP_ADMIN_PASSWORD` from `.env` (it is only read while `ui.users`
    is empty).
-3. Add colleagues under **Settings › Users** (`/settings/users`, admin only): e-mail,
-   name, role, initial password. Roles: `viewer` (read everything, download per-job
-   CSVs), `operator` (viewer + create runs, cancel/resume/retry, Scouts, Data Sources,
-   dataset exports), `admin` (operator + users, pipeline API keys). New users must change
-   their password on first sign-in; an admin can reset a password from the same page
-   and can disable an account, but not their own.
+3. Add colleagues under **Settings › Users** (`/settings/users`, the tab appears for
+   admins only): **Create user** → e-mail, name, role and a temporary password (at
+   least 12 characters) → the account is created with `must_change_password`, so the
+   colleague signs in once with the temporary password and is taken to
+   `/account/password`. Roles: `viewer` (read everything, download per-job CSVs),
+   `operator` (viewer + create runs, cancel/resume/retry, Scouts, Data Sources, dataset
+   exports), `admin` (operator + users, pipeline API keys).
+   - **Edit** changes the name or the role; **Reset password** sets a new temporary
+     password, forces a change at the next sign-in and ends the user's other sessions;
+     **Disable** signs the account out everywhere and blocks sign-in until **Enable**.
+   - The BFF refuses to disable or demote the account you are signed in with
+     (`409 self_protection`), so there is always one working admin; the Disable button
+     is greyed out on your own row.
+   - The table shows the role tag, creation date, last login and a "must change
+     password" tag until the first password change.
 4. Rate limits protect sign-in: 10 failed attempts per e-mail in 15 minutes or 60 per
    IP per hour answer `429 too_many_attempts`; wait or have an admin reset the password.
    Sessions expire after 12 hours idle or 7 days; Sign out (sidebar footer) ends one
@@ -133,8 +142,101 @@ density, saved views and a detail drawer, and exports the filtered set as CSV. <
 
 ## 10. Settings
 
-**Settings** holds API keys (admin), Workers & health, Stats & costs, Exports, System,
-Preferences and Users. <!-- feature agent: fill -->
+**Settings** (`/settings`, opens on Workers & health) holds the operations and
+platform pages. Everything on them comes from the pipeline API through the BFF; rows
+that the API does not expose yet are marked "not exposed by the API" rather than
+invented.
+
+**Overview first.** The home page (`/`) shows four tiles — running jobs (with queued /
+finalizing counts and the number of Scouts behind them), signals of the last 7 days
+with the delta against the previous 7 days, today's model + proxy cost with the delta
+against yesterday ("—" plus a warning when a call lacked pricing), and dead tasks with
+the number new since yesterday — then the active runs (link to each job, batch tag,
+stages, sites, signals, cost), the five most recent signals (each opens the explorer
+drawer), the **Needs attention** card (dead tasks → the job's Tasks tab, partial and
+failed runs of the last 7 days → the job, slow or missing worker heartbeats → the
+worker's row, and "Pipeline API is not ready" → System) and the workers by role.
+Tiles refresh every 30 s, runs and attention every 5 s; **Refresh** refetches
+everything at once.
+
+### 10.1 API keys (`/settings/keys`, admin)
+
+1. **Create key** → name (`A–Z a–z 0–9 _ . -`, unique) and role (`reader` for GET
+   routes and per-job CSVs, `operator` for mutations) → **Create key**.
+2. The dialog shows the plaintext **once**: copy it with the copy button and store
+   it before clicking **I stored it**. It is never shown again and never stored in the
+   browser (only the name, role and creation time are remembered in this browser's
+   local storage).
+3. **Revoke** (any key, by name) → confirm. Clients using the key lose access at once.
+4. The table lists every key once the pipeline exposes `GET /v1/api-keys` (B4);
+   until then it shows the keys created in this browser and says so. Operators and
+   viewers see an explanation instead of the controls. The console's own two keys
+   (section 2) are rotated through `.env`, not here.
+
+### 10.2 Workers & health (`/settings/workers`)
+
+- **Health tiles.** *API* (database, artifact store and migrations checks plus the
+  pipeline version, from the pipeline's `/readyz` and `/openapi.json`), *Proxy* (from
+  the crawl workers' `proxy_ok` / `proxy_checked_at`: "US exit verified" when every
+  checked crawl worker is ok; zone and traffic are not exposed), *Queue* (queued,
+  running, failed · retrying, dead — from `GET /v1/tasks` when B3 is deployed, else
+  summed from the progress counters of the 20 most recent running jobs, in which case
+  the failed count reads "unknown without B3"; **Open dead tasks** lists the partial
+  runs) and *Storage* (every row "not exposed by the API").
+- **Workers table.** One row per instance: role, version, started, last heartbeat
+  (amber "Slow heartbeat" after 30 s, red "Missing" after 90 s, "Gone" once the
+  pipeline retires it), current tasks, proxy and status. **Logs** and **Drain** are
+  shown but inert — the pipeline API has no route for them. A link of the form
+  `/settings/workers#<instance_id>` (the Overview's attention items use it)
+  highlights and scrolls to that row.
+- **Dead tasks by category** sums the `failures` of `GET /v1/stats/daily` over the
+  last 7 days; **Maintenance schedule** is the plan's static table (sweep_jobs 60 s,
+  expire_artifacts hourly, purge_work_items daily 03:00 UTC, backup_database daily
+  02:00 UTC, export_dataset on demand) — results are not exposed, check the
+  maintenance worker's logs.
+
+### 10.3 Stats & costs (`/settings/stats`)
+
+Three 14-day sparklines (jobs, signals, model + proxy cost) over the daily table of
+`GET /v1/stats/daily`, newest first: jobs, site runs, articles, companies, signals,
+tokens in/out, cost (an **incomplete** tag marks days with unpriced calls — the
+figure is the known cost) and a **failures** disclosure with the categories. **Load
+more** follows the API's cursor 30 days at a time; **Export CSV** downloads the loaded
+rows (every column, failures as `category: n; …`).
+
+### 10.4 Exports (`/settings/exports`)
+
+- **Per-job CSVs** (sources, site ranking, chosen seeds, sections, pages, links,
+  articles, summaries, companies, signals, company flags) download instantly from the
+  job header's **Export CSV** menu — any role.
+- **Dataset export** (operators): tick the tables, optionally filter by state,
+  county, job statuses and creation range, then **Start export** →
+  `POST /v1/exports`. The export id is remembered in this browser and the table
+  below polls `GET /v1/exports/{id}` every 5 s while it is queued or running; a
+  **Download** link appears when the file is ready (served through the console, so
+  no pipeline key is needed) and "expired" once the artifact store retired it. The
+  × button forgets a row; the API keeps no list of exports.
+
+### 10.5 System (`/settings/system`)
+
+Versions and readiness in two cards (the BFF: version, Alembic head, start time,
+last capability probe; the pipeline: host, Ready / Not ready pill, version, prompt
+version of the most recent job, every `/readyz` check), the table of optional pipeline
+routes (B1–B4) with what each unlocks and the fallback in use until it is deployed, and
+the list of what the API does not expose yet (model prices, proxy zone and traffic,
+storage, maintenance results). **Refresh** re-reads the pipeline; the capability probe
+itself runs every `UI_CAPABILITY_REFRESH_SECONDS` (default 300 s).
+
+### 10.6 Preferences (`/settings/preferences`)
+
+Theme (system / light / dark), density (comfortable / compact rows), time display
+(UTC with the local time in tooltips, or local) and the landing page after sign-in.
+Every choice applies immediately, is saved to your account (`PUT /app/prefs`) and
+confirmed with a toast; it follows you to any browser you sign in from.
+
+### 10.7 Users (`/settings/users`, admin)
+
+See section 3.
 
 ## 11. Upgrade, rotate keys, back up the `ui` schema
 

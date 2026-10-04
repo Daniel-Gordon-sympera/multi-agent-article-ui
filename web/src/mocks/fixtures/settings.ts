@@ -2,7 +2,8 @@
  * Static Settings fixtures: the maintenance schedule of mockup §4.7 (results are not exposed
  * by the API, so `last_result` is null), the `/app/system` notes and the health checks.
  */
-import type { MaintenanceSchedule, SystemInfo } from "@/api/types/bff";
+import type { SystemInfo } from "@/api/types/bff";
+import type { MaintenanceSchedule } from "@/api/types/overview";
 import { daysAgo } from "./clock";
 
 export const MAINTENANCE_SCHEDULE: MaintenanceSchedule = {

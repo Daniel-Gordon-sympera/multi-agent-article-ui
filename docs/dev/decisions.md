@@ -181,3 +181,43 @@ with the warn status, so a High pill and a "Retry in …" pill look alike in col
 pills differ in text and the status pill carries a dot, so meaning is never colour-only.
 If Daniel prefers the legend rule, switch High to brand-700 text on brand-200 background
 in the variant map (one line) and supersede this record.
+
+## ADR-UI-009 — Dashboard aggregates: short TTL caches, honest gaps, browser-local registries
+
+**Status:** accepted (2026-10-04). Owner: B4 (Overview + Settings).
+
+**Context.** The Overview and Settings › Workers & health are the pages every operator
+keeps open. Each needs several pipeline reads per refresh (`/v1/jobs` per status, a
+`get_job` per active run, `/v1/workers`, `/v1/stats/daily`, the dead tasks of up to 20
+jobs), the SPA polls them every 5–30 s, and several tabs may be open at once. The mockup
+also draws facts the pipeline API does not expose (proxy zone and traffic, storage
+figures, maintenance results, model prices, a list of API keys and of exports, worker
+logs and draining).
+
+**Decision.**
+1. **Per-process TTL cache with single flight** (`scout_bff/overview/cache.py`):
+   `/app/overview` 10 s, `/app/overview/active-runs` 5 s, `/app/attention` 10 s,
+   `/app/system*` 10 s. Values are shared across users (every cached read is a GET both
+   pipeline keys may perform); the first caller's role picks the key; failures are
+   never cached. The pipeline load is therefore bounded by the TTLs, not by the number
+   of viewers, and the fan-out per computation is capped (≤ 7 status queries, ≤ 25
+   active runs, ≤ 20 fallback jobs, ≤ 8 parallel calls).
+2. **Honest gaps instead of placeholders.** Rows the API does not expose render as
+   "not exposed by the API" (Storage tile, proxy zone/traffic, maintenance
+   `last_result: null`, `model_prices: null` with `notes[]`); Logs/Drain are inert
+   `aria-disabled` buttons with a tooltip; the failed count of the queue tile reads
+   "unknown without B3" in the `recent_jobs` basis. Every aggregate names its source
+   (`basis: "api" | "recent_jobs" | "daily_stats"`) so a reader can tell a fallback
+   from the real thing.
+3. **Browser-local registries for what the API cannot list.** The names/roles/dates of
+   API keys created in this browser (`scout.apiKeys.created`) and the ids of dataset
+   exports started here (`scout.exports.created`) live in `localStorage`; secrets are
+   never stored. Both registries are replaced by the API's own lists as soon as they
+   exist (`api_keys_list` for keys; an export list is a candidate backend PR).
+
+**Consequences.** Dashboards stay cheap and consistent across tabs; a change on the
+pipeline shows within one TTL (≤ 10 s), which matches the 5 s / 30 s polling policy
+(ADR-UI-005). Operators always know whether a number is authoritative. The registries are
+per browser: a key created on one machine is not listed on another until B4 lands — the
+page says so. Revisit the cache when the BFF runs with more than one process (the
+cache is per process; a shared cache or ETags on `/app/*` would be the next step).

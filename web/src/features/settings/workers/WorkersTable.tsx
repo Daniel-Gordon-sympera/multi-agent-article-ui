@@ -14,7 +14,7 @@ import { Tag } from "@/components/Tag";
 import { SimpleTooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/cn";
 import { useNow } from "@/lib/hooks/useNow";
-import { currentTasksLabel, heartbeatCell, proxyLabel } from "./workersFormat";
+import { currentTasksLabel, heartbeatCell, proxyLabel, sortWorkers } from "./workersFormat";
 
 const NOT_AVAILABLE = "Not available through the pipeline API";
 
@@ -141,14 +141,7 @@ export interface WorkersTableProps {
 export function WorkersTable({ workers, loading, error, onRetry, highlighted }: WorkersTableProps) {
   const now = useNow(5_000);
   const columns = useMemo(() => buildColumns(now, highlighted), [now, highlighted]);
-  const rows = useMemo(
-    () =>
-      [...(workers ?? [])].sort(
-        (a, b) =>
-          Number(!!a.gone_at) - Number(!!b.gone_at) || a.instance_id.localeCompare(b.instance_id),
-      ),
-    [workers],
-  );
+  const rows = useMemo(() => sortWorkers(workers ?? []), [workers]);
 
   useEffect(() => {
     if (!highlighted || !workers) return;

@@ -8,7 +8,7 @@ import type {
   OverviewDeadTasks,
   OverviewRunningJobs,
   OverviewSignals,
-} from "@/api/types/bff";
+} from "@/api/types/overview";
 import type { CrossJobSignalRow } from "@/api/types/signals";
 import type { StatTileDelta } from "@/components/StatTile";
 import {
@@ -72,6 +72,12 @@ export function formatSites(sites: ActiveRun["sites"]): string {
 export function formatSignals(run: ActiveRun): string {
   const signals = run.progress?.signals ?? 0;
   return signals > 0 ? formatInteger(signals) : "—";
+}
+
+/** "$3.12" · "—" before the first model call (null or zero cost). */
+export function formatRunCost(run: ActiveRun): string {
+  if (run.cost_usd === null || run.cost_usd === 0) return "—";
+  return formatMoney(run.cost_usd);
 }
 
 /** "Major Contract Awarded · Orange County, FL · Oct 2" under the company name. */

@@ -2,7 +2,7 @@
  * The 2-up bottom row of Settings › Workers & health (mockup §3.11): "Dead tasks by category"
  * (HorizontalBars from `/app/system/dead-by-category`) and the "Maintenance schedule" list.
  */
-import type { DeadByCategory, MaintenanceSchedule } from "@/api/types/bff";
+import type { DeadByCategory, MaintenanceSchedule } from "@/api/types/overview";
 import { Card, CardHeader } from "@/components/Card";
 import { ErrorState } from "@/components/ErrorState";
 import { HorizontalBars } from "@/components/HorizontalBars";

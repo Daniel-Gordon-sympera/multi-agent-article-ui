@@ -64,7 +64,7 @@ creates one job per industry (a **batch**, coupled to the API only through
 |---|---|---|---|
 | Sign-in | `/sign-in` | U0/U1 | planned |
 | Change password (forced after bootstrap or admin reset) | `/account/password` | U1 | planned |
-| Overview — tiles, active runs, needs attention, workers, recent signals | `/` | U5 | planned |
+| Overview — tiles, active runs, needs attention, workers, recent signals | `/` | U5 | done (B4) — dead-task counts from the daily failures and queue counts from the recent jobs until B3 `GET /v1/tasks` lands |
 | Jobs › Runs — filters, polling, cancel / resume, batch chips | `/jobs` | U2 | planned |
 | Jobs › Scouts — saved setups, run, history | `/jobs/scouts` | U3 | planned |
 | New run / Scout — mode tabs, fan-out preview, advanced settings, save as Scout | `/jobs/new` | U2 (form) · U3 (Scouts) | planned |
@@ -73,7 +73,7 @@ creates one job per industry (a **batch**, coupled to the API only through
 | Job › Site runs (+ finder sources and ranking) · Sections · Tasks (tree, retry, retry all dead) · Events | `/jobs/$jobId/{site-runs,sections,tasks,events}` | U2 | planned |
 | Signals explorer — filters, chips, saved views, column chooser, drawer, CSV | `/signals` (`?signal=` opens the drawer) | U4 | planned |
 | Data Sources — curated list, CSV import, finder suggestions, promote | `/sources` | U3 | planned |
-| Settings › API keys (admin) · Workers & health · Stats & costs · Exports · System · Preferences · Users (admin) | `/settings/{keys,workers,stats,exports,system,preferences,users}` | U5 | planned |
+| Settings › API keys (admin) · Workers & health · Stats & costs · Exports · System · Preferences · Users (admin) | `/settings/{keys,workers,stats,exports,system,preferences,users}` | U5 | done (B4) — the key list needs B4 `GET /v1/api-keys` (keys created in this browser are listed meanwhile); Logs/Drain, proxy zone/traffic, storage and maintenance results are marked "not exposed by the API" |
 
 ## Quick start (Docker)
 

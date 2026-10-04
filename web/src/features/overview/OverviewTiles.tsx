@@ -1,5 +1,5 @@
 /** The four KPI tiles of mockup §3.1, fed by `GET /app/overview`. */
-import type { OverviewSummary } from "@/api/types/bff";
+import type { OverviewSummary } from "@/api/types/overview";
 import { ErrorState } from "@/components/ErrorState";
 import { StatTile } from "@/components/StatTile";
 import { formatInteger } from "@/lib/format";

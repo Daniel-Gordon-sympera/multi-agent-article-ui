@@ -4,7 +4,6 @@
  */
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut, fetchJson, withQuery } from "@/api/client";
 import type {
-  ActiveRun,
   AttentionItem,
   Batch,
   BatchInput,
@@ -15,16 +14,12 @@ import type {
   CreateUserInput,
   CrossJobSignalFilters,
   CrossJobSignalsPage,
-  DeadByCategory,
   DismissSuggestionInput,
   Estimate,
   LoginInput,
-  MaintenanceSchedule,
   Me,
-  OverviewSummary,
   Prefs,
   PromoteSuggestionInput,
-  QueueSummary,
   RetryDeadResult,
   RunScoutInput,
   Scout,
@@ -43,6 +38,13 @@ import type {
   View,
   ViewInput,
 } from "@/api/types/bff";
+import type {
+  ActiveRun,
+  DeadByCategory,
+  MaintenanceSchedule,
+  OverviewSummary,
+  QueueSummary,
+} from "@/api/types/overview";
 import type { PageParams } from "@/api/types/common";
 
 type QueryRecord = Record<string, string | number | boolean | null | undefined>;

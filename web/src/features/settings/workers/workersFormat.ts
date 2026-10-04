@@ -2,11 +2,13 @@
  * Pure wording for Settings › Workers & health (mockup §3.11): current tasks, proxy cells and
  * the health tiles' rows. Everything the API does not expose is marked honestly.
  */
-import type { QueueSummary, SystemInfo } from "@/api/types/bff";
+import type { SystemInfo } from "@/api/types/bff";
+import type { QueueSummary } from "@/api/types/overview";
 import type { Worker } from "@/api/types/workers";
 import { formatRelativeTime, pluralize } from "@/lib/format";
 import { workerHeartbeatAge, workerStatus } from "@/lib/status";
 import type { StatusDescriptor } from "@/lib/status";
+import { WORKER_ROLE_ORDER } from "@/features/overview/workersGrouping";
 
 export const NOT_EXPOSED = "not exposed by the API";
 export const CRAWL_ROLES = new Set(["finder", "sections", "discovery"]);
@@ -141,4 +143,18 @@ export function heartbeatCell(worker: Worker, now: Date): { text: string; slow: 
     text: Number.isFinite(age) ? formatRelativeTime(worker.last_seen, { now }) : "never",
     slow: status.tone !== "done",
   };
+}
+
+/** Mockup order (api, maintenance, finder, sections, discovery, analysis), gone workers last. */
+export function sortWorkers(workers: readonly Worker[]): Worker[] {
+  const order = (role: string) => {
+    const index = (WORKER_ROLE_ORDER as readonly string[]).indexOf(role);
+    return index === -1 ? WORKER_ROLE_ORDER.length : index;
+  };
+  return [...workers].sort(
+    (a, b) =>
+      Number(!!a.gone_at) - Number(!!b.gone_at) ||
+      order(a.role) - order(b.role) ||
+      a.instance_id.localeCompare(b.instance_id),
+  );
 }

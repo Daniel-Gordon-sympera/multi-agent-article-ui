@@ -4,7 +4,8 @@
  */
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import type { QueueSummary, SystemInfo } from "@/api/types/bff";
+import type { SystemInfo } from "@/api/types/bff";
+import type { QueueSummary } from "@/api/types/overview";
 import type { Worker } from "@/api/types/workers";
 import { StatusPill } from "@/components/StatusPill";
 import { TextLink } from "@/components/TextLink";

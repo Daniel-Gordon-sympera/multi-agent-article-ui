@@ -6,7 +6,8 @@ import { Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Plus } from "lucide-react";
 import { useMemo } from "react";
-import type { ActiveRun, BatchMembership } from "@/api/types/bff";
+import type { BatchMembership } from "@/api/types/bff";
+import type { ActiveRun } from "@/api/types/overview";
 import { useSession } from "@/app/providers/SessionProvider";
 import { Button } from "@/components/Button";
 import { SectionHeader } from "@/components/Card";
@@ -18,8 +19,8 @@ import { Tag } from "@/components/Tag";
 import { TextLink } from "@/components/TextLink";
 import { jobTitle } from "@/features/jobs/jobTitle";
 import { useBatchMembership } from "@/features/jobs/useJobQueries";
-import { formatMoney, shortId } from "@/lib/format";
-import { formatSignals, formatSites } from "./overviewFormat";
+import { shortId } from "@/lib/format";
+import { formatRunCost, formatSignals, formatSites } from "./overviewFormat";
 
 function buildColumns(batches: Record<string, BatchMembership>): ColumnDef<ActiveRun, unknown>[] {
   return [
@@ -88,8 +89,7 @@ function buildColumns(batches: Record<string, BatchMembership>): ColumnDef<Activ
       id: "cost",
       header: "Cost",
       meta: { align: "right", width: 90 },
-      cell: ({ row }) =>
-        row.original.cost_usd === null ? "—" : formatMoney(row.original.cost_usd),
+      cell: ({ row }) => formatRunCost(row.original),
     },
   ];
 }

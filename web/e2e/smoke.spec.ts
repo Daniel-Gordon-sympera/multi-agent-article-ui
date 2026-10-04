@@ -38,7 +38,7 @@ function trackConsole(page: Page): string[] {
 }
 
 test.describe("Sympera Scout shell (mock mode)", () => {
-  test("signs in, shows the shell and the overview placeholder", async ({ page }) => {
+  test("signs in, shows the shell and the overview", async ({ page }) => {
     const errors = trackConsole(page);
     await page.goto("/");
     await expect(page).toHaveURL(/\/sign-in\?redirect=/);
@@ -49,7 +49,7 @@ test.describe("Sympera Scout shell (mock mode)", () => {
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
     await expect(page.getByText("Everything running right now, and what needs you")).toBeVisible();
-    await expect(page.getByTestId("later-phase")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Key figures" })).toBeVisible();
     await expect(page.getByText("API ready")).toBeVisible();
     await expect(page.getByText("admin", { exact: true })).toBeVisible();
     await expect(

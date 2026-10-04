@@ -307,6 +307,255 @@
         }
       }
     },
+    "/app/prefs": {
+      "get": {
+        "tags": [
+          "prefs"
+        ],
+        "summary": "Get Prefs",
+        "operationId": "get_prefs_app_prefs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Prefs App Prefs Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "prefs"
+        ],
+        "summary": "Put Prefs",
+        "operationId": "put_prefs_app_prefs_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrefsPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Put Prefs App Prefs Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/attention": {
+      "get": {
+        "tags": [
+          "attention"
+        ],
+        "summary": "Get Attention",
+        "operationId": "get_attention_app_attention_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Attention App Attention Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/system": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Get System",
+        "operationId": "get_system_app_system_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get System App System Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/system/queue": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Get Queue",
+        "operationId": "get_queue_app_system_queue_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Queue App System Queue Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/system/dead-by-category": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Get Dead By Category",
+        "operationId": "get_dead_by_category_app_system_dead_by_category_get",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "default": 7,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Dead By Category App System Dead By Category Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/system/maintenance": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Get Maintenance",
+        "operationId": "get_maintenance_app_system_maintenance_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Maintenance App System Maintenance Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/overview": {
+      "get": {
+        "tags": [
+          "overview"
+        ],
+        "summary": "Get Overview",
+        "operationId": "get_overview_app_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Overview App Overview Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/overview/active-runs": {
+      "get": {
+        "tags": [
+          "overview"
+        ],
+        "summary": "Get Active Runs",
+        "operationId": "get_active_runs_app_overview_active_runs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Active Runs App Overview Active Runs Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/{path}": {
       "get": {
         "tags": [
@@ -649,6 +898,76 @@
           "new_password"
         ],
         "title": "PasswordChangeRequest"
+      },
+      "PrefsPatch": {
+        "properties": {
+          "theme": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "system",
+                  "light",
+                  "dark"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Theme"
+          },
+          "density": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "comfortable",
+                  "compact"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Density"
+          },
+          "time_display": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "utc",
+                  "local"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Display"
+          },
+          "landing": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "/",
+                  "/jobs",
+                  "/signals"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Landing"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PrefsPatch",
+        "description": "Body of PUT /app/prefs: every field optional, unknown fields rejected."
       },
       "ResetPasswordRequest": {
         "properties": {

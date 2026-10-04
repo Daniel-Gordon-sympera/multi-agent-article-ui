@@ -1,6 +1,7 @@
 /** Workers, daily stats, readiness, API keys, exports, `/app/system*` and `/app/views`. */
 import { http, HttpResponse } from "msw";
-import type { DeadByCategory, QueueSummary, SystemInfo, ViewInput } from "@/api/types/bff";
+import type { SystemInfo, ViewInput } from "@/api/types/bff";
+import type { DeadByCategory, QueueSummary } from "@/api/types/overview";
 import type { CreateExportInput, ExportRecord } from "@/api/types/stats";
 import { db, nextMockId } from "@/mocks/db";
 import { NOW, dateDaysAgo } from "@/mocks/fixtures/clock";
