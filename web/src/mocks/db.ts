@@ -29,7 +29,7 @@ import {
   buildSections,
   buildSummaries,
 } from "./fixtures/results";
-import { buildScoutFixtures } from "./fixtures/scouts";
+import { buildBatchFixtures, buildScoutFixtures, type MockBatch } from "./fixtures/scouts";
 import { buildSignalFixtures } from "./fixtures/signals";
 import { buildSiteRunFixtures } from "./fixtures/siteRuns";
 import { buildSourceFixtures, buildSuggestionFixtures } from "./fixtures/sources";
@@ -67,6 +67,8 @@ export interface MockDatabase {
   workers: Worker[];
   dailyStats: DailyStats[];
   scouts: ScoutWithRuns[];
+  /** Batches behind the Scouts' runs and the ones `POST /app/batches` creates. */
+  batches: MockBatch[];
   sources: Source[];
   suggestions: Suggestion[];
   dismissed: Set<string>;
@@ -118,6 +120,7 @@ function buildDatabase(): MockDatabase {
   const siteRuns = buildSiteRunFixtures();
   const tasks = buildTaskFixtures();
   const signals = buildSignalFixtures();
+  const scouts = buildScoutFixtures();
   return {
     users: MOCK_USERS.map((u) => ({ ...u })),
     session: readPersistedSession(),
@@ -129,7 +132,8 @@ function buildDatabase(): MockDatabase {
     results: buildResults(signals, siteRuns, tasks),
     workers: buildWorkerFixtures(),
     dailyStats: buildDailyStatsFixtures(),
-    scouts: buildScoutFixtures(),
+    scouts,
+    batches: buildBatchFixtures(scouts),
     sources: buildSourceFixtures(),
     suggestions: buildSuggestionFixtures(),
     dismissed: new Set(),
@@ -181,6 +185,11 @@ export function setMockSession(session: MockSession | null): void {
 export function nextMockId(prefix = ""): string {
   db.nextId += 1;
   return prefix ? `${prefix}-${db.nextId}` : String(db.nextId);
+}
+
+/** Adds a job the mock BFF created (batch fan-out) so the Runs list and `/v1/jobs/:id` see it. */
+export function addMockJob(job: JobDetail): void {
+  db.jobs.unshift(job);
 }
 
 export function userPrefs(userId: string): Prefs {

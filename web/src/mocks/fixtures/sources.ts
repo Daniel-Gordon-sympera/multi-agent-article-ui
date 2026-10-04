@@ -1,7 +1,22 @@
-/** The 7 curated sources and 4 finder suggestions of mockup-spec §4.6. */
-import type { Source, Suggestion } from "@/api/types/bff";
+/**
+ * The 7 curated sources of mockup-spec §4.6, the finder suggestions (the 4 drawn ones first,
+ * then the rest of the "See all 11") and the tile baseline (Active 23 · Promoted 12 · Removed 4).
+ */
+import type { Source, SourceStats, Suggestion } from "@/api/types/bff";
 import { daysAgo } from "./clock";
 import { JOB_IDS } from "./jobs";
+
+/**
+ * The mockup's tiles describe a larger list than the 7 fixture rows; the handler keeps these
+ * numbers in step with mutations (add → +1 active, remove → +1 removed, …).
+ */
+export const SOURCE_STATS_BASELINE: SourceStats = {
+  active: 23,
+  promoted: 12,
+  removed: 4,
+  counties: 5,
+  median_precision: 0.11,
+};
 
 export function buildSourceFixtures(): Source[] {
   const make = (
@@ -198,5 +213,63 @@ export function buildSuggestionFixtures(): Suggestion[] {
       industry: "Construction",
       origin: "finder_memory",
     },
+    ...MORE_SUGGESTIONS,
   ];
 }
+
+const JOB_BY_STATE: Record<string, string> = {
+  FL: JOB_IDS.orangeConstruction,
+  CO: JOB_IDS.jeffersonConstruction,
+  TX: JOB_IDS.harrisManufacturingEarlier,
+  AZ: JOB_IDS.maricopaRetail,
+};
+
+function ordinal(n: number): string {
+  const suffix = n % 100 >= 11 && n % 100 <= 13 ? "th" : (["th", "st", "nd", "rd"][n % 10] ?? "th");
+  return `${n}${suffix}`;
+}
+
+function suggestion(
+  domain: string,
+  county: string,
+  state: string,
+  industry: string,
+  tier: string,
+  rank: number | null,
+  judgedDaysAgo: number,
+): Suggestion {
+  const name = domain
+    .replace(/\.(com|org|net)$/, "")
+    .replace(/[-.]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+  const coverage = tier === "high" ? "state" : "local";
+  return {
+    domain,
+    name,
+    url: `https://${domain}`,
+    tier,
+    verdict: "accept",
+    reason:
+      rank === null
+        ? `Found through the judged-domain memory (judged ${judgedDaysAgo} days ago, kept)`
+        : `Kept by the finder (coverage: ${coverage}, relevance: ${tier}); ranked ${ordinal(rank)}`,
+    judged_at: daysAgo(judgedDaysAgo),
+    rank,
+    job_id: rank === null ? null : (JOB_BY_STATE[state] ?? null),
+    county,
+    state_code: state,
+    industry,
+    origin: rank === null ? "finder_memory" : "ranking",
+  };
+}
+
+/** Suggestions 5–11 behind "See all 11" (lower ranks and older memory verdicts). */
+const MORE_SUGGESTIONS: Suggestion[] = [
+  suggestion("orlandobusinessjournal.com", "Orange", "FL", "Construction", "high", 7, 0),
+  suggestion("centralfloridapost.com", "Orange", "FL", "Manufacturing", "medium", 8, 1),
+  suggestion("apopkavoice.com", "Orange", "FL", "Construction", "medium", 9, 1),
+  suggestion("winterparkmag.com", "Orange", "FL", "Wholesale Trade", "medium", 11, 2),
+  suggestion("coloradosun.com", "Jefferson", "CO", "Construction", "high", null, 9),
+  suggestion("houstonchronicle.com", "Harris", "TX", "Manufacturing", "high", 2, 2),
+  suggestion("azcentral.com", "Maricopa", "AZ", "Retail Trade", "high", null, 6),
+];

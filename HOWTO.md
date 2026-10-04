@@ -117,14 +117,91 @@ a `partial` job is resumed from the job header with optional overrides. <!-- fea
 
 ## 7. Scouts
 
-A Scout is a saved setup (county, state, industries, source mode, settings) under
-**Jobs › Scouts**; running it creates one job per industry and keeps a run history. <!-- feature agent: fill -->
+A Scout is a saved setup — county and state, the location phrase for the finder, the
+industries, where the sites come from (the finder or your curated Data Sources) and the
+settings overrides — that you run again and again from **Jobs › Scouts**
+(`/jobs/scouts`). Operators and admins can create and run Scouts; viewers see the list.
+
+1. **Create one.** Fill in **Jobs › New run**, tick *Save as Scout*, give it a name and
+   create the jobs (`New Scout` in the Jobs header opens the form with the box already
+   ticked). Names are unique; `409 scout_exists` means the name is taken, archived
+   Scouts included.
+2. **Run it.** `Run` on the Scout row shows "This will create N jobs for …": one API job
+   per industry for location Scouts, a single job for site-URL and seed Scouts. The jobs
+   are created with `client_reference = ui:<batch id>:<industry slug>` (`:0` for the
+   single-job kinds), so they stay linked to the Scout and to each other. The toast's
+   *View runs* opens `/jobs?scout=<id>`; the Runs list shows a "batch n of N" chip on
+   each job. A leg the API rejects (for example `422`) is recorded on the batch with its
+   error and the other legs still run; when the API cannot be reached at all the run
+   answers `502 pipeline_api_unavailable` and nothing is created.
+3. **Read the row.** *Sources* reads "Finder · top N sites" (the `sites` setting) or
+   "N seeds from Data Sources" (the active sources matching the county, state and any of
+   the Scout's industries at that moment — new sources are picked up automatically).
+   *Last run* is the status of the newest batch (the furthest stage while any job runs;
+   Completed / Partial / Failed once all finished) with its age; *Runs* counts the
+   batches; *Signals (last run)* sums the jobs' signal counts (refreshed every 30 s).
+4. **Edit, duplicate, archive.** `Edit` (and the name link) opens the form with the
+   Scout loaded (`/jobs/new?scout=<id>`); the ⋯ menu offers *View runs*, *Duplicate*
+   (`…&duplicate=1`, a copy to save under a new name) and *Archive*. Archiving hides the
+   Scout (`DELETE /app/scouts/{id}` keeps the row with `archived_at`); its runs stay
+   under Runs and `GET /app/scouts?archived=true` still lists it.
+5. **Seed Scouts need sources.** A seed Scout with no active source for its county and
+   state answers `422 no_active_sources`: add or restore a source first (section 8).
+
+From a script, the same calls are `POST /app/scouts` (`ScoutInput`),
+`POST /app/scouts/{id}/run`, `GET /app/scouts/{id}/jobs` (the jobs of the last 10
+batches, newest first) and `POST /app/batches` for a one-off fan-out without a Scout;
+every call needs the session cookie plus `X-Requested-With: scout` and `X-CSRF-Token`.
 
 ## 8. Data Sources
 
 **Data Sources** (`/sources`) is the curated list of local news sites per county and
-state: add a URL, import a CSV (`name,url,county,state,industries`), remove/restore,
-and promote sites the finder suggested. <!-- feature agent: fill -->
+state. Seed runs (New run › *Seeds from Data Sources*, seed Scouts, the ⋯ › *Run a seed
+job* on a row) explore exactly these sites; the finder never needs them but keeps
+suggesting new ones. Operators and admins curate; viewers read and export.
+
+1. **Add a site.** `Add source`: name, URL (`https://` is added when missing; the domain
+   is the host without `www.`), county (with or without the word "County"), state
+   (2-letter code or full name) and optional industries from the NAICS catalog — leave
+   industries empty to match every industry. A domain can be listed once per county
+   and state (`409 source_exists`).
+2. **Import a CSV.** `Import CSV` takes a file with the header
+   `name,url,county,state,industries` (any column order; `industries` optional and
+   `;`-separated, for example `Construction;Manufacturing`; states as codes or names):
+
+   ```csv
+   name,url,county,state,industries
+   Orlando Magazine,https://orlandomagazine.com,Orange,FL,Construction;Manufacturing
+   Range Wire,https://rangewire.com,Jefferson,CO,Construction
+   ```
+
+   Limits: 1 MB and 2,000 rows. The result lists what was imported and every skipped
+   row with its line number and reason (missing name or county, invalid URL, unknown
+   state, duplicate inside the file, already listed for that county and state).
+   Imported rows carry the origin `csv`; *Download the CSV template* in the dialog gives
+   the header line to start from.
+3. **Promote a finder suggestion.** The card *Suggested by the finder* lists domains the
+   finder kept recently that are not in your list: the judged-domain memory with the
+   verdict `keep` (for "<County> County, <State>" and "<County>, <ST>") and the rankings
+   of the last five location-industry jobs of that county and state (chosen or not, with
+   tier and rank), de-duplicated by domain and refreshed every minute. *Add to sources*
+   opens the dialog pre-filled; the source keeps the finder's tier, rank, reason, judged
+   date and job as its `finder` facts (origin `finder`). *Dismiss* hides a domain for
+   that county and state for good (`ui.dismissed_suggestions`). The State / County /
+   Industry filters of the toolbar narrow the suggestions too.
+4. **Remove and restore.** `Remove` is a soft delete: the row keeps its history under
+   *Status: removed* and `Restore` brings it back. Removed sources are never seeded.
+5. **Precision.** "Precision · last run" (accepted articles ÷ candidate links of the
+   latest job that used the site) and the *Median precision* tile need the pipeline's
+   `GET /v1/sources/stats` (PR B2). Until it is deployed the column shows "—" with the
+   note "needs pipeline API update (B2)"; everything else works.
+6. **Export.** `Export CSV` downloads the rows currently listed (filters applied) with
+   their industries, origin, finder facts and precision.
+
+Scripts use `GET /app/sources?county=&state=&industry=&origin=&status=active|removed|all&q=`,
+`POST /app/sources`, `PATCH`/`DELETE /app/sources/{id}`, `POST /app/sources/{id}/restore`,
+`POST /app/sources/import` (multipart `file`), `GET /app/sources/suggestions?county=&state=&industry=&limit=`,
+`POST /app/sources/promote` and `POST /app/sources/dismiss`.
 
 ## 9. Signals explorer and saved views
 

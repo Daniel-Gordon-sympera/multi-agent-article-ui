@@ -1,4 +1,8 @@
-/** `/app/scouts*` and `/app/batches*` — Scouts CRUD, run fan-out and batch lookup (contract §4.3, §4.5). */
+/**
+ * `/app/scouts*` and `/app/batches*` — Scouts CRUD, run fan-out and batch lookup (contract
+ * §4.3, §4.5). A fan-out creates real rows in `db.jobs` (so Runs lists them) and a batch in
+ * `db.batches`; seed batches compose their seeds from the active `db.sources`.
+ */
 import { http, HttpResponse } from "msw";
 import type {
   Batch,
@@ -9,61 +13,54 @@ import type {
   ScoutWithRuns,
 } from "@/api/types/bff";
 import type { JobDetail } from "@/api/types/jobs";
-import { db, nextMockId } from "@/mocks/db";
-import { BATCH_ID, PROMPT_VERSION, SCOUT_IDS } from "@/mocks/fixtures/jobs";
+import { addMockJob, db, nextMockId } from "@/mocks/db";
+import { PROMPT_VERSION } from "@/mocks/fixtures/jobs";
+import { slugIndustry, type MockBatch } from "@/mocks/fixtures/scouts";
 import { readJson } from "@/mocks/lib/paging";
 import { notFound, problem } from "@/mocks/lib/problem";
 import { guard } from "@/mocks/lib/session";
 
-interface StoredBatch extends Batch {
-  job_ids: string[];
-}
+const JOBS_BATCHES = 10;
 
-const batches = new Map<string, StoredBatch>();
-
-/** The main job's batch (run 7 of "Orange County builders"). */
-function seedBatches(): void {
-  if (batches.size) return;
-  const scout = db.scouts.find((s) => s.id === SCOUT_IDS.orangeBuilders);
-  if (!scout?.last_run) return;
-  batches.set(BATCH_ID, {
-    id: BATCH_ID,
-    scout_id: scout.id,
-    scout_name: scout.name,
-    run_number: 7,
-    created_at: scout.last_run.created_at,
-    jobs: scout.last_run.jobs.map((j, i) => ({
-      position: i + 1,
-      industry: j.industry,
-      job_id: j.job_id,
-      client_reference: `ui:${BATCH_ID}:${(j.industry ?? "0").toLowerCase().replace(/\s+/g, "-")}`,
-      status: j.status,
-      error: null,
-    })),
-    job_ids: scout.last_run.jobs.map((j) => j.job_id),
-  });
-}
-
-function refreshStatuses(batch: StoredBatch): Batch {
+function refreshStatuses(batch: MockBatch): Batch {
+  const { job_ids: _ids, ...rest } = batch;
   return {
-    ...batch,
-    jobs: batch.jobs.map((j) => ({
-      ...j,
-      status: db.jobs.find((job) => job.id === j.job_id)?.status ?? j.status,
+    ...rest,
+    jobs: batch.jobs.map((leg) => ({
+      ...leg,
+      status: db.jobs.find((job) => job.id === leg.job_id)?.status ?? leg.status,
     })),
   };
 }
 
-function slug(value: string): string {
+function normaliseCounty(value: string): string {
   return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+    .trim()
+    .replace(/\s+county$/i, "")
+    .toLowerCase();
+}
+
+/** Active sources of the county/state (+ any of the industries; sources without industries match). */
+export function seedsFor(input: Pick<BatchInput, "county" | "state_code" | "industries">) {
+  const county = normaliseCounty(input.county);
+  const wanted = input.industries.map((i) => i.toLowerCase());
+  return db.sources
+    .filter(
+      (source) =>
+        source.status === "active" &&
+        normaliseCounty(source.county) === county &&
+        source.state_code.toUpperCase() === input.state_code.toUpperCase() &&
+        (wanted.length === 0 ||
+          source.industries.length === 0 ||
+          source.industries.some((i) => wanted.includes(i.toLowerCase()))),
+    )
+    .map((source) => ({ title: source.name, url: source.url }));
 }
 
 function createJobRow(
   input: BatchInput,
   industry: string | null,
+  seeds: Array<{ title: string; url: string }>,
   clientReference: string,
   createdBy: string,
 ): JobDetail {
@@ -77,7 +74,7 @@ function createJobRow(
         ? { location: input.location, industry: industry ?? undefined }
         : input.kind === "url"
           ? { url: input.url }
-          : { seeds: input.seeds ?? [] },
+          : { seeds },
     county: input.county,
     state_code: input.state_code,
     settings: {
@@ -102,7 +99,7 @@ function createJobRow(
     sessions: [],
     progress: {
       job_id: id,
-      seeds: 0,
+      seeds: seeds.length,
       sections: 0,
       pages: 0,
       links: 0,
@@ -122,12 +119,13 @@ function fanOut(input: BatchInput, scout: ScoutWithRuns | null, createdBy: strin
   const id = nextMockId("batch");
   const runNumber = scout ? scout.runs_count + 1 : null;
   const legs = input.kind === "location_industry" ? input.industries : [null];
+  const seeds = input.kind === "seeds" ? (input.seeds?.length ? input.seeds : seedsFor(input)) : [];
   const jobs: BatchJob[] = [];
   const jobIds: string[] = [];
   legs.forEach((industry, index) => {
-    const clientReference = `ui:${id}:${industry ? slug(industry) : "0"}`;
-    const job = createJobRow(input, industry, clientReference, createdBy);
-    db.jobs.unshift(job);
+    const clientReference = `ui:${id}:${industry ? slugIndustry(industry) : "0"}`;
+    const job = createJobRow(input, industry, seeds, clientReference, createdBy);
+    addMockJob(job);
     jobIds.push(job.id);
     jobs.push({
       position: index + 1,
@@ -138,7 +136,7 @@ function fanOut(input: BatchInput, scout: ScoutWithRuns | null, createdBy: strin
       error: null,
     });
   });
-  const batch: StoredBatch = {
+  const batch: MockBatch = {
     id,
     scout_id: scout?.id ?? null,
     scout_name: scout?.name ?? null,
@@ -147,16 +145,16 @@ function fanOut(input: BatchInput, scout: ScoutWithRuns | null, createdBy: strin
     jobs,
     job_ids: jobIds,
   };
-  batches.set(id, batch);
+  db.batches.unshift(batch);
   if (scout) {
     scout.runs_count += 1;
     scout.last_run = {
       batch_id: id,
       run_number: runNumber ?? 1,
       created_at: batch.created_at,
-      jobs: jobs.map((j) => ({
-        job_id: j.job_id!,
-        industry: j.industry,
+      jobs: jobs.map((leg) => ({
+        job_id: leg.job_id!,
+        industry: leg.industry,
         status: "queued",
         signals: null,
       })),
@@ -166,12 +164,17 @@ function fanOut(input: BatchInput, scout: ScoutWithRuns | null, createdBy: strin
   return refreshStatuses(batch);
 }
 
+function nameTaken(name: string, exceptId?: string): boolean {
+  return db.scouts.some((s) => s.name === name && s.id !== exceptId);
+}
+
 export const scoutHandlers = [
   http.get("/app/scouts", ({ request }) => {
     const { error } = guard(request);
     if (error) return error;
-    seedBatches();
-    return HttpResponse.json({ items: db.scouts.filter((s) => !s.archived_at) });
+    const archived = new URL(request.url).searchParams.get("archived") === "true";
+    const items = db.scouts.filter((s) => archived || !s.archived_at);
+    return HttpResponse.json({ items });
   }),
 
   http.post("/app/scouts", async ({ request }) => {
@@ -180,6 +183,8 @@ export const scoutHandlers = [
     const body = await readJson<ScoutInput>(request);
     if (!body?.name || !body.county || !body.state_code)
       return problem(422, "validation_error", "name, county and state_code are required");
+    if (nameTaken(body.name))
+      return problem(409, "scout_exists", "A Scout with this name already exists.");
     const now = new Date().toISOString();
     const scout: ScoutWithRuns = {
       ...body,
@@ -203,14 +208,31 @@ export const scoutHandlers = [
     return scout ? HttpResponse.json(scout) : notFound("Scout");
   }),
 
+  http.get("/app/scouts/:id/jobs", ({ request, params }) => {
+    const { error } = guard(request);
+    if (error) return error;
+    const scout = db.scouts.find((s) => s.id === params.id);
+    if (!scout) return notFound("Scout");
+    const jobIds = db.batches
+      .filter((batch) => batch.scout_id === scout.id)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .slice(0, JOBS_BATCHES)
+      .flatMap((batch) => batch.job_ids);
+    const items = jobIds
+      .map((jobId) => db.jobs.find((job) => job.id === jobId))
+      .filter((job): job is JobDetail => job !== undefined);
+    return HttpResponse.json({ items });
+  }),
+
   http.patch("/app/scouts/:id", async ({ request, params }) => {
     const { error } = guard(request, { minRole: "operator" });
     if (error) return error;
     const scout = db.scouts.find((s) => s.id === params.id);
     if (!scout) return notFound("Scout");
-    Object.assign(scout, (await readJson<Partial<ScoutInput>>(request)) ?? {}, {
-      updated_at: new Date().toISOString(),
-    });
+    const patch = (await readJson<Partial<ScoutInput>>(request)) ?? {};
+    if (patch.name && nameTaken(patch.name, scout.id))
+      return problem(409, "scout_exists", "A Scout with this name already exists.");
+    Object.assign(scout, patch, { updated_at: new Date().toISOString() });
     return HttpResponse.json(scout);
   }),
 
@@ -228,6 +250,7 @@ export const scoutHandlers = [
     if (error) return error;
     const scout = db.scouts.find((s) => s.id === params.id);
     if (!scout) return notFound("Scout");
+    if (scout.archived_at) return problem(409, "scout_archived", "This Scout is archived.");
     const input: BatchInput = {
       kind: scout.kind,
       county: scout.county,
@@ -238,6 +261,8 @@ export const scoutHandlers = [
       settings: scout.settings,
       scout_id: scout.id,
     };
+    if (input.kind === "seeds" && seedsFor(input).length === 0)
+      return problem(422, "no_active_sources", "No active sources match this county.");
     return HttpResponse.json(fanOut(input, scout, user.name), { status: 201 });
   }),
 
@@ -247,10 +272,14 @@ export const scoutHandlers = [
     const body = await readJson<BatchInput>(request);
     if (!body?.kind || !body.county || !body.state_code)
       return problem(422, "validation_error", "kind, county and state_code are required");
+    if (body.kind === "seeds" && !body.seeds?.length && seedsFor(body).length === 0)
+      return problem(422, "no_active_sources", "No active sources match this county.");
     let scout: ScoutWithRuns | null = body.scout_id
       ? (db.scouts.find((s) => s.id === body.scout_id) ?? null)
       : null;
     if (!scout && body.save_as_scout?.name) {
+      if (nameTaken(body.save_as_scout.name))
+        return problem(409, "scout_exists", "A Scout with this name already exists.");
       const now = new Date().toISOString();
       scout = {
         id: nextMockId("scout"),
@@ -279,10 +308,9 @@ export const scoutHandlers = [
   http.get("/app/batches", ({ request }) => {
     const { error } = guard(request);
     if (error) return error;
-    seedBatches();
     const ids = (new URL(request.url).searchParams.get("job_ids") ?? "").split(",").filter(Boolean);
     const result: Record<string, BatchMembership> = {};
-    for (const batch of batches.values()) {
+    for (const batch of db.batches) {
       batch.job_ids.forEach((jobId, index) => {
         if (ids.includes(jobId)) {
           result[jobId] = {
@@ -302,13 +330,7 @@ export const scoutHandlers = [
   http.get("/app/batches/:id", ({ request, params }) => {
     const { error } = guard(request);
     if (error) return error;
-    seedBatches();
-    const batch = batches.get(String(params.id));
+    const batch = db.batches.find((b) => b.id === String(params.id));
     return batch ? HttpResponse.json(refreshStatuses(batch)) : notFound("Batch");
   }),
 ];
-
-/** Test helper: forget created batches (fixtures are re-seeded lazily). */
-export function resetMockBatches(): void {
-  batches.clear();
-}
