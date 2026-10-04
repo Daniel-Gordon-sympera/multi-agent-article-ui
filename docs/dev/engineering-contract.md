@@ -342,3 +342,16 @@ Status maps (`lib/status.ts`): job `queued→neutral "Queued"`, `finding/explori
 - **Generated files** (`routeTree.gen.ts`, `pipeline.gen.ts`, `bff.gen.ts`, `mockServiceWorker.js`, `uv.lock`, `pnpm-lock.yaml`) are regenerated, never hand-edited; `routeTree.gen.ts` is git-ignored.
 - **Docs are part of the feature.** Each feature agent appends its HOWTO section(s) and updates the README feature table.
 - **Hand-back report** (≤ 40 lines): what was built (paths), commands run and their results, deviations from this contract, open issues.
+
+---
+
+## 7. Phase B ownership map (feature agents, parallel worktrees)
+
+| Agent | Screens (web) | Web paths owned | BFF packages owned | Docs sections |
+|---|---|---|---|---|
+| B1 Jobs | Jobs › Runs, New run / Scout form, Job › Overview, Companies, Summaries, Articles, Site runs, Sections, Tasks, Events tabs | `features/jobs/**`, `routes/_app/jobs/index.tsx`, `routes/_app/jobs/new.tsx`, `routes/_app/jobs/$jobId/{index,companies,summaries,articles,site-runs,sections,tasks,events}.tsx` (+ additive edits to `routes/_app/jobs/$jobId.tsx`), `mocks/handlers/jobs.ts`, `mocks/fixtures/jobs*.ts` | `jobs/` (`POST /app/jobs/{id}/retry-dead`), `estimate/` | HOWTO §4 §5 §6, README rows |
+| B2 Scouts + Sources | Jobs › Scouts, Data Sources | `features/scouts/**`, `features/sources/**`, `routes/_app/jobs/scouts.tsx`, `routes/_app/sources.tsx`, `mocks/handlers/{scouts,sources}.ts`, `mocks/fixtures/{scouts,sources}.ts` | `scouts/`, `batches/` (fan-out service used by both), `sources/` | HOWTO §7 §8 |
+| B3 Signals | Signals explorer + drawer, **Job › Signals tab**, the shared `SignalsTable`/`SignalRecordCell`/`SignalDrawer` | `features/signals/**`, `routes/_app/signals.tsx`, `routes/_app/jobs/$jobId/signals.tsx`, `mocks/handlers/signals.ts`, `mocks/fixtures/signals.ts` | `views/`, `signals/` (aggregate + CSV export) | HOWTO §9 |
+| B4 Overview + Settings | Overview; Settings › API keys, Workers & health, Stats & costs, Exports, System, Preferences, Users | `features/overview/**`, `features/settings/**`, `routes/_app/index.tsx`, `routes/_app/settings/*.tsx`, `mocks/handlers/{overview,settings}.ts`, `mocks/fixtures/{overview,settings,workers,stats}.ts` | `attention/`, `system/`, `prefs/` | HOWTO §3 (users part) §10 |
+
+Cross-feature links are URL contracts only: a signal opens at `/signals?detail=<mention id>`; a job at `/jobs/$jobId`; a scout's runs at `/jobs?scout=<id>`; a worker at `/settings/workers#<instance_id>`. Shared mock state lives in `web/src/mocks/db.ts` (additive changes only; keep the reset function complete).
