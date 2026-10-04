@@ -1,1 +1,1 @@
-"""Aggregate `prefs`: filled by feature agent A7 (attention, system, prefs); routes: GET/PUT /app/prefs (contract §4.3)."""
+"""Aggregate `prefs` (B4): GET/PUT /app/prefs stored in ui.preferences.prefs."""

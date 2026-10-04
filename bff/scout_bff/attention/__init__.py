@@ -1,1 +1,1 @@
-"""Aggregate `attention`: filled by feature agent A7 (attention, system, prefs); routes: GET /app/attention (contract §4.3)."""
+"""Aggregate `attention` (B4): GET /app/attention — the "Needs attention" items of contract §4.3."""
