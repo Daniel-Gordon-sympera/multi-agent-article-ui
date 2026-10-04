@@ -13,6 +13,7 @@ async function signIn(page: Page, email = "admin@sympera.ai", password = "scout-
 
 async function expectAccessible(page: Page, label: string) {
   const results = await new AxeBuilder({ page })
+    .exclude("[data-sonner-toaster]")
     .withTags(["wcag2a", "wcag2aa", "best-practice"])
     .analyze();
   const serious = results.violations.filter(

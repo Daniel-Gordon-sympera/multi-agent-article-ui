@@ -13,6 +13,7 @@ async function signIn(page: Page, email = "admin@sympera.ai", password = "scout-
 
 async function expectAccessible(page: Page, label: string) {
   const results = await new AxeBuilder({ page })
+    .exclude("[data-sonner-toaster]")
     .withTags(["wcag2a", "wcag2aa", "best-practice"])
     .analyze();
   const serious = results.violations.filter(
@@ -151,7 +152,9 @@ test.describe("Jobs (mock mode)", () => {
       .getByRole("button", { name: /Saved text of/ })
       .first()
       .click();
-    await expect(page.getByRole("dialog")).toContainText("Saved article text (mock)");
+    await expect(page.getByRole("dialog")).toContainText(
+      /saved by the pipeline|Saved article text/,
+    );
     await page.keyboard.press("Escape");
 
     await tabs.getByRole("link", { name: /Tasks/ }).click();

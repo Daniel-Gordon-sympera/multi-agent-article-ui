@@ -138,8 +138,8 @@ async def test_active_runs_carry_progress_cost_and_sites(operator_client, pipeli
     analysing = next(row for row in items if row["id"] == JOB_ANALYSING)
     assert analysing["progress"]["signals"] == 24
     assert analysing["cost_usd"] == 1.21 and analysing["cost_complete"] is True
-    # the stub has no site-runs route: the seed count is known, the done count is not
-    assert analysing["sites"] == {"done": None, "total": 5}
+    # the stub serves five site runs for this job; four of them are terminal
+    assert analysing["sites"] == {"done": 4, "total": 5}
     assert "costs" not in analysing
 
 

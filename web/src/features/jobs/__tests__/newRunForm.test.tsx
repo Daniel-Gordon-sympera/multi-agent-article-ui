@@ -59,7 +59,7 @@ describe("/jobs/new", () => {
       expect(screen.getByRole("checkbox", { name: "Save as Scout" })).toBeChecked();
       await user.type(
         screen.getByRole("textbox", { name: "Scout name" }),
-        "Orange County builders",
+        "Orange County builders 2",
       );
 
       const before = db.jobs.length;
@@ -72,7 +72,7 @@ describe("/jobs/new", () => {
         "Wholesale Trade",
       ]);
       expect(created.every((job) => job.client_reference?.startsWith("ui:batch-"))).toBe(true);
-      expect(db.scouts.some((scout) => scout.name === "Orange County builders")).toBe(true);
+      expect(db.scouts.some((scout) => scout.name === "Orange County builders 2")).toBe(true);
       await waitFor(() => expect(router.state.location.pathname).toBe("/jobs"));
     },
   );
