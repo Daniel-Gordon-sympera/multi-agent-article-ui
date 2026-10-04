@@ -1,7 +1,7 @@
 /**
  * JobHeader — mockup §3.5: breadcrumb `Jobs › 0192f1c2`, title "County, ST · Industry" with the
  * StatusPill, the meta line (mono id + CopyButton · kind tag · prompt tag · created by · Scout /
- * run / batch) and the actions (Cancel run · Resume · Export CSV ▾ · ⋯).
+ * run / batch) and the actions (Cancel run · Resume (with the resume options) · Export CSV ▾ · ⋯).
  */
 import { Link } from "@tanstack/react-router";
 import { Ellipsis, ExternalLink, Link2, RotateCcw, Square } from "lucide-react";
@@ -26,6 +26,7 @@ import {
 import { toast } from "@/components/ui/sonner";
 import { ExportMenu } from "@/features/jobs/ExportMenu";
 import { jobTitle } from "@/features/jobs/jobTitle";
+import { ResumeDialog } from "@/features/jobs/ResumeDialog";
 import { useJobMutations } from "@/features/jobs/useJobMutations";
 import { shortId } from "@/lib/format";
 import { isCancellableJobStatus, isResumableJobStatus } from "@/lib/status";
@@ -65,9 +66,20 @@ export function JobHeader({ job, batch }: JobHeaderProps) {
         {batch.scout_name ? (
           <>
             Scout{" "}
-            <Link to="/jobs/scouts" className="font-medium">
-              {batch.scout_name}
-            </Link>
+            {batch.scout_id ? (
+              <Link
+                to="/jobs"
+                search={{ scout: batch.scout_id }}
+                className="font-medium"
+                title="Runs of this Scout"
+              >
+                {batch.scout_name}
+              </Link>
+            ) : (
+              <Link to="/jobs/scouts" className="font-medium">
+                {batch.scout_name}
+              </Link>
+            )}
             {batch.run_number ? <> · run {batch.run_number}</> : null}
             {" · "}
           </>
@@ -170,15 +182,12 @@ export function JobHeader({ job, batch }: JobHeaderProps) {
         pending={cancel.isPending}
         onConfirm={() => cancel.mutate(undefined, { onSettled: () => setConfirm(null) })}
       />
-      <ConfirmDialog
+      <ResumeDialog
         open={confirm === "resume"}
         onOpenChange={(open) => setConfirm(open ? "resume" : null)}
-        title="Resume this run?"
-        description="Unfinished site runs and dead tasks are re-queued with the saved settings; the job returns to its last stage."
-        confirmLabel="Resume"
-        confirmVariant="primary"
+        jobTitle={jobTitle(job)}
         pending={resume.isPending}
-        onConfirm={() => resume.mutate({}, { onSettled: () => setConfirm(null) })}
+        onResume={(input) => resume.mutate(input, { onSettled: () => setConfirm(null) })}
       />
     </>
   );

@@ -18,6 +18,7 @@ from tests.pipeline_fixtures import (
     SIGNALS_CSV_COLUMNS,
 )
 from tests.pipeline_results_fixtures import fresh_state
+from tests.pipeline_stub_jobs import JobsRoutesMixin
 from tests.pipeline_stub_mutations import MutationRoutesMixin
 from tests.pipeline_support import (
     JOB_FILTERS,
@@ -35,7 +36,7 @@ def load_openapi_document() -> dict[str, Any]:
     return json.loads(OPENAPI_PATH.read_text())
 
 
-class PipelineStub(MutationRoutesMixin):
+class PipelineStub(MutationRoutesMixin, JobsRoutesMixin):
     """Mutable in-memory pipeline; `router.handler` plugs into httpx.MockTransport."""
 
     def __init__(self) -> None:
@@ -99,6 +100,7 @@ class PipelineStub(MutationRoutesMixin):
         route(method="DELETE", path__regex=r"^/v1/api-keys/(?P<name>[^/]+)$").mock(
             side_effect=self._revoke_key
         )
+        self._register_jobs_routes(route)
         route().mock(side_effect=self._not_found)
 
     # -- helpers --------------------------------------------------------------

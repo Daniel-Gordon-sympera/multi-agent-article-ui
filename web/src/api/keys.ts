@@ -76,6 +76,9 @@ export const qk = {
     users: () => ["app", "users"] as const,
     scouts: () => ["app", "scouts"] as const,
     scout: (id: string) => ["app", "scouts", id] as const,
+    scoutJobs: (id: string, filters?: Filters) =>
+      ["app", "scouts", id, "jobs", normaliseFilters(filters)] as const,
+    jobsProgress: (ids: readonly string[]) => ["app", "jobs", "progress", [...ids].sort()] as const,
     batches: (ids: readonly string[]) => ["app", "batches", [...ids].sort()] as const,
     batch: (id: string) => ["app", "batches", "detail", id] as const,
     sources: (filters?: Filters) => ["app", "sources", normaliseFilters(filters)] as const,

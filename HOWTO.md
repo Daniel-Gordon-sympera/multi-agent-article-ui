@@ -100,20 +100,94 @@ Settings › Preferences.
 
 ## 4. Launch a run
 
-Create a run from **Jobs › New run** (`/jobs/new`): choose a mode (location + industries,
-site URL, or seeds from Data Sources), county and state are always required, several
-industries fan out to one job per industry tracked as a batch. <!-- feature agent: fill -->
+Runs are created from **Jobs › New run** (`/jobs/new`; operators and admins only — viewers
+do not see the button). One form covers the three job kinds of the pipeline API:
+
+1. **Mode** (segmented control at the top of the *Target* card):
+   - *Location + industries* — the finder searches the web for local news sites per
+     industry and explores the top `sites` of each. Fill the **State**, the **County**
+     (always required: HQ scope and entity flags are derived relative to it), check the
+     **Location phrase** the finder will use (pre-filled as "Orange County, FL", edit it
+     if the local press uses another name) and add **Industries** from the NAICS catalog
+     (type, pick from the list, Backspace removes the last token). The *fan-out preview*
+     lists one row per industry: **every industry becomes its own job**, all of them
+     share one batch id.
+   - *Site URL* — one job that explores a single site; paste its address.
+   - *Seeds from Data Sources* — one job whose site runs are the ticked active sources
+     of that county (`/sources`); all of them are ticked by default. Industries are
+     optional here and only label the job.
+2. **Sources** (location mode only): keep the finder, or switch to the curated seeds of
+   the county — the card shows how many active Data Sources match; the option is
+   disabled when there is none.
+3. **Settings**: *Hide/Show advanced* toggles the grid — days to look back, sites per
+   job, site timeout (0 = none), max runtime, memory mode and re-analysis. The values
+   shown are the platform defaults; what you see is what is saved with the job.
+4. The sticky **Summary** shows the resolved kind, the jobs the batch will create, the
+   sources, the prompt version the API stamps on new jobs (that of the most recent job)
+   and an **estimated cost per job** (`GET /app/estimate`: the pipeline's figure when it
+   has one, otherwise the median of the last 10 completed runs of the same kind and
+   industry; "—" until a run of that kind has completed).
+5. Tick **Save as Scout** and give it a name to keep the setup for later runs (`Jobs ›
+   Scouts`); *Save Scout without running* stores it without creating jobs.
+6. Press **Create N jobs**. Each leg is one `POST /v1/jobs`; the runs appear under
+   `/jobs` within seconds with a *batch n of N* chip. When a leg fails (the API refused
+   it), a dialog lists the outcome per leg with a **Retry** for the failed ones — the
+   created runs are already queued.
+
+Shortcuts: a run's **⋯ › Re-run** / the `[▶ Re-run]` row button opens the form pre-filled
+from that job (`/jobs/new?from=<jobId>`); a Data Source's "run with this seed" opens it
+in Seeds mode with that source ticked (`/jobs/new?mode=seeds&source=<id>`); a Scout's
+Edit opens it with **Run Scout** (runs the setup *as saved*) and **Save changes**.
 
 ## 5. Watch a run and read results
 
-Open a job from **Jobs › Runs**; the header shows the stage stepper, live counters and
-cost, the results tabs (Signals, Companies, Summaries, Articles) come first and the
-operations tabs (Site runs, Sections, Tasks, Events) after. <!-- feature agent: fill -->
+**Jobs › Runs** (`/jobs`) lists every job of the API, newest first, with the stage bar,
+sites done / total, articles, signals, cost and duration (from `GET /app/jobs/progress`,
+refreshed every 5 s while any listed run is still working, every 30 s otherwise). The
+toolbar filters by status, state, county, industry and creation date (*Created* defaults
+to the last 7 days; *Custom range* opens two date inputs — leave both empty to list every
+run), the search box narrows the loaded page by county, industry, domain or id, and
+*Export CSV* downloads the loaded page. The industry filter runs in the browser until the
+pipeline API gains the `industry` filter (B3). `?scout=<id>` shows the runs of one Scout.
+
+Open a run to reach the **Job › Overview**: the *Pipeline progress* card shows the five
+stages (Finding → Finalizing) with their durations and facts, the counters (seeds,
+sections, pages, links, articles, summaries, companies, signals), the cost so far with
+tokens, the elapsed time with the deadline and the task counts; it refreshes every 5 s
+("Live · refreshed N s ago") until the job is terminal. Below it: the **Site runs**
+table (*Work items* opens the discovery work of one site, *Exploration* how the
+Sections agent explored it, with the transcript when one was saved), **Cost by stage**
+from the model-call ledger (plus the proxy traffic) and the **Settings** saved with the
+job.
+
+The results tabs come first — **Signals**, **Companies** (one row per mention; switch to
+*One row per company* for the job's company flags), **Summaries** (the analysis of each
+article; *Record* opens the full row and, on demand, the raw record JSON) and
+**Articles** (*Saved text* streams the stored text; a 410 means it expired) — then the
+operations tabs **Site runs** (with the finder's judged sources and ranking for
+location jobs), **Sections**, **Tasks** and **Events** (as the API pages them: oldest
+first). Every tab keeps its filters, density, columns and page in the URL, so a link
+reproduces exactly what you see, and *Export CSV* downloads the matching
+`/v1/jobs/{id}/export/<table>.csv`.
 
 ## 6. Retry a dead task / resume a partial run
 
-Dead tasks are retried from the job's **Tasks** tab (one task or "Retry all dead");
-a `partial` job is resumed from the job header with optional overrides. <!-- feature agent: fill -->
+A task that failed `max_attempts` times is **dead**; the job then finishes as *partial*.
+On the job's **Tasks** tab (`/jobs/<id>/tasks`) the status chips count the tasks, the
+table shows them as a tree (`parent_task_id`; untick *Show as tree* for a flat list
+sorted by id) and dead rows carry a red last error and a tonal **Retry** button
+(operators only). *Details* opens the task's payload, result and error. **Retry all
+dead** re-queues every dead task of the job in one go (`POST /app/jobs/{id}/retry-dead`:
+forwarded to the pipeline when it has the route, otherwise one `POST /v1/tasks/{id}/retry`
+per dead task — tasks that changed state meanwhile are reported as skipped). A retry
+resets the attempts to 0; the job returns to *analysing*.
+
+A *partial* (or failed / cancelled) job is **resumed** from the Runs row (`[↺ Resume]`)
+or the job header: the dialog takes the resume options of the API — a new site timeout,
+the memory mode, *re-analyse every article*, *re-run enrichment* and *refetch dead
+articles* — and leaves the saved settings alone when a field is empty. **Cancel** (Runs
+row or `Cancel run` in the header) asks for confirmation; running tasks stop after their
+current step and the run can be resumed later.
 
 ## 7. Scouts
 

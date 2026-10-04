@@ -158,6 +158,8 @@ export function buildEvents(tasks: Task[], siteRuns: SiteRun[]): PipelineEvent[]
     }
   }
   for (const run of siteRuns) {
+    events.push(...fetchEvents(run, id));
+    id += FETCH_EVENTS_PER_RUN;
     if (!run.finished_at) continue;
     events.push({
       id: id++,
@@ -179,4 +181,35 @@ export function buildEvents(tasks: Task[], siteRuns: SiteRun[]): PipelineEvent[]
     });
   }
   return events.sort((a, b) => a.ts.localeCompare(b.ts) || a.id - b.id);
+}
+
+const FETCH_EVENTS_PER_RUN = 10;
+
+/** Page fetches and accepted articles of one site run (the bulk of a job's event log). */
+function fetchEvents(run: SiteRun, firstId: number): PipelineEvent[] {
+  const started = run.started_at ?? jobStart;
+  const pages = run.stats.pages ?? 0;
+  const events: PipelineEvent[] = [];
+  for (let i = 0; i < FETCH_EVENTS_PER_RUN; i += 1) {
+    const page = i % 2 === 0;
+    const failed = pages > 0 && i === 7;
+    events.push({
+      id: firstId + i,
+      ts: addSeconds(started, 90 + i * 45),
+      job_id: MAIN_JOB_ID,
+      site_run_id: run.id,
+      task_id: null,
+      service: page ? "discovery" : "analysis",
+      event: pages === 0 ? "section_skipped" : page ? "page_fetched" : "article_accepted",
+      stage: pages === 0 ? "exploring" : "discovering",
+      url: `${run.seed_url}/${page ? "business/page" : "story"}/${i + 1}`,
+      status: failed ? "failed" : "ok",
+      error_category: failed ? "network_error" : null,
+      duration_ms: failed ? 30_000 : 420 + i * 37,
+      attrs: failed
+        ? { attempt: 2, reason: "connection reset by peer" }
+        : { bytes: 48_000 + i * 1_200, status_code: 200, links: page ? 24 + i : 0 },
+    });
+  }
+  return events;
 }

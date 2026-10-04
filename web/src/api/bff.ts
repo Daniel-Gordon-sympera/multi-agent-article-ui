@@ -2,7 +2,16 @@
  * Typed functions for every `/app/*` endpoint of the BFF (engineering contract §4.3–§4.4).
  * One function per endpoint; React Query hooks and mutations live in `features/*`.
  */
-import { apiDelete, apiGet, apiPatch, apiPost, apiPut, fetchJson, withQuery } from "@/api/client";
+import {
+  apiDelete,
+  apiGet,
+  apiPatch,
+  apiPost,
+  apiPut,
+  fetchJson,
+  fetchPage,
+  withQuery,
+} from "@/api/client";
 import type {
   AttentionItem,
   Batch,
@@ -38,7 +47,9 @@ import type {
   View,
   ViewInput,
 } from "@/api/types/bff";
-import type { PageParams } from "@/api/types/common";
+import type { JobsProgressMap } from "@/api/types/jobsProgress";
+import type { Page, PageParams } from "@/api/types/common";
+import type { JobRecord } from "@/api/types/jobs";
 
 type QueryRecord = Record<string, string | number | boolean | null | undefined>;
 const asQuery = (filters: object | undefined): QueryRecord => (filters ?? {}) as QueryRecord;
@@ -114,6 +125,11 @@ export function deleteScout(id: string): Promise<void> {
 
 export function runScout(id: string, input: RunScoutInput = {}): Promise<Batch> {
   return apiPost<Batch>(`/app/scouts/${encodeURIComponent(id)}/run`, input);
+}
+
+/** `GET /app/scouts/{id}/jobs` — the runs a Scout launched, newest first (`{items, next_cursor}`). */
+export function listScoutJobs(id: string, page: PageParams = {}): Promise<Page<JobRecord>> {
+  return fetchPage<JobRecord>(`/app/scouts/${encodeURIComponent(id)}/jobs`, page);
 }
 
 /* ---------------------------------------------------------------- batches */
@@ -269,6 +285,15 @@ export function crossJobSignalsExportUrl(filters: CrossJobSignalFilters = {}): s
 /** Proxied when capability `retry_dead` exists; else the BFF loops over the dead tasks. */
 export function retryDeadTasks(jobId: string): Promise<RetryDeadResult> {
   return apiPost<RetryDeadResult>(`/app/jobs/${encodeURIComponent(jobId)}/retry-dead`);
+}
+
+/** `GET /app/jobs/progress?job_ids=a,b,c` (≤ 50 ids) → status, progress, cost and sites per job. */
+export async function getJobsProgress(jobIds: readonly string[]): Promise<JobsProgressMap> {
+  if (jobIds.length === 0) return {};
+  const result = await apiGet<JobsProgressMap | null>(
+    withQuery("/app/jobs/progress", { job_ids: jobIds.join(",") }),
+  );
+  return result ?? {};
 }
 
 export function getEstimate(

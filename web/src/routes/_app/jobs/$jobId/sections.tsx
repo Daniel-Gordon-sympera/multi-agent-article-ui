@@ -1,17 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LaterPhaseNotice } from "@/features/placeholder/LaterPhaseNotice";
+import { SectionsTab } from "@/features/jobs/sections/SectionsTab";
+import { useTabHandlers } from "@/features/jobs/shared/useTabHandlers";
+import { sectionsTabSearchSchema, type SectionsTabSearch } from "@/features/jobs/tabSearchSchemas";
 
 function JobSectionsTab() {
-  return (
-    <section aria-labelledby="job-tab-sections-title" className="flex flex-col gap-4">
-      <h2 id="job-tab-sections-title" className="text-card-title text-ink">
-        Sections
-      </h2>
-      <LaterPhaseNotice screen="Kept and skipped sections per site" />
-    </section>
-  );
+  const { jobId } = Route.useParams();
+  const search = Route.useSearch();
+  const handlers = useTabHandlers<SectionsTabSearch>(Route.useNavigate());
+  return <SectionsTab jobId={jobId} search={search} {...handlers} />;
 }
 
 export const Route = createFileRoute("/_app/jobs/$jobId/sections")({
+  validateSearch: sectionsTabSearchSchema,
   component: JobSectionsTab,
 });

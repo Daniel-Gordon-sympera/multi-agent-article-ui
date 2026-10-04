@@ -27,7 +27,8 @@ export interface KeysetPageOptions<T> {
   /** URL-bound cursor (controlled mode). */
   after?: string | undefined;
   onAfterChange?: (after: string | undefined) => void;
-  polling?: PollKind;
+  /** A fixed cadence, or one decided from the loaded rows (`live` while any job runs). */
+  polling?: PollKind | ((items: T[]) => PollKind);
   enabled?: boolean;
   /** Total count when the BFF or a summary supplies one. */
   total?: number | null;
@@ -118,12 +119,19 @@ export function useKeysetPage<T>(
     [serialisedKey, stackKey],
   );
 
+  const pollingByRows = typeof polling === "function" ? polling : null;
   const query = useQuery({
     queryKey: [...queryKey, { after: after ?? null, limit }],
     queryFn: () => fetchPage({ limit, after: after ?? null }),
     placeholderData: keepPreviousData,
     enabled,
-    ...pollingOptions(polling, enabled),
+    ...pollingOptions(typeof polling === "function" ? "live" : polling, enabled),
+    ...(pollingByRows && enabled
+      ? {
+          refetchInterval: (current: { state: { data?: Page<T> } }) =>
+            pollingOptions(pollingByRows(current.state.data?.items ?? [])).refetchInterval,
+        }
+      : {}),
   });
 
   const nextCursor = query.data?.next_cursor ?? null;
