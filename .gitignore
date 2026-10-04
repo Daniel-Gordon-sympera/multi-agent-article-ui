@@ -39,3 +39,4 @@ coverage/
 *.log
 .import_linter_cache/
 web/.tanstack/
+.claude/
