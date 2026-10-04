@@ -307,75 +307,53 @@
         }
       }
     },
-    "/app/estimate": {
+    "/app/prefs": {
       "get": {
         "tags": [
-          "estimate"
+          "prefs"
         ],
-        "summary": "Estimate",
-        "description": "`{median_cost_usd, p90_cost_usd, samples, basis}` or `{samples: 0}`.",
-        "operationId": "estimate_app_estimate_get",
-        "parameters": [
-          {
-            "name": "kind",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "enum": [
-                "location_industry",
-                "seeds",
-                "url"
-              ],
-              "type": "string",
-              "default": "location_industry",
-              "title": "Kind"
-            }
-          },
-          {
-            "name": "sites",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "integer",
-                  "maximum": 1000,
-                  "minimum": 1
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Sites"
-            }
-          },
-          {
-            "name": "industry",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "maxLength": 200
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Industry"
-            }
-          }
-        ],
+        "summary": "Get Prefs",
+        "operationId": "get_prefs_app_prefs_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
-                  "title": "Response Estimate App Estimate Get"
+                  "type": "object",
+                  "title": "Response Get Prefs App Prefs Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "prefs"
+        ],
+        "summary": "Put Prefs",
+        "operationId": "put_prefs_app_prefs_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrefsPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Put Prefs App Prefs Put"
                 }
               }
             }
@@ -393,26 +371,94 @@
         }
       }
     },
-    "/app/jobs/progress": {
+    "/app/attention": {
       "get": {
         "tags": [
-          "jobs"
+          "attention"
         ],
-        "summary": "Jobs Progress",
-        "description": "`{[job_id]: {status, progress, cost_usd, sites_total, sites_done, duration_seconds}}`.",
-        "operationId": "jobs_progress_app_jobs_progress_get",
+        "summary": "Get Attention",
+        "operationId": "get_attention_app_attention_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Attention App Attention Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/system": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Get System",
+        "operationId": "get_system_app_system_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get System App System Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/system/queue": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Get Queue",
+        "operationId": "get_queue_app_system_queue_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Queue App System Queue Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/system/dead-by-category": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Get Dead By Category",
+        "operationId": "get_dead_by_category_app_system_dead_by_category_get",
         "parameters": [
           {
-            "name": "job_ids",
+            "name": "days",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string",
-              "description": "Comma-separated job ids (at most 50)",
-              "default": "",
-              "title": "Job Ids"
-            },
-            "description": "Comma-separated job ids (at most 50)"
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "default": 7,
+              "title": "Days"
+            }
           }
         ],
         "responses": {
@@ -423,7 +469,7 @@
                 "schema": {
                   "type": "object",
                   "additionalProperties": true,
-                  "title": "Response Jobs Progress App Jobs Progress Get"
+                  "title": "Response Get Dead By Category App System Dead By Category Get"
                 }
               }
             }
@@ -441,44 +487,68 @@
         }
       }
     },
-    "/app/jobs/{job_id}/retry-dead": {
-      "post": {
+    "/app/system/maintenance": {
+      "get": {
         "tags": [
-          "jobs"
+          "system"
         ],
-        "summary": "Retry Dead",
-        "description": "Re-queue every dead task of the job \u2192 `{retried, task_ids, skipped_task_ids}`.",
-        "operationId": "retry_dead_app_jobs__job_id__retry_dead_post",
-        "parameters": [
-          {
-            "name": "job_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Job Id"
-            }
-          }
-        ],
+        "summary": "Get Maintenance",
+        "operationId": "get_maintenance_app_system_maintenance_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "additionalProperties": true,
-                  "title": "Response Retry Dead App Jobs  Job Id  Retry Dead Post"
+                  "type": "object",
+                  "title": "Response Get Maintenance App System Maintenance Get"
                 }
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
+          }
+        }
+      }
+    },
+    "/app/overview": {
+      "get": {
+        "tags": [
+          "overview"
+        ],
+        "summary": "Get Overview",
+        "operationId": "get_overview_app_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Overview App Overview Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/overview/active-runs": {
+      "get": {
+        "tags": [
+          "overview"
+        ],
+        "summary": "Get Active Runs",
+        "operationId": "get_active_runs_app_overview_active_runs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Active Runs App Overview Active Runs Get"
                 }
               }
             }
@@ -828,6 +898,76 @@
           "new_password"
         ],
         "title": "PasswordChangeRequest"
+      },
+      "PrefsPatch": {
+        "properties": {
+          "theme": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "system",
+                  "light",
+                  "dark"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Theme"
+          },
+          "density": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "comfortable",
+                  "compact"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Density"
+          },
+          "time_display": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "utc",
+                  "local"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Display"
+          },
+          "landing": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "/",
+                  "/jobs",
+                  "/signals"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Landing"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PrefsPatch",
+        "description": "Body of PUT /app/prefs: every field optional, unknown fields rejected."
       },
       "ResetPasswordRequest": {
         "properties": {

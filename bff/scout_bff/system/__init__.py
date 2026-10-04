@@ -1,1 +1,1 @@
-"""Aggregate `system`: filled by feature agent A7 (attention, system, prefs); routes: GET /app/system (contract §4.3)."""
+"""Aggregate `system` (B4): GET /app/system, /app/system/{queue,dead-by-category,maintenance}."""

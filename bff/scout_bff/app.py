@@ -25,6 +25,7 @@ from scout_bff.errors import install_error_handlers, problem_response
 from scout_bff.estimate import router as estimate_router
 from scout_bff.jobs import router as jobs_router
 from scout_bff.logging import RequestLoggingMiddleware, configure_logging, get_logger
+from scout_bff.overview import router as overview_router
 from scout_bff.pipeline_client import PipelineClient, PipelineError
 from scout_bff.prefs import router as prefs_router
 from scout_bff.proxy import router as proxy_router
@@ -57,6 +58,7 @@ APP_ROUTERS = (
     prefs_router.router,
     attention_router.router,
     system_router.router,
+    overview_router.router,
     signals_router.router,
     estimate_router.router,
     jobs_router.router,

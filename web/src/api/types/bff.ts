@@ -13,6 +13,7 @@ export interface User {
   must_change_password: boolean;
   created_at: IsoDateTime;
   disabled?: boolean;
+  disabled_at?: IsoDateTime | null; // set by the BFF; the mock spells it `disabled`
   last_login_at?: IsoDateTime | null;
 }
 
@@ -339,7 +340,7 @@ export interface AttentionItem {
 /* --------------------------------------------------------------- system */
 
 export interface SystemInfo {
-  bff: { version: string; migrations_head: string | null; started_at: IsoDateTime };
+  bff: { version: string; migrations_head: string | null; started_at: IsoDateTime | null };
   pipeline: {
     url_host: string;
     ready: boolean;
@@ -348,7 +349,9 @@ export interface SystemInfo {
     prompt_version?: string | null;
   };
   capabilities: Capabilities;
+  capabilities_probed_at?: IsoDateTime | null;
   model_prices: null | Array<Record<string, unknown>>;
+  notes?: string[]; // what the pipeline API does not expose yet
 }
 
 /* -------------------------------------------------------------- signals */
