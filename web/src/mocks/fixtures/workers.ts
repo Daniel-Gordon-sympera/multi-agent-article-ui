@@ -1,7 +1,13 @@
-/** The 8 workers of mockup-spec §4.7 and 14 days of daily stats (§4.8 shapes). */
-import type { DailyStats } from "@/api/types/stats";
+/**
+ * The 8 workers of mockup-spec §4.7 (analysis-2 with a slow heartbeat). `heartbeat_age_seconds`
+ * is the seed; the `/v1/workers` handler re-bases `last_seen` on every request so the ages stay
+ * true however long the mock session runs. Daily stats moved to `./stats` (re-exported here so
+ * `db.ts` keeps its import).
+ */
 import type { Worker } from "@/api/types/workers";
-import { dateDaysAgo, daysAgo, minutesAgo, secondsAgo } from "./clock";
+import { daysAgo, minutesAgo, secondsAgo } from "./clock";
+
+export { buildDailyStatsFixtures } from "./stats";
 
 interface WorkerSeed {
   instance: string;
@@ -11,6 +17,8 @@ interface WorkerSeed {
   tasks: number[];
   proxy: boolean | null;
 }
+
+export const SLOW_WORKER_ID = "analysis-2";
 
 const seeds: WorkerSeed[] = [
   {
@@ -70,7 +78,7 @@ const seeds: WorkerSeed[] = [
     proxy: null,
   },
   {
-    instance: "analysis-2",
+    instance: SLOW_WORKER_ID,
     role: "analysis",
     startedAt: daysAgo(1, 22, 10),
     heartbeatAge: 47,
@@ -97,45 +105,13 @@ export function buildWorkerFixtures(): Worker[] {
   }));
 }
 
-/** Deterministic pseudo-random in [0, 1) from a seed (no Math.random so snapshots stay stable). */
-function noise(seed: number): number {
-  const x = Math.sin(seed * 12.9898) * 43758.5453;
-  return x - Math.floor(x);
-}
-
-/** Signals per day follow the mockup sparkline shape (rising towards today). */
-const SIGNAL_SHAPE = [7, 9, 8, 11, 10, 14, 12, 16, 11, 15, 19, 22, 24, 18];
-
-export function buildDailyStatsFixtures(days = 14): DailyStats[] {
-  const rows: DailyStats[] = [];
-  for (let i = days - 1; i >= 0; i -= 1) {
-    const n = noise(i + 1);
-    const signals = SIGNAL_SHAPE[days - 1 - i] ?? 12;
-    const articles = Math.round(signals * 2.4 + n * 6);
-    const inputTokens = Math.round(articles * 23_000 + n * 50_000);
-    const outputTokens = Math.round(inputTokens * 0.19);
-    const cost = Number((inputTokens / 1e6) * 1.1 + (outputTokens / 1e6) * 4.4).toFixed(2);
-    rows.push({
-      day: dateDaysAgo(i),
-      jobs: 2 + Math.round(n * 3),
-      site_runs: 8 + Math.round(n * 10),
-      articles,
-      companies: Math.round(articles * 3.2),
-      signals,
-      input_tokens: inputTokens,
-      output_tokens: outputTokens,
-      cost_usd: Number(cost),
-      known_cost_usd: Number(cost),
-      unpriced_calls: 0,
-      unknown_usage_calls: 0,
-      cost_complete: true,
-      failures:
-        i % 4 === 0
-          ? { model_rate_limited: 1 }
-          : i % 5 === 0
-            ? { saved_content_unavailable: 1, task_timeout: 1 }
-            : {},
-    });
-  }
-  return rows;
+/** A worker row as the API would serve it right now: `last_seen` = now − heartbeat age. */
+export function liveWorkerRow(worker: Worker, now = new Date()): Worker {
+  const age = worker.heartbeat_age_seconds;
+  return {
+    ...worker,
+    last_seen: new Date(now.getTime() - age * 1000).toISOString(),
+    live: age < 180,
+    running_tasks: worker.current_tasks.length,
+  };
 }

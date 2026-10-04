@@ -4,6 +4,7 @@
  */
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut, fetchJson, withQuery } from "@/api/client";
 import type {
+  ActiveRun,
   AttentionItem,
   Batch,
   BatchInput,
@@ -14,12 +15,16 @@ import type {
   CreateUserInput,
   CrossJobSignalFilters,
   CrossJobSignalsPage,
+  DeadByCategory,
   DismissSuggestionInput,
   Estimate,
   LoginInput,
+  MaintenanceSchedule,
   Me,
+  OverviewSummary,
   Prefs,
   PromoteSuggestionInput,
+  QueueSummary,
   RetryDeadResult,
   RunScoutInput,
   Scout,
@@ -228,10 +233,33 @@ export async function listAttention(): Promise<AttentionItem[]> {
   return result.items ?? [];
 }
 
+/* --------------------------------------------------------------- overview */
+
+export function getOverview(): Promise<OverviewSummary> {
+  return apiGet<OverviewSummary>("/app/overview");
+}
+
+export async function listActiveRuns(): Promise<ActiveRun[]> {
+  const result = await apiGet<{ items?: ActiveRun[] }>("/app/overview/active-runs");
+  return result.items ?? [];
+}
+
 /* ----------------------------------------------------------------- system */
 
 export function getSystem(): Promise<SystemInfo> {
   return apiGet<SystemInfo>("/app/system");
+}
+
+export function getQueueSummary(): Promise<QueueSummary> {
+  return apiGet<QueueSummary>("/app/system/queue");
+}
+
+export function getDeadByCategory(days = 7): Promise<DeadByCategory> {
+  return apiGet<DeadByCategory>(withQuery("/app/system/dead-by-category", { days }));
+}
+
+export function getMaintenanceSchedule(): Promise<MaintenanceSchedule> {
+  return apiGet<MaintenanceSchedule>("/app/system/maintenance");
 }
 
 export function getBffReadiness(): Promise<BffReadiness> {
