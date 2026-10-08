@@ -1251,6 +1251,12 @@ export interface components {
                  * @default 30
                  */
                 days: number;
+                /** Discovery Idle Seconds */
+                discovery_idle_seconds?: number | null;
+                /** Discovery Min Seconds */
+                discovery_min_seconds?: number | null;
+                /** Discovery Priority Grace Seconds */
+                discovery_priority_grace_seconds?: number | null;
                 /**
                  * Discovery Unlocker Max Requests Per Site
                  * @default 100
@@ -1287,6 +1293,11 @@ export interface components {
                  * @default 180
                  */
                 hard_retrieval_timeout_seconds: number;
+                /**
+                 * Max Candidate Sources
+                 * @description Maximum distinct source candidates, including cached accepts.
+                 */
+                max_candidate_sources?: number | null;
                 /**
                  * Max Parallel Sites
                  * @default 2
@@ -1929,6 +1940,12 @@ export interface components {
              * @default 30
              */
             days: number;
+            /** Discovery Idle Seconds */
+            discovery_idle_seconds?: number | null;
+            /** Discovery Min Seconds */
+            discovery_min_seconds?: number | null;
+            /** Discovery Priority Grace Seconds */
+            discovery_priority_grace_seconds?: number | null;
             /**
              * Discovery Unlocker Max Requests Per Site
              * @default 100
@@ -1965,6 +1982,11 @@ export interface components {
              * @default 180
              */
             hard_retrieval_timeout_seconds: number;
+            /**
+             * Max Candidate Sources
+             * @description Maximum distinct source candidates, including cached accepts.
+             */
+            max_candidate_sources?: number | null;
             /**
              * Max Parallel Sites
              * @default 2

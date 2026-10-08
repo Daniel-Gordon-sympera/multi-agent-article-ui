@@ -30401,6 +30401,55 @@
                 ],
                 "title": "Max Sites"
               },
+              "max_candidate_sources": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "exclusiveMinimum": 0.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Max Candidate Sources",
+                "description": "Maximum distinct source candidates, including cached accepts."
+              },
+              "discovery_min_seconds": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Discovery Min Seconds"
+              },
+              "discovery_idle_seconds": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "exclusiveMinimum": 0.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Discovery Idle Seconds"
+              },
+              "discovery_priority_grace_seconds": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Discovery Priority Grace Seconds"
+              },
               "prompt_version": {
                 "type": "string",
                 "title": "Prompt Version",
@@ -32523,6 +32572,55 @@
               }
             ],
             "title": "Max Sites"
+          },
+          "max_candidate_sources": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Candidate Sources",
+            "description": "Maximum distinct source candidates, including cached accepts."
+          },
+          "discovery_min_seconds": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discovery Min Seconds"
+          },
+          "discovery_idle_seconds": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discovery Idle Seconds"
+          },
+          "discovery_priority_grace_seconds": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discovery Priority Grace Seconds"
           },
           "prompt_version": {
             "type": "string",
