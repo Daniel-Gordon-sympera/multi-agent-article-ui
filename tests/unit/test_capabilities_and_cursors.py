@@ -62,11 +62,12 @@ def _client(stub: PipelineStub) -> PipelineClient:
 
 async def test_cache_probe_reads_version_and_readiness():
     stub = PipelineStub()
+    stub.openapi["info"]["version"] = "9.8.7"
     cache = CapabilityCache(_client(stub), refresh_seconds=300)
     assert cache.probe_error == "not probed yet"
     await cache.probe()
     assert cache.probe_error is None
-    assert cache.pipeline_api_version == "1.0.0"
+    assert cache.pipeline_api_version == "9.8.7"
     assert all(cache.capabilities.values())
     assert cache.compatible and cache.keys_valid
     assert cache.api_ready is True

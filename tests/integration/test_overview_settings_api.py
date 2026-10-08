@@ -245,7 +245,7 @@ async def test_system_info(operator_client, pipeline, app):
         "contract": True,
         "keys": True,
     }
-    assert pipeline_info["version"] == "1.0.0"
+    assert pipeline_info["version"] == pipeline.openapi["info"]["version"]
     assert pipeline_info["prompt_version"] == "2026.10"
     assert body["capabilities"]["tasks_global"] is True
     assert body["capabilities"]["probe_error"] is None
