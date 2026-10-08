@@ -107,7 +107,7 @@ bff/scout_bff/
   scouts/ · batches/ · sources/ · views/ · prefs/ · attention/ · system/ · signals/ · estimate/ · jobs/
                          one package per aggregate: router.py (+ repository.py / service.py when needed)
   static/                built SPA (Docker only; git-ignored)
-  version.py             __version__ = "0.1.0"
+  version.py             __version__ = "2.1.0"
 tests/
   conftest.py            app factory with a stub pipeline API (respx), a test database (UI_TEST_DATABASE_URL), helpers to sign in
   unit/ · integration/ · proxy/

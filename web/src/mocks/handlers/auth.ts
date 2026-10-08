@@ -1,3 +1,4 @@
+import packageMetadata from "../../../package.json";
 /** `/app/auth/*`, `/app/prefs`, `/app/capabilities`, `/app/users*` (contract §4.2–§4.3). */
 import { http, HttpResponse } from "msw";
 import type {
@@ -16,7 +17,7 @@ import { readJson } from "@/mocks/lib/paging";
 import { notFound, problem } from "@/mocks/lib/problem";
 import { currentSession, guard } from "@/mocks/lib/session";
 
-export const BFF_VERSION = "0.1.0";
+export const BFF_VERSION = packageMetadata.version;
 export const PIPELINE_VERSION = "v2.1.0";
 
 function publicUser(user: MockUser): User {

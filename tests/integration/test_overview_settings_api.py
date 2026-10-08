@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from sqlalchemy import text
 
+from scout_bff.version import __version__
 from tests.conftest import fetch_all
 from tests.pipeline_fixtures import (
     DEAD_TASK_ID,
@@ -231,7 +232,7 @@ async def test_system_info(operator_client, pipeline, app):
     response = await operator_client.get("/app/system")
     assert response.status_code == 200, response.text
     body = response.json()
-    assert body["bff"]["version"] == "0.1.0"
+    assert body["bff"]["version"] == __version__
     assert body["bff"]["migrations_head"] == "0001_ui_schema"
     assert body["bff"]["started_at"]
     pipeline_info = body["pipeline"]

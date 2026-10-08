@@ -1,6 +1,6 @@
 [project]
 name = "scout-bff"
-version = "0.1.0"
+version = "2.1.0"
 description = "Sympera Scout BFF: sessions, UI-owned aggregates and the /v1 reverse proxy."
 requires-python = ">=3.12"
 dependencies = [

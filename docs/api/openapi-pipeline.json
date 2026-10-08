@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Sympera Article Pipeline",
-    "version": "1.0.0"
+    "version": "2.1.0"
   },
   "paths": {
     "/v1/jobs": {

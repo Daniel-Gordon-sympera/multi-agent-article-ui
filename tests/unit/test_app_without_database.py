@@ -10,6 +10,7 @@ from scout_bff.app import LazyApplication, create_app
 from scout_bff.openapi import openapi_document
 from scout_bff.security import CONTENT_SECURITY_POLICY
 from scout_bff.settings import placeholder_settings
+from scout_bff.version import __version__
 from tests.pipeline_fixtures import OPERATOR_KEY, PIPELINE_URL, READER_KEY
 from tests.pipeline_stub import PipelineStub
 
@@ -168,7 +169,7 @@ async def test_app_without_static_folder_returns_404_problem(tmp_path):
 def test_openapi_export_lists_core_routes_and_proxy():
     document = openapi_document()
     paths = document["paths"]
-    assert document["info"] == {"title": "Sympera Scout BFF", "version": "0.1.0"}
+    assert document["info"] == {"title": "Sympera Scout BFF", "version": __version__}
     for path in (
         "/app/auth/login",
         "/app/auth/logout",

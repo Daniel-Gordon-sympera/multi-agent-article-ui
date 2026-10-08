@@ -8,6 +8,7 @@ import structlog
 
 from scout_bff.logging import configure_logging, redact, register_secret
 from scout_bff.settings import Settings, placeholder_settings
+from scout_bff.version import __version__
 
 
 def test_redact_replaces_registered_secrets_everywhere():
@@ -66,7 +67,7 @@ def test_configured_logging_never_prints_settings_secrets(monkeypatch):
         "db-password-SECRET-4",
     ):
         assert secret not in output, output
-    assert '"service": "ui"' in output and '"version": "0.1.0"' in output
+    assert '"service": "ui"' in output and f'"version": "{__version__}"' in output
 
 
 def test_settings_read_exact_variable_names(monkeypatch):

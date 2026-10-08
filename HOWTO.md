@@ -477,7 +477,7 @@ See section 3.
 
 ```bash
 git -C ../multi-agent-articles-ui pull            # or checkout the release tag
-# optional: UI_IMAGE_TAG=0.1.0 in .env.platform to name the image after the release
+# optional: UI_IMAGE_TAG=2.1.0 in .env.platform to name the image after the release
 dcu build ui                                      # one image for ui and ui_migrate
 dcu up -d ui_migrate ui                           # applies new migrations, restarts the BFF
 dcu logs --since 2m ui_migrate ui
