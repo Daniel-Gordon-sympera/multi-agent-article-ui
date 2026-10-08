@@ -24,6 +24,7 @@ export interface SummaryCardProps {
   promptVersion: string | null | undefined;
   estimate: Estimate | undefined;
   estimateLoading: boolean;
+  estimateFailed?: boolean;
   /** Editing a saved Scout (`?scout=`). */
   scoutId?: string;
   dirty: boolean;
@@ -38,6 +39,7 @@ export function SummaryCard({
   promptVersion,
   estimate,
   estimateLoading,
+  estimateFailed = false,
   scoutId,
   dirty,
   pending,
@@ -75,10 +77,15 @@ export function SummaryCard({
           { label: "Jobs to create", value: String(legs) },
           { label: "Sources", value: sourcesText },
           { label: "Prompt version", value: promptVersion ?? "—", mono: true },
-          { label: "Estimated cost", value: estimateText(estimate, estimateLoading) },
+          {
+            label: "Estimated cost",
+            value: estimateText(estimate, estimateLoading, estimateFailed),
+          },
         ]}
       />
-      <p className="text-[12px] text-muted">{estimateFootnote(estimate)}</p>
+      <p className="text-[12px] text-muted">
+        {estimateFootnote(estimate, estimateLoading, estimateFailed)}
+      </p>
       <div className="border-t border-border" />
       {scoutId ? (
         <FormField id="new-run-scout-name" label="Scout name" error={scoutNameError}>

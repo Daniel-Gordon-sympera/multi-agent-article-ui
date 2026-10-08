@@ -104,7 +104,13 @@ export function sourceColumns({
         return (
           <div className="flex flex-col gap-1">
             {precision.ratio === null ? (
-              <span className="text-muted">Unavailable: incomplete candidate history</span>
+              <span className="text-muted">
+                {!precision.complete
+                  ? "Unavailable: incomplete candidate history"
+                  : precision.candidates === 0
+                    ? "Unavailable: no candidates recorded"
+                    : "Unavailable"}
+              </span>
             ) : (
               <Meter
                 value={precision.ratio ?? 0}

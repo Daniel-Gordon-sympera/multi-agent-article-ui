@@ -11,6 +11,16 @@ const noEstimate: Estimate = {
 };
 
 describe("cost estimate coverage", () => {
+  it("does not report missing history while loading or after an API failure", () => {
+    expect(estimateFootnote(undefined, true)).toBe("Loading the cost estimate…");
+    expect(estimateFootnote(undefined)).toBe("Estimate unavailable.");
+    expect(estimateFootnote(undefined, false, true)).toContain("Estimate unavailable");
+    expect(estimateFootnote(noEstimate, false, true)).not.toContain("No completed run");
+    const cached = { ...noEstimate, samples: 3, median_cost_usd: 2, p90_cost_usd: 4 };
+    expect(estimateText(cached, false, true)).toBe("—");
+    expect(estimateFootnote(cached, false, true)).toContain("Estimate unavailable");
+  });
+
   it("distinguishes missing history from incomplete recorded costs", () => {
     expect(estimateFootnote(noEstimate)).toContain("No completed run");
     const incomplete = { ...noEstimate, excluded_incomplete_jobs: 2 };

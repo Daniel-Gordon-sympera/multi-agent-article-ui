@@ -173,7 +173,7 @@ it does not call external websites or models.
 
 ## What was verified
 
-On the integration branch: Node 22 `pnpm check` passes 103 tests and `pnpm build` passes.
+On the integration branch: Node 22 `pnpm check` passes 105 tests and `pnpm build` passes.
 The combined acceptance and Docker verification results are recorded with the integration hand-back.
 
 Historical baseline:

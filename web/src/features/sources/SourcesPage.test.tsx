@@ -11,6 +11,23 @@ import { originLine, relativeDayLabel } from "./sourcePresentation";
 installJsdomBlobMethods();
 
 describe("/sources", () => {
+  it("distinguishes complete zero-candidate measurements from incomplete history", async () => {
+    const sources = db.sources.filter((source) => source.status === "active").slice(0, 2);
+    const first = sources[0]!;
+    const second = sources[1]!;
+    const measurement = { accepted: 0, candidates: 0, ratio: null, job_id: null, at: null };
+    first.precision = { ...measurement, complete: true };
+    second.precision = { ...measurement, candidates: null, complete: false };
+    signInMockUser("viewer@sympera.ai");
+    await renderApp({ initialEntries: ["/sources"] });
+    const table = await screen.findByRole("table", { name: "Data sources" });
+    const firstRow = await within(table).findByRole("row", { name: new RegExp(first.name) });
+    const secondRow = within(table).getByRole("row", { name: new RegExp(second.name) });
+    expect(firstRow).toHaveTextContent("Unavailable: no candidates recorded");
+    expect(firstRow).not.toHaveTextContent("incomplete candidate history");
+    expect(secondRow).toHaveTextContent("Unavailable: incomplete candidate history");
+  });
+
   it("renders the tiles, the active sources and the finder suggestions", async () => {
     signInMockUser("admin@sympera.ai");
     await renderApp({ initialEntries: ["/sources"] });

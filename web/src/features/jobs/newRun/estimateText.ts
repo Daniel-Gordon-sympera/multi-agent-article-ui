@@ -20,19 +20,32 @@ export function knownEstimate(estimate: Estimate | undefined): KnownEstimate | n
 }
 
 /** "≈ $3.12 per job" · "—" (no samples) · "…" while loading. */
-export function estimateText(estimate: Estimate | undefined, loading: boolean): string {
+export function estimateText(
+  estimate: Estimate | undefined,
+  loading: boolean,
+  failed = false,
+): string {
+  if (failed) return "—";
   if (loading && !estimate) return "…";
   const known = knownEstimate(estimate);
   return known ? `≈ ${formatMoney(known.median_cost_usd)} per job` : "—";
 }
 
-export function estimateFootnote(raw: Estimate | undefined): string {
+export function estimateFootnote(
+  raw: Estimate | undefined,
+  loading = false,
+  failed = false,
+): string {
+  if (failed) return "Estimate unavailable. Try again when the pipeline API is available.";
+  if (!raw) return loading ? "Loading the cost estimate…" : "Estimate unavailable.";
   const estimate = knownEstimate(raw);
   if (!estimate) {
     if (raw?.excluded_incomplete_jobs) {
       return `Estimate unavailable: ${pluralize(raw.excluded_incomplete_jobs, "matching completed job")} had incomplete recorded model costs.`;
     }
-    return "No completed run with these settings yet — the first one sets the estimate.";
+    return raw.samples === 0
+      ? "No completed run with these settings yet — the first one sets the estimate."
+      : "Estimate unavailable: recorded model costs are incomplete.";
   }
   const runs = pluralize(estimate.samples, "completed run");
   const p90 = `p90 ${formatMoney(estimate.p90_cost_usd)}`;

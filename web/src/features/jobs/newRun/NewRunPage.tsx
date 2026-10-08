@@ -169,6 +169,7 @@ function NewRunForm({ initial, scoutId }: { initial: NewRunValues; scoutId?: str
             promptVersion={promptVersion.data}
             estimate={estimate.data}
             estimateLoading={estimate.isPending}
+            estimateFailed={estimate.isError}
             scoutId={scoutId}
             dirty={form.formState.isDirty}
             pending={submit.pending}
