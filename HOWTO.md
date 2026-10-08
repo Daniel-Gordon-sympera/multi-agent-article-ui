@@ -6,18 +6,18 @@ hosts the pipeline, from the **pipeline repository** (the folder with its
 `../multi-agent-articles-ui`. To keep the lines short:
 
 ```bash
-alias dcu='docker compose -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml'
+alias dcu='docker compose --env-file .env.platform -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml'
 ```
 
 Button, tab and field names below are written as they appear in the console.
 
 ## 1. Install and first run (Docker)
 
-1. Make sure the pipeline itself runs: `docker compose up -d` in the pipeline repo and
+1. Make sure the pipeline itself runs: `docker compose --env-file .env.platform up -d` in the pipeline repo and
    `curl --fail http://127.0.0.1:8000/readyz` answers `{"status":"ready",…}`.
 2. Create the two pipeline API keys for the console (section 2).
-3. Append the UI variables to the pipeline's `.env`. Copy the uncommented lines of
-   [`.env.ui.example`](.env.ui.example) and fill them:
+3. Append the UI variables to the pipeline's `.env.platform`. Copy the uncommented lines of
+   [the shared backend template](../multi-agent-article/.env.platform.example) and fill them:
 
    ```bash
    UI_DATABASE_PASSWORD=$(openssl rand -hex 24)
@@ -26,25 +26,22 @@ Button, tab and field names below are written as they appear in the console.
    SESSION_SECRET=$(openssl rand -hex 32)
    UI_BOOTSTRAP_ADMIN_EMAIL=you@sympera.ai
    UI_BOOTSTRAP_ADMIN_PASSWORD=<temporary password, at least 12 characters>
-   UI_DOMAIN=scout.localhost                 # or scout.<your-domain> pointing at this machine
+   UI_SECURE_COOKIES=false
+   UI_PUBLIC_URL=http://localhost:8080
    ```
 
-4. Decide how Caddy serves the UI host — option A: add `import /etc/caddy/Caddyfile.ui`
-   to the pipeline's `deploy/Caddyfile`; option B: uncomment the
-   `deploy/Caddyfile:/etc/caddy/Caddyfile:ro` line in `compose.ui.yaml` (details in
-   `README.md` › Quick start, step 3). Skipping this step still gives you
-   `http://127.0.0.1:8080`.
+4. Set `UI_SECURE_COOKIES=false` and `UI_PUBLIC_URL=http://localhost:8080` for
+   local HTTP. Caddy is optional; no Caddy change is required.
 5. Validate, build and start:
 
    ```bash
-   dcu config --quiet                         # no output = the merged project is valid
-   dcu up -d --build                          # builds scout-ui:local, runs ui_migrate, starts ui
-   dcu ps                                     # ui_migrate "Exited (0)", ui "healthy"
-   curl --fail http://127.0.0.1:8080/readyz   # {"status":"ready","checks":{"database":…,"migrations":…,"pipeline_api":…}}
+   dcu config --quiet
+   dcu up -d --build
+   dcu ps
+   curl --fail http://localhost:8080/readyz
    ```
 
-6. Open `https://scout.localhost` (accept the Caddy-internal certificate for a
-   `*.localhost` name) or `http://127.0.0.1:8080` and continue with section 3.
+6. Open `http://localhost:8080` and continue with section 3.
 
 If `ui_migrate` exits non-zero, read `dcu logs ui_migrate`: the usual causes are a
 missing `UI_DATABASE_PASSWORD`, a `POSTGRES_PASSWORD` that does not match the running
@@ -55,11 +52,11 @@ database, or the pipeline's own `migrate` service not having completed.
 The console never holds a key in the browser. The BFF uses two pipeline keys chosen by
 the signed-in user's role: `admin` and `operator` users act with the **operator** key,
 `viewer` users with the **reader** key. Create both once with the pipeline's bootstrap
-key (`API_BOOTSTRAP_KEY` in the pipeline's `.env`; see the pipeline README, "Platform
+key (`API_BOOTSTRAP_KEY` in the pipeline's `.env.platform`; see the pipeline README, "Platform
 operation › Start and inspect"):
 
 ```bash
-export API_BOOTSTRAP_KEY=…   # from the pipeline's .env
+export API_BOOTSTRAP_KEY=…   # from the pipeline's .env.platform
 curl -sS -X POST http://127.0.0.1:8000/v1/api-keys \
      -H "X-API-Key: $API_BOOTSTRAP_KEY" -H "Content-Type: application/json" \
      -d '{"name": "scout-ui-operator", "role": "operator"}'
@@ -83,7 +80,7 @@ Rotation is in section 11.
    password** (at least 12 characters) and **Repeat new password**, then **Change
    password**. Until you do, every other page answers `403 password_change_required`.
    Later password changes: account menu (sidebar footer) › **Change password**.
-2. Remove `UI_BOOTSTRAP_ADMIN_PASSWORD` from `.env` (it is only read while `ui.users`
+2. Remove `UI_BOOTSTRAP_ADMIN_PASSWORD` from `.env.platform` (it is only read while `ui.users`
    is empty).
 3. Add colleagues under **Settings › Users** (`/settings/users`, the tab appears for
    admins only): **Create user** → **E-mail**, **Name**, **Role** and **Temporary
@@ -141,8 +138,8 @@ do not see the button). One form covers the three job kinds of the pipeline API:
 4. The sticky **Summary** shows the resolved **Kind**, **County · State**, **Jobs to
    create**, **Sources**, the **Prompt version** the API stamps on new jobs (that of the
    most recent job) and the **Estimated cost** per job (`GET /app/estimate`: the
-   pipeline's figure when it has one, otherwise the median of the last 10 completed runs
-   of the same kind and industry; "—" until a run of that kind has completed).
+   median recorded model cost of comparable completed jobs, with a p90 figure and
+   excluded-incomplete-job count; "—" when there are no complete samples).
 5. Tick **Save as Scout** and give it a **Scout name** to keep the setup for later runs
    (section 7); **Save Scout without running** stores it without creating jobs.
 6. Press **Create N jobs**. Each leg is one `POST /v1/jobs`; a toast confirms "Created N
@@ -167,9 +164,9 @@ the form with *Save as Scout* already ticked.
 every 30 s otherwise. The toolbar filters by **Status**, **State**, **County**,
 **Industry** and **Created** (defaults to *Last 7 days*; *Custom range* opens **Created
 from** / **Created until** — leave both empty to list every run), the search box narrows
-the loaded page by county, industry, domain or id, and **Export CSV** downloads the
-loaded page. The industry filter runs in the browser until the pipeline API gains the
-`industry` filter (B3; the select says so). `?scout=<id>` shows the runs of one Scout.
+all matching jobs by county, industry, domain or id before pagination. Status
+**Running** means finding, exploring, discovering, analysing or finalizing. **Export
+CSV** downloads the loaded Runs page. `?scout=<id>` shows one Scout's complete history.
 
 Open a run to reach the **Job › Overview**: the **Pipeline progress** card shows the five
 stages (Finding → Finalizing) with their durations and facts, the counters (seeds,
@@ -256,8 +253,7 @@ settings overrides — that you run again and again from **Jobs › Scouts**
    state answers `422 no_active_sources`: add or restore a source first (section 8).
 
 From a script, the same calls are `POST /app/scouts` (`ScoutInput`),
-`POST /app/scouts/{id}/run`, `GET /app/scouts/{id}/jobs` (the jobs of the last 10
-batches, newest first) and `POST /app/batches` for a one-off fan-out without a Scout;
+`POST /app/scouts/{id}/run`, `GET /app/scouts/{id}/jobs` (all matching Scout jobs, newest first) and `POST /app/batches` for a one-off fan-out without a Scout;
 every call needs the session cookie plus `X-Requested-With: scout` and `X-CSRF-Token`.
 
 ## 8. Data Sources
@@ -266,8 +262,7 @@ every call needs the session cookie plus `X-Requested-With: scout` and `X-CSRF-T
 state. Seed runs (New run › *Seeds from Data Sources*, seed Scouts, the row's ⋯ › **Run a
 seed job**) explore exactly these sites; the finder never needs them but keeps
 suggesting new ones. Operators and admins curate; viewers read and export. The tiles
-at the top count **Active sources**, **Promoted from the finder**, **Median precision ·
-last run** and **Removed**.
+at the top count **Active sources**, **Promoted from the finder**, **Median article acceptance rate** and **Removed**.
 
 1. **Add a site.** **Add source** → **Name**, **URL** (`https://` is added when missing;
    the domain is the host without `www.`), **County** (with or without the word
@@ -304,12 +299,13 @@ last run** and **Removed**.
 4. **Remove and restore.** **Remove** (confirm "Remove <name>?" → **Remove**) is a soft
    delete: the row keeps its history under **Status** `removed` (or `all`) and
    **Restore** brings it back. Removed sources are never seeded.
-5. **Precision.** **Precision · last run** (accepted articles ÷ candidate links of the
-   latest job that used the site) and the **Median precision · last run** tile need the
-   pipeline's `GET /v1/sources/stats` (PR B2). Until it is deployed the column shows "—"
-   with the note "needs pipeline API update (B2)"; everything else works.
+5. **Article acceptance rate.** Accepted articles divided by measured candidates
+   across the site's runs in the last 30 days. If any included run has incomplete
+   candidate history, the rate shows "Unavailable";
+   it is not treated as zero. This is a retrieval measure, not signal accuracy.
+   The median tile uses only complete measurements.
 6. **Export.** **Export CSV** downloads the rows currently listed (filters applied) with
-   their industries, origin, finder facts and precision.
+   their industries, origin, finder facts and acceptance measurements.
 
 Scripts use `GET /app/sources?county=&state=&industry=&origin=&status=active|removed|all&q=`,
 `POST /app/sources`, `PATCH`/`DELETE /app/sources/{id}`, `POST /app/sources/{id}/restore`,
@@ -367,13 +363,13 @@ that run's table straight from the pipeline API.
 3. **Manage views…** (last entry of the select) renames, shares/unshares and deletes views.
    Only the owner (or an admin) can change a view; shared views are read-only for others.
 
-**Until the pipeline's cross-job read (B1) is deployed** the console shows the banner
-"Showing signals from N most recent matching jobs — the cross-job read (B1) is not
-deployed yet": the explorer merges the signals of the 20 most recent runs that match
-the state, county, job industry, job or batch filters (30 s cache; a run with more than
-1,000 signals is cut at 1,000 and flagged). Older runs stay reachable through their own
-Signals tab or by filtering on their job id. Once `GET /v1/signals` exists the banner
-disappears on the next capability probe (`GET /app/capabilities`) without a redeploy.
+The explorer reads every matching job from the global pipeline API. List, summary
+counts and CSV use the same filters; CSV includes all matching rows. Each row is one
+signal mention within one job. A reused mention may therefore appear under several
+jobs. Copied links include `detail=<mention_id>&detail_job=<job_id>` and load the exact
+row even when it is outside the current page. Company profiles use the job's state
+and access scope. Month-only publication dates show a month and year, without an
+invented day; date filters include any matching part of that month.
 
 ## 10. Settings
 
@@ -385,7 +381,7 @@ exposed by the API" rather than invented.
 
 **Overview first.** The home page (`/`) shows four tiles — **Running jobs** (with queued /
 finalizing counts and the number of Scouts behind them), **Signals · last 7 days** with
-the delta against the previous 7 days, **Model + proxy cost · today** with the delta
+the delta against the previous 7 days, **Recorded model cost · today** with the delta
 against yesterday ("—" plus a warning when a call lacked pricing), and **Dead tasks**
 with the number new since yesterday — then **Active runs** (link to each job, batch tag,
 stages, sites, signals, cost), **Recent signals** (the five newest; each opens the
@@ -402,14 +398,12 @@ everything at once.
    **Create key**.
 2. The dialog "Key created" shows the plaintext **once**: copy it with the copy button
    and store it before clicking **I stored it**. It is never shown again and never
-   stored in the browser (only the name, role and creation time are remembered in this
-   browser's local storage).
+   stored in browser storage.
 3. **Revoke** (any key, by name) → "Revoke key <name>?" → **Revoke key**. Clients using
    the key lose access at once.
-4. The table lists every key once the pipeline exposes `GET /v1/api-keys` (B4);
-   until then it shows the keys created in this browser and says so. Operators and
-   viewers see an explanation instead of the controls. The console's own two keys
-   (section 2) are rotated through `.env`, not here.
+4. The paginated table reads the server's key inventory. Operators and viewers see
+   an explanation instead of inventory or controls. The console's own two keys are
+   rotated through `.env.platform` (section 2).
 
 ### 10.2 Workers & health (`/settings/workers`)
 
@@ -417,10 +411,8 @@ everything at once.
   pipeline version, from the pipeline's `/readyz` and `/openapi.json`), **Proxy** (from
   the crawl workers' `proxy_ok` / `proxy_checked_at`: "US exit verified" when every
   checked crawl worker is ok; zone and traffic are "not exposed by the API"), **Queue**
-  (Queued, Running, Failed · retrying, Dead — from `GET /v1/tasks` when B3 is deployed,
-  else summed from the progress counters of the 20 most recent running jobs, in which
-  case the failed count reads "unknown without B3"; **Open dead tasks** lists the partial
-  runs) and **Storage** (every row "not exposed by the API").
+  (Queued, Running, Failed · retrying, Dead — from the complete global task list;
+  **Open dead tasks** lists the partial runs) and **Storage** (every row "not exposed by the API").
 - **Workers table.** One row per instance: role, version, started, last heartbeat
   (amber "Slow heartbeat" after 30 s, red "Missing" after 90 s, "Gone" once the
   pipeline retires it), current tasks, proxy and status. **Logs** and **Drain** are
@@ -435,7 +427,7 @@ everything at once.
 
 ### 10.3 Stats & costs (`/settings/stats`)
 
-Three 14-day sparklines (**Jobs**, **Signals**, **Model + proxy cost**) over the daily
+Three 14-day sparklines (**Jobs**, **Signals**, **Recorded model cost**) over the daily
 table of `GET /v1/stats/daily`, newest first: jobs, site runs, articles, companies,
 signals, tokens in/out, cost (an **incomplete** tag marks days with unpriced calls — the
 figure is the known cost) and a **failures** disclosure with the categories. **Load
@@ -459,12 +451,13 @@ rows (every column, failures as `category: n; …`).
 
 Versions and readiness in two cards (**Scout BFF**: version, Alembic head, start time,
 last capability probe; **Pipeline API**: host, Ready / Not ready pill, version, prompt
-version of the most recent job, every `/readyz` check), the table **Optional pipeline
-routes** (B1–B4) with what each unlocks and the fallback in use until it is deployed,
+version of the most recent job, every `/readyz` check), the table **Required pipeline
+routes** with what each provides,
 and the list **Not exposed by the pipeline API yet** (model prices, proxy zone and
 traffic, storage, maintenance results). **Refresh** re-reads the pipeline; the
 capability probe itself runs at startup and every `UI_CAPABILITY_REFRESH_SECONDS`
-(default 300 s).
+(default 300 s). The browser refreshes the capability map every 30 seconds.
+Contract version 1 and authenticated key reads are required for readiness.
 
 ### 10.6 Preferences (`/settings/preferences`)
 
@@ -484,7 +477,7 @@ See section 3.
 
 ```bash
 git -C ../multi-agent-articles-ui pull            # or checkout the release tag
-# optional: UI_IMAGE_TAG=0.1.0 in .env to name the image after the release
+# optional: UI_IMAGE_TAG=0.1.0 in .env.platform to name the image after the release
 dcu build ui                                      # one image for ui and ui_migrate
 dcu up -d ui_migrate ui                           # applies new migrations, restarts the BFF
 dcu logs --since 2m ui_migrate ui
@@ -502,14 +495,13 @@ curl -sS -X POST http://127.0.0.1:8000/v1/api-keys -H "X-API-Key: $OPERATOR_KEY"
      -H "Content-Type: application/json" -d '{"name": "scout-ui-operator-2026-10", "role": "operator"}'
 curl -sS -X POST http://127.0.0.1:8000/v1/api-keys -H "X-API-Key: $OPERATOR_KEY" \
      -H "Content-Type: application/json" -d '{"name": "scout-ui-reader-2026-10", "role": "reader"}'
-# put the two new keys into .env (PIPELINE_OPERATOR_KEY / PIPELINE_READER_KEY), then:
+# put the two new keys into .env.platform (PIPELINE_OPERATOR_KEY / PIPELINE_READER_KEY), then:
 dcu up -d ui
 curl -sS -X DELETE http://127.0.0.1:8000/v1/api-keys/scout-ui-operator -H "X-API-Key: $OPERATOR_KEY"
 curl -sS -X DELETE http://127.0.0.1:8000/v1/api-keys/scout-ui-reader -H "X-API-Key: $OPERATOR_KEY"
 ```
 
-(An admin can create and revoke the same keys from Settings › API keys, section 10.1;
-listing the existing keys there needs the pipeline update B4.)
+An admin can list, create and revoke the same keys from Settings › API keys (section 10.1).
 
 **Rotate `SESSION_SECRET`.** Set a new `openssl rand -hex 32` value and `dcu up -d ui`.
 Every user is signed out and signs in again; nothing else changes.
@@ -537,91 +529,39 @@ dcu exec -T postgres pg_restore -U article_owner -d article_pipeline --clean --i
 dcu up -d ui_migrate ui          # re-applies grants to svc_ui/app_ui and confirms the migration head
 ```
 
-## 12. Develop without Docker
+## 12. Local development and checks
 
-**SPA only (mock mode).** No backend at all; the SPA runs on MSW fixtures shaped like
-the mockup:
+Use **Node 22**, pnpm 10 and Python 3.12. Local Docker is the integration setup in
+section 1. To edit the frontend against that stack:
 
 ```bash
-cd web && pnpm install --frozen-lockfile && pnpm dev:mock      # http://localhost:5173
-# sign in with admin@sympera.ai / scout-admin, operator@sympera.ai / scout-operator,
-# viewer@sympera.ai / scout-viewer or newcomer@sympera.ai / scout-newcomer (forced password change)
+cd web
+pnpm install --frozen-lockfile
+pnpm dev                         # localhost:5173 proxies to the BFF on localhost:8080
 ```
 
-**Full local stack: PostgreSQL + pipeline API + BFF + SPA, no containers.** This is the
-setup that was walked through end to end on 2026-10-04 (`README.md` › What was
-verified). You need a PostgreSQL 16 you can reach with an owner role (a local server, or
-the pipeline's `docker compose up -d postgres`), the pipeline repo on branch
-`feature/platform-and-api`, and this repo.
+For isolated UI development, use `pnpm dev:mock`. The MSW fixture accounts are
+`admin@sympera.ai / scout-admin`, `operator@sympera.ai / scout-operator`,
+`viewer@sympera.ai / scout-viewer`, and `newcomer@sympera.ai / scout-newcomer`.
 
-1. **Bootstrap the pipeline's schemas and roles**, in the pipeline repo, with these
-   variables in its environment: `DATABASE_URL` (the **owner** URL),
-   `ARTIFACT_STORE_URL=file:///<an existing folder>`, the six `*_DATABASE_PASSWORD`
-   variables of the pipeline's settings (each at least 20 characters) and
-   `API_BOOTSTRAP_KEY`:
+Bare BFF processes automatically read the sibling pipeline `.env.platform`.
+`PLATFORM_ENV_FILE=/absolute/path/.env.platform` overrides that path; process
+variables take precedence. `.env` and `.env.ui` are not read. Bootstrap needs an
+owner `UI_DATABASE_URL`; the running BFF needs the restricted `app_ui` login. Docker
+sets these separately, so no manual URL swap is needed.
 
-   ```bash
-   uv run python -m cli.bootstrap
-   ```
+```bash
+cd web
+pnpm check
+pnpm build
+pnpm e2e                        # isolated browser/axe tests against preview:mock
+```
 
-2. **Start the pipeline API** (same repo) with `DATABASE_URL` switched to the `app_api`
-   login that bootstrap created; it listens on `:8000`:
-
-   ```bash
-   uv run python -m cli.run api
-   curl --fail http://localhost:8000/readyz
-   ```
-
-3. **Create the two console keys** with `POST /v1/api-keys` exactly as in section 2
-   (`http://localhost:8000`, `X-API-Key: $API_BOOTSTRAP_KEY`); keep both plaintext keys.
-4. **Configure the BFF**, at the root of this repo: `cp .env.ui.example .env.ui` and set
-
-   ```bash
-   UI_DATABASE_URL=postgresql+psycopg://<owner>:<password>@localhost:5432/<database>   # owner URL, for bootstrap
-   UI_DATABASE_PASSWORD=<new password for app_ui>
-   PIPELINE_API_URL=http://localhost:8000
-   PIPELINE_OPERATOR_KEY=<operator key from step 3>
-   PIPELINE_READER_KEY=<reader key from step 3>
-   SESSION_SECRET=<openssl rand -hex 32>
-   UI_SECURE_COOKIES=false
-   UI_BOOTSTRAP_ADMIN_EMAIL=you@sympera.ai
-   UI_BOOTSTRAP_ADMIN_PASSWORD=<temporary password, at least 12 characters>
-   LOG_FORMAT=console
-   ```
-
-5. **Bootstrap the `ui` schema and the first admin** (owner URL), then switch the URL to
-   the `app_ui` login for serving:
-
-   ```bash
-   uv sync --frozen
-   uv run python -m scout_bff.bootstrap        # schema ui, roles svc_ui/app_ui, migrations, first admin
-   # now set UI_DATABASE_URL=postgresql+psycopg://app_ui:<UI_DATABASE_PASSWORD>@localhost:5432/<database> in .env.ui
-   ```
-
-6. **Run the BFF** on `:8080`:
-
-   ```bash
-   uv run uvicorn scout_bff.app:app --port 8080     # add --reload while editing the BFF
-   curl --fail http://localhost:8080/readyz
-   ```
-
-7. **Run the SPA**, one of two ways:
-   - development: `cd web && pnpm dev` — Vite on `http://localhost:5173` proxies `/app`,
-     `/v1`, `/healthz` and `/readyz` to `:8080`;
-   - as deployed: `cd web && pnpm build`, then copy `web/dist` to `bff/scout_bff/static`
-     (`rm -rf bff/scout_bff/static && cp -R web/dist bff/scout_bff/static`), restart the
-     BFF (the folder is mounted at startup) and open `http://localhost:8080` — the BFF
-     serves the built SPA itself (this is what the Docker image does).
-
-8. **Sign in** with the bootstrap admin, change the password when asked (section 3) and
-   create a run (section 4).
-
-Checks before a commit: `cd web && pnpm check && pnpm build` (and `pnpm e2e` when routes
-change; it builds the mock variant into `web/dist-mock`); at the root
-`uv run ruff check . && uv run ruff format --check .`, `uv run lint-imports`,
-`uv run pytest -q` (integration tests need `UI_TEST_DATABASE_URL` pointing at a
-disposable database, for example
-`postgresql+psycopg://scout_test:scout_test@localhost:5432/scout_test`).
+At the UI repository root run `uv run ruff check .`, `uv run ruff format --check .`,
+`uv run lint-imports` and `uv run pytest -q`. Database tests use a disposable
+`UI_TEST_DATABASE_URL`. The separate combined acceptance harness supplies its own
+local database, real API/BFF and deterministic saved articles; it does not run models
+or crawl external websites. Never point that harness at normal pipeline data.
 
 ## 13. Troubleshooting
 
@@ -638,7 +578,20 @@ disposable database, for example
 | `429 too_many_attempts` | too many failed sign-ins | wait 15 minutes (per e-mail) / 1 hour (per IP) or have an admin reset the password |
 | `503 pipeline_api_unavailable` / `504 pipeline_api_timeout` | `PIPELINE_API_URL`, `dcu ps api` | the API is down or unreachable from the `ui` container (connect timeout 5 s, 3 attempts on GET) or did not answer within 30 s |
 | `404 not_proxied` | the path or method is not in the `/v1` allowlist | only the pipeline routes listed in `docs/api/pipeline-routes.txt` are proxied, with role checks |
-| Note "needs pipeline API update (B1…B4)" | `GET /app/capabilities`, Settings › System | expected until the backend PRs land; the screen works in degraded mode (`README.md` › Troubleshooting) |
-| Caddy fails to start | `dcu logs caddy` | the pipeline's Caddyfile imports `/etc/caddy/Caddyfile.ui` but the project was started without `compose.ui.yaml`; start with both files or use `import /etc/caddy/Caddyfile.ui*` |
-| Browser warns about the certificate on `scout.localhost` | Caddy's internal CA | expected for `*.localhost`; use a real hostname with DNS pointing at the machine for Let's Encrypt |
+| Contract unavailable | `GET /app/capabilities`, Settings › System | use matching contract version 1 backend/UI and valid operator/reader keys; no limited-results fallback |
 | Where are the logs? | `dcu logs -f ui` | one JSON line per request / proxied call: `user_id, role, method, path, status, duration_ms` — never a key |
+
+### Website access policies (`/settings/access-policies`)
+
+Operators and admins can inspect learned bot blocks and subscription requirements.
+After website access changes, choose **Reset** and confirm **Reset policy**. The next
+retrieval evaluates access again; resetting does not grant access to restricted
+content. Viewers cannot read or reset this inventory.
+
+### Counts and costs
+
+Daily articles, companies and signals count first stored objects. A later job that
+reuses one does not create another daily stored-object count. The global Signals
+explorer counts rows per job, so its total can differ. **Recorded model cost** excludes
+proxy transfer fees. Estimates use comparable completed jobs with complete recorded
+costs and report how many incomplete jobs were excluded.

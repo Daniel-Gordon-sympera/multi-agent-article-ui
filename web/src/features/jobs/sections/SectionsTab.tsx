@@ -44,11 +44,11 @@ const columns: ColumnDef<SectionRow, unknown>[] = [
     cell: ({ row }) => (
       <div className="flex min-w-0 flex-col gap-0.5">
         <a
-          href={row.original.url}
+          href={row.original.url ?? undefined}
           target="_blank"
           rel="noopener noreferrer"
           className="truncate font-semibold text-ink hover:text-brand-700"
-          title={row.original.url}
+          title={row.original.url ?? undefined}
         >
           {row.original.title || row.original.url}
         </a>
@@ -76,7 +76,10 @@ const columns: ColumnDef<SectionRow, unknown>[] = [
     header: "Reason",
     meta: { minWidth: 220 },
     cell: ({ row }) => (
-      <span className="line-clamp-2 text-[12px] text-ink-2" title={row.original.reason}>
+      <span
+        className="line-clamp-2 text-[12px] text-ink-2"
+        title={row.original.reason ?? undefined}
+      >
         {row.original.reason || "—"}
       </span>
     ),
@@ -88,16 +91,16 @@ const columns: ColumnDef<SectionRow, unknown>[] = [
     cell: ({ row }) => <Tag mono>{row.original.origin}</Tag>,
   },
   {
-    id: "section_id",
+    id: "section_no",
     header: "Section id",
     meta: { align: "right", width: 90, defaultHidden: true },
-    cell: ({ row }) => row.original.section_id ?? "—",
+    cell: ({ row }) => row.original.section_no ?? "—",
   },
   {
     id: "recorded",
     header: "Recorded",
     meta: { width: 130 },
-    cell: ({ row }) => <RelativeTime value={row.original.recorded_at} mode="smart" />,
+    cell: ({ row }) => <RelativeTime value={row.original.decided_at} mode="smart" />,
   },
 ];
 

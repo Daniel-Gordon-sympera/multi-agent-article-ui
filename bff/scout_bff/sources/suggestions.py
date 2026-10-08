@@ -1,4 +1,4 @@
-"""Finder suggestions: judged-domain memory ("keep") + rankings of recent jobs
+"""Finder suggestions: judged-domain memory ("accept") + rankings of matching jobs
 (contract §4.3 `GET /app/sources/suggestions`), merged and de-duplicated by domain."""
 
 from __future__ import annotations
@@ -16,8 +16,7 @@ from scout_bff.sources.domains import InvalidUrl, domain_of
 from scout_bff.sources.states import normalise_county, normalise_state_code, state_name
 
 CACHE_SECONDS = 60
-RANKING_JOBS = 5
-MAX_LOCATIONS = 10
+MAX_PARALLEL_CALLS = 8
 DEFAULT_LIMIT = 50
 MAX_LIMIT = 200
 _SMALL_WORDS = {"and", "of", "the"}
@@ -163,44 +162,33 @@ def merge_suggestions(
     return result
 
 
-async def _recent_jobs(
+async def _matching_jobs(
     pipeline: PipelineClient, query: SuggestionQuery, role: KeyRole
 ) -> list[dict[str, Any]]:
-    filters: dict[str, Any] = {"limit": 200}
+    filters: dict[str, Any] = {
+        "limit": 200,
+        "kind": "location_industry",
+        "order": "created_desc",
+    }
+    if query.industry:
+        filters["industry"] = query.industry
     if query.county:
         filters["county"] = normalise_county(query.county)
     if query.state:
         filters["state"] = query.state
-    jobs = [
-        job
-        async for job in pipeline.iter_items(
-            "/v1/jobs", role=role, max_pages=2, **filters
-        )
-    ]
-    jobs = [job for job in jobs if job.get("kind") == "location_industry"]
-    jobs.sort(key=lambda job: str(job.get("created_at") or ""), reverse=True)
+    jobs = [job async for job in pipeline.iter_items("/v1/jobs", role=role, **filters)]
     return jobs
 
 
 async def _memory_rows(
     pipeline: PipelineClient, key: str, role: KeyRole
 ) -> list[dict[str, Any]]:
-    try:
-        return [
-            row
-            async for row in pipeline.iter_items(
-                "/v1/finder/memory",
-                role=role,
-                max_pages=3,
-                location=key,
-                verdict="keep",
-                limit=200,
-            )
-        ]
-    except PipelineError as error:
-        if error.status in (404, 422):
-            return []
-        raise
+    return [
+        row
+        async for row in pipeline.iter_items(
+            "/v1/finder/memory", role=role, location=key, verdict="accept", limit=200
+        )
+    ]
 
 
 async def _ranking_rows(
@@ -210,7 +198,7 @@ async def _ranking_rows(
         return [
             row
             async for row in pipeline.iter_items(
-                f"/v1/jobs/{job_id}/ranking", role=role, max_pages=2, limit=200
+                f"/v1/jobs/{job_id}/ranking", role=role, limit=200
             )
         ]
     except PipelineError as error:
@@ -225,8 +213,8 @@ async def load_candidates(
     query: SuggestionQuery,
     role: KeyRole,
 ) -> list[dict[str, Any]]:
-    """Rankings of the last 5 location_industry jobs first, then memory rows."""
-    jobs = await _recent_jobs(pipeline, query, role)
+    """All matching rankings, newest job first, followed by finder memory."""
+    jobs = await _matching_jobs(pipeline, query, role)
     if query.county and query.state:
         locations: list[tuple[str, str]] = [
             (normalise_county(query.county), query.state)
@@ -248,14 +236,22 @@ async def load_candidates(
         if query.county:
             wanted = normalise_county(query.county).casefold()
             locations = [pair for pair in locations if pair[0].casefold() == wanted]
-        locations = locations[:MAX_LOCATIONS]
-    ranking_jobs = jobs[:RANKING_JOBS]
+    ranking_jobs = jobs
+    semaphore = asyncio.Semaphore(MAX_PARALLEL_CALLS)
+
+    async def bounded(operation):
+        async with semaphore:
+            return await operation
+
     rankings = await asyncio.gather(
-        *(_ranking_rows(pipeline, str(job["id"]), role) for job in ranking_jobs)
+        *(
+            bounded(_ranking_rows(pipeline, str(job["id"]), role))
+            for job in ranking_jobs
+        )
     )
     memory_batches = await asyncio.gather(
         *(
-            _memory_rows(pipeline, key, role)
+            bounded(_memory_rows(pipeline, key, role))
             for county, state in locations
             for key in location_keys(county, state)
         )

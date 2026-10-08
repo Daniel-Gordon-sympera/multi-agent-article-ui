@@ -18,6 +18,7 @@ from tests.pipeline_fixtures import (
     SIGNALS_CSV_COLUMNS,
 )
 from tests.pipeline_results_fixtures import fresh_state
+from tests.pipeline_stub_contract import ContractRoutesMixin, complete_contract_document
 from tests.pipeline_stub_jobs import JobsRoutesMixin
 from tests.pipeline_stub_mutations import MutationRoutesMixin
 from tests.pipeline_support import (
@@ -36,12 +37,12 @@ def load_openapi_document() -> dict[str, Any]:
     return json.loads(OPENAPI_PATH.read_text())
 
 
-class PipelineStub(MutationRoutesMixin, JobsRoutesMixin):
+class PipelineStub(ContractRoutesMixin, MutationRoutesMixin, JobsRoutesMixin):
     """Mutable in-memory pipeline; `router.handler` plugs into httpx.MockTransport."""
 
     def __init__(self) -> None:
         self.state = fresh_state()
-        self.openapi = load_openapi_document()
+        self.openapi = complete_contract_document(load_openapi_document())
         self.ready = True
         self.down = False
         self.fail_connects = 0
@@ -101,6 +102,7 @@ class PipelineStub(MutationRoutesMixin, JobsRoutesMixin):
             side_effect=self._revoke_key
         )
         self._register_jobs_routes(route)
+        self._register_contract_routes(route)
         route().mock(side_effect=self._not_found)
 
     # -- helpers --------------------------------------------------------------
@@ -148,7 +150,7 @@ class PipelineStub(MutationRoutesMixin, JobsRoutesMixin):
         key: str = "id",
     ) -> httpx.Response:
         query = self._query(request)
-        unknown = set(query) - set(filters) - {"limit", "after"}
+        unknown = set(query) - set(filters) - {"limit", "after", "order"}
         if unknown:
             return problem(
                 request,
@@ -170,6 +172,13 @@ class PipelineStub(MutationRoutesMixin, JobsRoutesMixin):
                 rows = [row for row in rows if str(row[column]) > value]
             elif parameter == "created_before":
                 rows = [row for row in rows if str(row[column]) < value]
+            elif column == "input.industry":
+                rows = [
+                    row
+                    for row in rows
+                    if str((row.get("input") or {}).get("industry", "")).casefold()
+                    == value.casefold()
+                ]
             else:
                 rows = [
                     row for row in rows if str(row.get(column)).lower() == value.lower()
@@ -179,16 +188,31 @@ class PipelineStub(MutationRoutesMixin, JobsRoutesMixin):
                 [name, {k: v for k, v in query.items() if k in filters}]
             ).encode()
         ).hexdigest()[:24]
-        rows = sorted(rows, key=lambda row: str(row[key]))
+        descending = query.get("order") == "created_desc"
+
+        def sort_key(row):
+            return (str(row.get("created_at", "")) + "|" if descending else "") + str(
+                row[key]
+            )
+
+        rows = sorted(rows, key=sort_key, reverse=descending)
         if query.get("after"):
             try:
                 cursor = decode_cursor(query["after"])
                 assert cursor["scope"] == scope
             except Exception:
                 return problem(request, 400, "invalid_cursor", "Invalid cursor.")
-            rows = [row for row in rows if str(row[key]) > cursor["key"]]
+            rows = [
+                row
+                for row in rows
+                if (
+                    (sort_key(row) < cursor["key"])
+                    if descending
+                    else (sort_key(row) > cursor["key"])
+                )
+            ]
         page, rest = rows[:limit], rows[limit:]
-        next_cursor = encode_cursor(scope, str(page[-1][key])) if rest else None
+        next_cursor = encode_cursor(scope, sort_key(page[-1])) if rest else None
         return httpx.Response(200, json={"items": page, "next_cursor": next_cursor})
 
     def _job_or_404(self, request: httpx.Request, job_id: str):

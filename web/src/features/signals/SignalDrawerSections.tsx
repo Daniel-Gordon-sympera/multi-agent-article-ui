@@ -1,3 +1,4 @@
+import { formatArticleDate } from "@/lib/articleDate";
 /**
  * Body sections of the signal drawer (mockup §3.9 items 2–4): the Article (title link, meta,
  * main idea, Open article / Saved text / Summary record), the Company profile grid with the
@@ -34,7 +35,7 @@ import {
   useArticleSummaries,
   useCompanyProfile,
 } from "@/features/signals/useSignalsQueries";
-import { formatDate, formatLocation, shortId } from "@/lib/format";
+import { formatLocation, shortId } from "@/lib/format";
 import type { SignalTableRow } from "./signalColumns";
 
 function MetaDot() {
@@ -49,13 +50,13 @@ export function ArticleSection({ row }: { row: SignalTableRow }) {
     queryFn: () => getArticle(row.article_id),
     ...pollingOptions("static"),
   });
-  const accepted = (article.data as { accepted_at?: string } | undefined)?.accepted_at;
+  const accepted = article.data?.accepted_at;
   const mainIdea = summaries.data?.items[0]?.main_idea?.trim();
   return (
     <DrawerSection title="Article">
       <div className="flex flex-col gap-1.5">
         <a
-          href={row.url}
+          href={row.url ?? undefined}
           target="_blank"
           rel="noopener noreferrer"
           className="text-[14px] font-semibold text-ink hover:text-brand-700 hover:underline"
@@ -65,7 +66,7 @@ export function ArticleSection({ row }: { row: SignalTableRow }) {
         <p className="text-[12px] text-muted">
           {row.source_domain}
           <MetaDot />
-          published {formatDate(row.date)}
+          published {formatArticleDate(row.date, row.date_precision)}
           {accepted ? (
             <>
               <MetaDot />
@@ -89,7 +90,7 @@ export function ArticleSection({ row }: { row: SignalTableRow }) {
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <Button asChild variant="secondary" size="sm">
-          <a href={row.url} target="_blank" rel="noopener noreferrer">
+          <a href={row.url ?? undefined} target="_blank" rel="noopener noreferrer">
             <ExternalLink aria-hidden />
             Open article
           </a>
@@ -104,13 +105,13 @@ export function ArticleSection({ row }: { row: SignalTableRow }) {
       </div>
       <SavedTextDialog
         articleId={row.article_id}
-        title={row.title}
+        title={row.title ?? "Article"}
         open={dialog === "text"}
         onOpenChange={(open) => setDialog(open ? "text" : null)}
       />
       <SummaryRecordDialog
         articleId={row.article_id}
-        title={row.title}
+        title={row.title ?? "Article"}
         open={dialog === "record"}
         onOpenChange={(open) => setDialog(open ? "record" : null)}
       />
@@ -131,9 +132,14 @@ export function CompanyProfileSection({
   row: SignalTableRow;
   job?: DrawerJobContext | null;
 }) {
-  const [state, setState] = useState<string | undefined>(() => companyStateFor(row, job));
+  const [selectedState, setState] = useState<string>();
+  const state = selectedState ?? companyStateFor(row, job);
   const [profileOpen, setProfileOpen] = useState(false);
-  const profile = useCompanyProfile(row.company_key, state);
+  const profile = useCompanyProfile(
+    row.company_key ?? undefined,
+    state,
+    job?.id ?? row.job_id ?? undefined,
+  );
   const states = profile.isError ? companyStatesFromError(profile.error) : null;
   const flagsVersion = profile.data?.flags?.enrichment_version;
   const version = flagsVersion && flagsVersion !== row.enrichment_source ? flagsVersion : undefined;
@@ -152,7 +158,9 @@ export function CompanyProfileSection({
         className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-border px-3 py-2.5 text-[13px] text-ink-2"
         data-testid="across-jobs"
       >
-        {profile.isPending ? (
+        {!row.company_key ? (
+          <span className="text-muted">Company profile unavailable</span>
+        ) : profile.isPending ? (
           <Skeleton className="h-3.5 w-48" />
         ) : states ? (
           <label className="flex flex-wrap items-center gap-2">

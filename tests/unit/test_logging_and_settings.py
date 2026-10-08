@@ -109,8 +109,8 @@ def test_session_secret_must_be_long_enough():
         placeholder_settings(session_secret="too-short")
 
 
-def test_env_ui_file_is_read_when_present(tmp_path, monkeypatch):
-    env_file = tmp_path / ".env.ui"
+def test_explicit_platform_file_is_read_when_present(tmp_path, monkeypatch):
+    env_file = tmp_path / ".env.platform"
     env_file.write_text(
         "UI_DATABASE_URL=postgresql+psycopg://u:p@localhost/db\n"
         "PIPELINE_API_URL=http://localhost:8000\n"
@@ -118,6 +118,7 @@ def test_env_ui_file_is_read_when_present(tmp_path, monkeypatch):
         f"SESSION_SECRET={'x' * 40}\n"
     )
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("PLATFORM_ENV_FILE", str(env_file))
     for name in ("UI_DATABASE_URL", "PIPELINE_API_URL", "SESSION_SECRET"):
         monkeypatch.delenv(name, raising=False)
     settings = Settings()

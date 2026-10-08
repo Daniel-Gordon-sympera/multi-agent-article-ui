@@ -5,8 +5,7 @@
  */
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import type { CompanyProfile } from "@/api/types/companies";
-import type { SignalRow } from "@/api/types/signals";
+import type { CompanyProfile, CompanyProfileMention } from "@/api/types/companies";
 import { ErrorState } from "@/components/ErrorState";
 import { MaterialityPill } from "@/components/MaterialityPill";
 import { NoteBanner } from "@/components/NoteBanner";
@@ -21,7 +20,8 @@ import {
 import { streamArticleText } from "@/features/signals/articleText";
 import { signalTitle } from "@/features/signals/signalCatalog";
 import { useArticleSummaryRecord } from "@/features/signals/useSignalsQueries";
-import { formatDate, shortId } from "@/lib/format";
+import { shortId } from "@/lib/format";
+import { formatArticleDate } from "@/lib/articleDate";
 
 interface ArticleDialogProps {
   articleId: number;
@@ -141,7 +141,7 @@ export interface CompanyProfileDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-function jobIdOf(row: SignalRow): string | null {
+function jobIdOf(row: CompanyProfileMention): string | null {
   const value = (row as unknown as Record<string, unknown>).job_id;
   return typeof value === "string" ? value : null;
 }
@@ -149,7 +149,7 @@ function jobIdOf(row: SignalRow): string | null {
 /** "Open profile": every signal of the company across jobs, newest first. */
 export function CompanyProfileDialog({ profile, open, onOpenChange }: CompanyProfileDialogProps) {
   const signals = [...(profile.signals?.items ?? [])].sort(
-    (a, b) => b.date.localeCompare(a.date) || b.id - a.id,
+    (a, b) => (b.published_date ?? "").localeCompare(a.published_date ?? "") || b.id - a.id,
   );
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -178,7 +178,9 @@ export function CompanyProfileDialog({ profile, open, onOpenChange }: CompanyPro
                       {row.signal_title?.trim() || signalTitle(row.signal)}
                     </span>
                     <MaterialityPill materiality={row.materiality} />
-                    <span className="text-[12px] text-muted">{formatDate(row.date)}</span>
+                    <span className="text-[12px] text-muted">
+                      {formatArticleDate(row.published_date, row.date_precision)}
+                    </span>
                     {jobId ? (
                       <Link
                         to="/jobs/$jobId"
@@ -189,11 +191,11 @@ export function CompanyProfileDialog({ profile, open, onOpenChange }: CompanyPro
                       </Link>
                     ) : null}
                   </div>
-                  <p className="truncate text-[12px] text-ink-2" title={row.evidence}>
+                  <p className="truncate text-[12px] text-ink-2" title={row.evidence ?? undefined}>
                     “{(row.signal_evidence ?? "").trim() || row.evidence}”
                   </p>
-                  <p className="truncate text-[11px] text-muted" title={row.title}>
-                    {row.source_domain} · {row.title}
+                  <p className="truncate text-[11px] text-muted" title={row.title ?? undefined}>
+                    {row.title}
                   </p>
                 </li>
               );

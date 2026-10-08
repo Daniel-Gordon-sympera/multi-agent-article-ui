@@ -1,12 +1,12 @@
 /**
  * Settings › API keys. Admins create (`POST /v1/api-keys`) and revoke (`DELETE /v1/api-keys/{name}`)
- * keys; the list comes from `GET /v1/api-keys` when capability `api_keys_list` (B4) exists, else
- * from the keys created in this browser (localStorage). Operators and viewers read an explanation.
+ * keys; the complete inventory comes from paginated `GET /v1/api-keys`.
  */
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { KeyRound, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useKeysetPage } from "@/api/pagination";
 import { qk } from "@/api/keys";
 import { deleteApiKey, listApiKeys } from "@/api/pipeline";
 import { useSession } from "@/app/providers/SessionProvider";
@@ -21,11 +21,9 @@ import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { SettingsSection } from "../SettingsSection";
 import { CreateKeyDialog } from "./CreateKeyDialog";
-import { useLocalKeys, type LocalKeyRecord } from "./localKeys";
+import type { ApiKey } from "@/api/types/stats";
 
-interface KeyRow extends LocalKeyRecord {
-  revoked_at?: string | null;
-}
+type KeyRow = ApiKey;
 
 function buildColumns(onRevoke: (name: string) => void): ColumnDef<KeyRow, unknown>[] {
   return [
@@ -70,24 +68,23 @@ const ROLE_EXPLANATION =
   "The console itself signs in to the pipeline with two keys held by the server (an operator key for admins and operators, a reader key for viewers). Keys created here are for scripts, curl and other clients; the secret is shown exactly once.";
 
 export function ApiKeysPage() {
-  const { can, hasCapability } = useSession();
+  const { can } = useSession();
   const queryClient = useQueryClient();
-  const canList = hasCapability("api_keys_list");
-  const local = useLocalKeys();
   const [createOpen, setCreateOpen] = useState(false);
   const [revoking, setRevoking] = useState<string | null>(null);
 
-  const remote = useQuery({
-    queryKey: qk.v1.apiKeys(),
-    queryFn: async () => (await listApiKeys()).items,
-    enabled: can("admin") && canList,
-    staleTime: 60_000,
+  const [after, setAfter] = useState<string>();
+  const remote = useKeysetPage(qk.v1.apiKeys(), listApiKeys, {
+    after,
+    onAfterChange: setAfter,
+    limit: 50,
+    enabled: can("admin"),
+    polling: "calm",
   });
 
   const revoke = useMutation({
     mutationFn: (name: string) => deleteApiKey(name),
     onSuccess: (_result, name) => {
-      local.remove(name);
       void queryClient.invalidateQueries({ queryKey: qk.v1.apiKeys() });
       toast.success(`Key ${name} revoked`);
       setRevoking(null);
@@ -96,7 +93,7 @@ export function ApiKeysPage() {
   });
 
   const columns = useMemo(() => buildColumns(setRevoking), []);
-  const rows: KeyRow[] = canList ? (remote.data ?? []) : local.keys;
+  const rows: KeyRow[] = remote.items;
 
   if (!can("admin")) {
     return (
@@ -121,26 +118,21 @@ export function ApiKeysPage() {
         </Button>
       }
     >
-      {!canList ? (
-        <NoteBanner>
-          The pipeline API does not list keys yet — needs pipeline API update (B4). Until then this
-          table shows the keys created in this browser; revoking works for any key by name.
-        </NoteBanner>
-      ) : null}
       <DataTable<KeyRow>
-        ariaLabel={canList ? "API keys" : "Keys created in this browser"}
+        ariaLabel="API keys"
         columns={columns}
         data={rows}
         getRowId={(row) => row.name}
         rowHeight={44}
-        isLoading={canList && remote.isPending}
-        error={canList ? remote.error : undefined}
-        onRetry={() => void remote.refetch()}
+        isLoading={remote.query.isPending}
+        error={remote.query.error}
+        onRetry={() => void remote.query.refetch()}
+        pagination={{ ...remote.footer, noun: "key", pluralNoun: "keys" }}
         emptyState={
           <EmptyState
             variant="plain"
             icon={<KeyRound />}
-            title={canList ? "No API keys" : "No keys created in this browser yet"}
+            title="No API keys"
             description="Create one for a script or a second client; the secret is shown once."
           />
         }
@@ -148,8 +140,7 @@ export function ApiKeysPage() {
       <CreateKeyDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onCreated={(key) => {
-          local.add({ name: key.name, role: key.role, created_at: key.created_at });
+        onCreated={() => {
           void queryClient.invalidateQueries({ queryKey: qk.v1.apiKeys() });
         }}
       />

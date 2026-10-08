@@ -2,11 +2,21 @@
 import type { Estimate } from "@/api/types/bff";
 import { formatMoney, pluralize } from "@/lib/format";
 
-type KnownEstimate = Exclude<Estimate, { samples: 0 }>;
+type KnownEstimate = Estimate & { median_cost_usd: number; p90_cost_usd: number };
 
 export function knownEstimate(estimate: Estimate | undefined): KnownEstimate | null {
-  if (!estimate || !("median_cost_usd" in estimate) || estimate.samples === 0) return null;
-  return estimate;
+  if (
+    !estimate ||
+    estimate.samples === 0 ||
+    estimate.median_cost_usd === null ||
+    estimate.p90_cost_usd === null
+  )
+    return null;
+  return {
+    ...estimate,
+    median_cost_usd: estimate.median_cost_usd,
+    p90_cost_usd: estimate.p90_cost_usd,
+  };
 }
 
 /** "≈ $3.12 per job" · "—" (no samples) · "…" while loading. */
@@ -19,12 +29,13 @@ export function estimateText(estimate: Estimate | undefined, loading: boolean): 
 export function estimateFootnote(raw: Estimate | undefined): string {
   const estimate = knownEstimate(raw);
   if (!estimate) {
+    if (raw?.excluded_incomplete_jobs) {
+      return `Estimate unavailable: ${pluralize(raw.excluded_incomplete_jobs, "matching completed job")} had incomplete recorded model costs.`;
+    }
     return "No completed run with these settings yet — the first one sets the estimate.";
   }
   const runs = pluralize(estimate.samples, "completed run");
   const p90 = `p90 ${formatMoney(estimate.p90_cost_usd)}`;
-  if (estimate.basis === "api") {
-    return `Estimate from the pipeline API over ${runs} (model + proxy); ${p90}.`;
-  }
-  return `Estimate from the last ${runs} with these settings (model + proxy); ${p90}.`;
+  const excluded = estimate.excluded_incomplete_jobs ?? 0;
+  return `Recorded model cost from ${runs}; ${p90}. Proxy transfer fees are excluded.${excluded ? ` ${excluded} jobs with incomplete costs were excluded.` : ""}`;
 }

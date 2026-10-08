@@ -1,3 +1,4 @@
+import { defaultSettings } from "@/mocks/fixtures/jobSettings";
 /**
  * `/app/scouts*` and `/app/batches*` — Scouts CRUD, run fan-out and batch lookup (contract
  * §4.3, §4.5). A fan-out creates real rows in `db.jobs` (so Runs lists them) and a batch in
@@ -78,12 +79,7 @@ function createJobRow(
     county: input.county,
     state_code: input.state_code,
     settings: {
-      days: 30,
-      sites: 5,
-      site_timeout: 0,
-      max_runtime: 18000,
-      memory_mode: "full",
-      reanalyze: false,
+      ...defaultSettings,
       ...input.settings,
     },
     prompt_version: PROMPT_VERSION,

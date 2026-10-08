@@ -29,10 +29,11 @@ export function SignalRecordCell({ row, maxWidth = 330, className }: SignalRecor
       <div className="flex min-w-0 items-center gap-2">
         <SignalDetailLink
           signalId={row.id}
+          jobId={row.job_id}
           className="min-w-0 truncate text-[13px] font-semibold text-brand-600 hover:text-brand-700 hover:underline"
-          title={row.company}
+          title={row.company ?? row.name_as_written}
         >
-          {row.company}
+          {row.company ?? row.name_as_written}
         </SignalDetailLink>
         {row.org_kind ? <Tag className="shrink-0">{row.org_kind}</Tag> : null}
       </div>

@@ -1303,6 +1303,7 @@ export interface operations {
     estimate_app_estimate_get: {
         parameters: {
             query?: {
+                days?: number | null;
                 industry?: string | null;
                 kind?: "location_industry" | "seeds" | "url";
                 sites?: number | null;

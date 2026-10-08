@@ -367,3 +367,26 @@ pipeline shows within one TTL (≤ 10 s), which matches the 5 s / 30 s polling p
 per browser: a key created on one machine is not listed on another until B4 lands — the
 page says so. Revisit the cache when the BFF runs with more than one process (the
 cache is per process; a shared cache or ETags on `/app/*` would be the next step).
+
+
+## ADR-UI-014 — Required local integration contract and complete backend queries
+
+The paired backend/UI release uses OpenAPI `x-scout-contract-version: 1`. This
+supersedes earlier optional-capability and bounded-fallback decisions. The BFF
+checks required routes, migration readiness and both authenticated service keys.
+Missing or incompatible services produce an explicit failure state.
+
+All signal rows, totals and exports use the same backend filters and preserve
+`(job_id, signal_id)` identity. Runs request newest-first backend filtering. The
+company profile uses job state and job ID. Generated API response types describe
+the raw wire data, including nulls and month-only publication precision.
+
+The backend `.env.platform` is shared by both repositories. Host commands support
+`PLATFORM_ENV_FILE`; process settings win. Vite disables implicit `.env` loading
+and reads only its development proxy address. The local console is HTTP on the
+loopback address at port 8080; Caddy is an optional HTTPS profile.
+
+Source acceptance rates use durable candidate membership and explicit coverage.
+Recorded spending is model cost; downloaded content is a separate incomplete-aware
+measurement. API-key metadata is admin-only in the UI, and website access-policy
+view/reset requires operator access, with CSRF and an audit entry for reset.

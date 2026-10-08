@@ -1,11 +1,28 @@
-import { rmSync } from "node:fs";
+import { readFileSync, rmSync } from "node:fs";
+import { parseEnv } from "node:util";
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import { fileURLToPath, URL } from "node:url";
 
-const bffUrl = process.env.VITE_BFF_URL ?? "http://localhost:8080";
+function devBffUrl(): string {
+  if (process.env.VITE_BFF_URL) return process.env.VITE_BFF_URL;
+  const selected = process.env.PLATFORM_ENV_FILE;
+  const path =
+    selected ?? fileURLToPath(new URL("../../multi-agent-article/.env.platform", import.meta.url));
+  try {
+    // Read this server-only proxy setting without loading backend secrets into Vite's env.
+    return parseEnv(readFileSync(path, "utf8")).VITE_BFF_URL ?? "http://localhost:8080";
+  } catch (error) {
+    if (!selected && error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return "http://localhost:8080";
+    }
+    throw error;
+  }
+}
+
+const bffUrl = devBffUrl();
 
 /** Paths the BFF owns; everything else is the SPA. */
 const proxiedPrefixes = ["/app", "/v1", "/healthz", "/readyz"];
@@ -25,6 +42,7 @@ function dropMockWorker(mode: string): Plugin {
 }
 
 export default defineConfig(({ mode }) => ({
+  envDir: false,
   plugins: [
     // Route paths and ignore patterns live in tsr.config.json (shared with `pnpm gen:routes`).
     tanstackRouter({ target: "react", autoCodeSplitting: true }),
@@ -45,6 +63,7 @@ export default defineConfig(({ mode }) => ({
     ),
   },
   preview: {
+    host: "127.0.0.1",
     port: 4173,
     strictPort: true,
   },

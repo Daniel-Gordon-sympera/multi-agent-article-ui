@@ -140,8 +140,7 @@ export const settingsHandlers = [
   http.get("/v1/api-keys", ({ request }) => {
     const { error } = guard(request);
     if (error) return error;
-    // Today's backend has no list route (capability api_keys_list = false).
-    return problem(404, "not_proxied", "GET /v1/api-keys is not available");
+    return HttpResponse.json(paginate(db.apiKeys, new URL(request.url), (row) => row.id));
   }),
 
   http.post("/v1/api-keys", async ({ request }) => {
@@ -191,6 +190,8 @@ export const settingsHandlers = [
       tables: body.tables,
       filters: body.filters ?? {},
       artifact_sha: null,
+      download_expired: false,
+      download_url: null,
       status: "queued",
       created_at: new Date().toISOString(),
       finished_at: null,

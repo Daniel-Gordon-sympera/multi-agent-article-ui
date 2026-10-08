@@ -133,7 +133,6 @@ async def test_etag_and_304_pass_through(viewer_client):
 async def test_unknown_routes_are_404_not_proxied(viewer_client, pipeline):
     calls_before = len(pipeline.calls)
     for method, path in (
-        ("GET", "/v1/signals"),
         ("GET", "/v1/nope"),
         ("DELETE", f"/v1/jobs/{JOB_ANALYSING}"),
         ("GET", "/v1/jobs/x/export/signals.json"),

@@ -5,12 +5,7 @@ import {
   defaultVisibleColumns,
   isSignalColumnId,
 } from "@/features/signals/signalColumns";
-import {
-  activeChips,
-  dateChipLabel,
-  filterJobSignalRows,
-  isoDateDaysAgo,
-} from "@/features/signals/signalFilters";
+import { activeChips, dateChipLabel, isoDateDaysAgo } from "@/features/signals/signalFilters";
 import { signalKeyForTitle, signalTitle } from "@/features/signals/signalCatalog";
 import { signalRowsToCsv } from "@/features/signals/signalExport";
 import { buildSignalFixtures } from "@/mocks/fixtures/signals";
@@ -79,7 +74,7 @@ describe("signal catalog", () => {
   });
 });
 
-describe("filter chips and client-side filters", () => {
+describe("filter chips and CSV fields", () => {
   it("renders one chip per active filter with the date range merged", () => {
     const now = new Date("2026-10-04T12:00:00Z");
     const chips = activeChips(
@@ -100,14 +95,6 @@ describe("filter chips and client-side filters", () => {
     expect(chips[0]?.clears).toEqual(["date_after", "date_before"]);
     expect(dateChipLabel("2026-10-01", "2026-10-04", now)).toBe("Date: Oct 1 – Oct 4");
     expect(dateChipLabel(undefined, "2026-10-04", now)).toBe("Date: until Oct 4");
-  });
-
-  it("filters a page by company industry, revenue bin and free text", () => {
-    const rows = buildSignalFixtures();
-    expect(filterJobSignalRows(rows, { industry: "Real Estate" })).toHaveLength(2);
-    expect(filterJobSignalRows(rows, { revenue_bin: "NA" })).toHaveLength(1);
-    expect(filterJobSignalRows(rows, { q: "kirkman road" })).toHaveLength(1);
-    expect(filterJobSignalRows(rows, { q: "nothing-here" })).toHaveLength(0);
   });
 
   it("exports the pipeline columns plus the job columns", () => {

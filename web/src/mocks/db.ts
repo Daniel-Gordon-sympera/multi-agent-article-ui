@@ -3,6 +3,7 @@
  * (cancel → cancelling, retry → queued, …) and `resetMockDatabase()` restores the fixtures.
  * The signed-in session is mirrored to `sessionStorage` in the browser so a reload keeps it.
  */
+import type { AccessPolicy } from "@/api/accessPolicies";
 import type { Prefs, Source, View } from "@/api/types/bff";
 import { DEFAULT_PREFS } from "@/api/types/bff";
 import type { JobDetail } from "@/api/types/jobs";
@@ -73,6 +74,7 @@ export interface MockDatabase {
   suggestions: Suggestion[];
   dismissed: Set<string>;
   views: View[];
+  accessPolicies: AccessPolicy[];
   apiKeys: Array<{ id: number; name: string; role: "operator" | "reader"; created_at: string }>;
   loginFailures: Map<string, number>;
   nextId: number;
@@ -157,6 +159,23 @@ function buildDatabase(): MockDatabase {
         columns: null,
         shared: false,
         created_at: new Date().toISOString(),
+      },
+    ],
+    accessPolicies: [
+      {
+        host: "localjournal.example",
+        active: true,
+        bot_blocked: true,
+        subscription_required: false,
+        last_reason: "bot_blocked",
+        last_provider: "browser",
+        last_error: "",
+        last_page_type: "blocked",
+        last_url: "https://localjournal.example",
+        first_seen: new Date().toISOString(),
+        last_seen: new Date().toISOString(),
+        reset_at: null,
+        reset_by: null,
       },
     ],
     apiKeys: [

@@ -21,7 +21,7 @@ describe("/sources", () => {
     const tiles = screen.getByRole("group", { name: "Source statistics" });
     expect(tiles).toHaveTextContent("Active sources23across 5 counties");
     expect(tiles).toHaveTextContent("Promoted from the finder12");
-    expect(tiles).toHaveTextContent("Median precision · last run11%");
+    expect(tiles).toHaveTextContent("Median article acceptance rate11%");
     expect(tiles).toHaveTextContent("Removed4");
 
     const orlando = within(table).getAllByRole("row")[1]!;
@@ -33,7 +33,7 @@ describe("/sources", () => {
     expect(within(orlando).getByText("finder")).toBeInTheDocument();
     expect(within(orlando).getByText(/Promoted .* · rank 1/)).toBeInTheDocument();
     expect(
-      within(orlando).getByRole("meter", { name: "Precision of Orlando Magazine" }),
+      within(orlando).getByRole("meter", { name: "Article acceptance rate of Orlando Magazine" }),
     ).toHaveAttribute("aria-valuenow", "13");
     expect(within(orlando).getByText("18 / 142 candidates")).toBeInTheDocument();
     expect(within(orlando).getByText("Active")).toHaveAttribute("data-tone", "done");
@@ -165,9 +165,11 @@ describe("/sources", () => {
     await renderApp({ initialEntries: ["/sources"] });
     const table = await screen.findByRole("table", { name: "Data sources" });
     await within(table).findByText("Orlando Magazine");
-    expect(within(table).getAllByText("needs pipeline API update (B2)")).toHaveLength(6);
+    expect(within(table).getAllByText("No complete candidate measurements")).toHaveLength(6);
     const tiles = screen.getByRole("group", { name: "Source statistics" });
-    expect(tiles).toHaveTextContent("Median precision · last run—needs pipeline API update (B2)");
+    expect(tiles).toHaveTextContent(
+      "Median article acceptance rate—No complete candidate measurements",
+    );
     expect(screen.queryByRole("button", { name: "Add source" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Import CSV" })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Remove / })).toBeNull();

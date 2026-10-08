@@ -27,8 +27,13 @@ export function useCountySources(county: string, stateCode: string) {
   return { sources: items, isLoading: enabled && query.isPending, enabled };
 }
 
-export function useCostEstimate(kind: JobKind, sites: number, industry: string | undefined) {
-  const params = { kind, sites, industry };
+export function useCostEstimate(
+  kind: JobKind,
+  sites: number,
+  industry: string | undefined,
+  days?: number,
+) {
+  const params = { kind, sites, industry, days };
   return useQuery({
     queryKey: qk.app.estimate(params),
     queryFn: () => getEstimate(params),
@@ -41,8 +46,8 @@ export function useLatestPromptVersion() {
   return useQuery({
     queryKey: qk.v1.jobs.list({ purpose: "latest-prompt-version" }),
     queryFn: async () => {
-      const page = await listJobs({}, { limit: 20 });
-      const newest = [...page.items].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+      const page = await listJobs({ order: "created_desc" }, { limit: 1 });
+      const newest = page.items[0];
       return newest?.prompt_version ?? null;
     },
     ...pollingOptions("calm"),

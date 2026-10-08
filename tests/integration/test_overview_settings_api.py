@@ -118,9 +118,9 @@ async def test_overview_tiles(operator_client, pipeline, engine, app):
     assert cost["usd"] == 11.6 and cost["delta_usd"] == 5.8
     assert cost["cost_complete"] is True and len(cost["series"]) == 14
     assert body["dead_tasks"] == {
-        "count": 2,
-        "new_since_yesterday": 1,
-        "basis": "daily_stats",
+        "count": 1,
+        "new_since_yesterday": 0,
+        "basis": "api",
     }
     # cached for 10 s: a second read makes no further pipeline calls
     calls_before = len(pipeline.calls)
@@ -152,7 +152,7 @@ async def test_viewer_reads_overview_with_the_reader_key(viewer_client, pipeline
     )
 
 
-async def test_attention_items_fallback_mode(operator_client, pipeline, app):
+async def test_attention_items_global_tasks(operator_client, pipeline, app):
     rebase_clock(pipeline)
     response = await operator_client.get("/app/attention")
     assert response.status_code == 200, response.text
@@ -181,7 +181,7 @@ async def test_attention_items_fallback_mode(operator_client, pipeline, app):
     slow = items[4]
     assert slow["instance_id"] == "analysis-1"
     assert slow["title"] == "analysis-1 heartbeat is slow"
-    assert not any(call.request.url.path == "/v1/tasks" for call in pipeline.calls)
+    assert any(call.request.url.path == "/v1/tasks" for call in pipeline.calls)
 
     pipeline.ready = False
     invalidate(app)
@@ -241,10 +241,12 @@ async def test_system_info(operator_client, pipeline, app):
         "database": True,
         "artifact_store": True,
         "migrations": True,
+        "contract": True,
+        "keys": True,
     }
     assert pipeline_info["version"] == "1.0.0"
     assert pipeline_info["prompt_version"] == "2026.10"
-    assert body["capabilities"]["tasks_global"] is False
+    assert body["capabilities"]["tasks_global"] is True
     assert body["capabilities"]["probe_error"] is None
     assert body["model_prices"] is None
     assert any("Model prices" in note for note in body["notes"])
@@ -253,21 +255,6 @@ async def test_system_info(operator_client, pipeline, app):
     invalidate(app)
     degraded = (await operator_client.get("/app/system")).json()["pipeline"]
     assert degraded["ready"] is False and degraded["checks"]["migrations"] is False
-
-
-async def test_queue_summary_falls_back_to_recent_jobs(operator_client, pipeline):
-    rebase_clock(pipeline)
-    response = await operator_client.get("/app/system/queue")
-    assert response.status_code == 200, response.text
-    assert response.json() == {
-        "queued": 27,
-        "running": 6,
-        "failed": None,
-        "dead": 1,
-        "basis": "recent_jobs",
-        "jobs_scanned": 3,
-        "generated_at": response.json()["generated_at"],
-    }
 
 
 @pytest.mark.parametrize("pipeline", [PipelineStubWithGlobalTasks], indirect=True)

@@ -12,7 +12,7 @@ const SLOW = 20_000;
 
 describe("/signals explorer", () => {
   it(
-    "lists signals across jobs with the summary, the strip and the degraded banner",
+    "lists signals across jobs with exact summary counts and the materiality strip",
     { timeout: SLOW },
     async () => {
       signInMockUser("admin@sympera.ai");
@@ -33,9 +33,6 @@ describe("/signals explorer", () => {
       );
       expect(screen.getByLabelText("By materiality")).toHaveTextContent("High");
       expect(screen.getByTestId("top-signal")).toHaveTextContent(/Top signal: .+ \(\d+\)/);
-      expect(screen.getByTestId("degraded-banner")).toHaveTextContent(
-        "the cross-job read (B1) is not deployed yet",
-      );
       expect(screen.getByRole("link", { name: /Export CSV/ })).toHaveAttribute(
         "href",
         "/app/signals/export.csv",

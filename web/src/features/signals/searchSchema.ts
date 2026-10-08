@@ -24,6 +24,7 @@ export const mentionIdParam = z
 export const signalsSearchSchema = tableSearchSchema.extend({
   view: optionalString,
   detail: mentionIdParam,
+  detail_job: z.string().uuid().optional().catch(undefined),
   signal: optionalString,
   materiality: optionalString,
   company_key: optionalString,
@@ -65,10 +66,11 @@ export type SignalFilterKey = (typeof SIGNAL_FILTER_KEYS)[number];
 
 /**
  * Job › Signals tab: the API's exact-match filters (`signal, materiality, org_kind, hq_scope`),
- * the client-side ones (`industry, revenue_bin, q`), the table state and the drawer.
+ * industry, revenue bin and search, the table state and the drawer.
  */
 export const jobSignalsSearchSchema = tableSearchSchema.extend({
   detail: mentionIdParam,
+  detail_job: z.string().uuid().optional().catch(undefined),
   signal: optionalString,
   materiality: optionalString,
   org_kind: optionalString,

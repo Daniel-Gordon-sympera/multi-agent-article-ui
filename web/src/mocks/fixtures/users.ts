@@ -47,12 +47,12 @@ export const MOCK_USERS: MockUser[] = [
 
 /** Today's backend: none of the optional routes exist. */
 export const MOCK_CAPABILITIES: Capabilities = {
-  signals_global: false,
-  tasks_global: false,
-  retry_dead: false,
-  api_keys_list: false,
-  sources_stats: false,
-  cost_estimate: false,
-  jobs_industry_filter: false,
-  jobs_reference_filter: false,
+  signals_global: true,
+  tasks_global: true,
+  retry_dead: true,
+  api_keys_list: true,
+  sources_stats: true,
+  cost_estimate: true,
+  jobs_industry_filter: true,
+  jobs_reference_filter: true,
 };

@@ -43,10 +43,10 @@ export function RecentSignalsCard({ signals, loading, error, onRetry }: RecentSi
       {signals && signals.length > 0 ? (
         <ul className="-my-2.5 divide-y divide-border" aria-label="Recent signals">
           {signals.map((row) => (
-            <li key={row.id}>
+            <li key={`${row.job_id}:${row.id}`}>
               <Link
                 to="/signals"
-                search={{ detail: row.id }}
+                search={{ detail: row.id, detail_job: row.job_id }}
                 className="flex items-center justify-between gap-3 py-2.5 no-underline hover:no-underline"
               >
                 <span className="flex min-w-0 flex-col gap-0.5">

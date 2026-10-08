@@ -28,7 +28,7 @@ import { useJobDetail } from "@/features/jobs/useJobQueries";
 import { formatDurationPrecise } from "@/lib/format";
 import type { StatusDescriptor } from "@/lib/status";
 
-function eventStatus(status: string | null): StatusDescriptor {
+function eventStatus(status: string | null | undefined): StatusDescriptor {
   const s = (status ?? "").toLowerCase();
   if (["ok", "succeeded", "finished", "completed", "accepted"].includes(s))
     return { tone: "done", label: s, indicator: "dot" };
@@ -106,7 +106,7 @@ const columns: ColumnDef<PipelineEvent, unknown>[] = [
     header: "Duration",
     meta: { align: "right", width: 100 },
     cell: ({ row }) =>
-      row.original.duration_ms === null
+      row.original.duration_ms == null
         ? "—"
         : formatDurationPrecise(row.original.duration_ms / 1000),
   },

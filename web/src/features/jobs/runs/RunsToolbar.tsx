@@ -1,5 +1,5 @@
 /**
- * Toolbar of the Runs table — mockup §3.2: search (client-side over the loaded page), selects
+ * Toolbar of the Runs table — mockup §3.2: search across all matching runs, selects
  * Status · State · County · Industry · Created (custom range popover with two date inputs);
  * right: density toggle, column chooser, `[⤓ Export CSV]` (the loaded page as CSV).
  */
@@ -13,7 +13,6 @@ import { SearchInput } from "@/components/SearchInput";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { SimpleTooltip } from "@/components/ui/tooltip";
 import { jobIndustry } from "@/features/jobs/jobTitle";
 import type { JobsSearch } from "@/features/jobs/searchSchemas";
 import { optionsFromRows } from "@/features/jobs/shared/tableSearch";
@@ -37,7 +36,6 @@ export interface RunsToolbarProps {
   search: JobsSearch;
   rows: JobRecord[];
   onPatch: (patch: Partial<JobsSearch>) => void;
-  industryOnApi: boolean;
   tools: ReactNode;
   onExport: () => void;
   exportDisabled?: boolean;
@@ -47,7 +45,6 @@ export function RunsToolbar({
   search,
   rows,
   onPatch,
-  industryOnApi,
   tools,
   onExport,
   exportDisabled,
@@ -115,13 +112,6 @@ export function RunsToolbar({
           options={toOptions(industries)}
           width={130}
         />
-        {!industryOnApi ? (
-          <SimpleTooltip content="The pipeline API cannot filter jobs by industry yet (B3), so this select only narrows the loaded page.">
-            <span className="max-w-[170px] cursor-help text-[11px] leading-tight text-muted">
-              needs pipeline API update (B3)
-            </span>
-          </SimpleTooltip>
-        ) : null}
       </div>
       <FilterSelect
         label="Created"

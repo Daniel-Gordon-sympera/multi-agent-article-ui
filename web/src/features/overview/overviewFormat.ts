@@ -1,3 +1,4 @@
+import { formatArticleDate } from "@/lib/articleDate";
 /**
  * Pure wording of the Overview tiles (mockup §3.1 / §4.8): "2 queued · 1 finalizing",
  * "across 3 Scouts", "+18% vs previous 7 days", "+$3.10 vs yesterday", "1 new since yesterday".
@@ -11,13 +12,7 @@ import type {
 } from "@/api/types/overview";
 import type { CrossJobSignalRow } from "@/api/types/signals";
 import type { StatTileDelta } from "@/components/StatTile";
-import {
-  formatInteger,
-  formatLocation,
-  formatMoney,
-  formatShortDate,
-  pluralize,
-} from "@/lib/format";
+import { formatInteger, formatLocation, formatMoney, pluralize } from "@/lib/format";
 
 export function runningJobsSubLabel(running: OverviewRunningJobs): string {
   const parts: string[] = [];
@@ -85,6 +80,6 @@ export function signalMeta(row: CrossJobSignalRow): string {
   return [
     row.signal_title ?? row.signal ?? "Signal",
     formatLocation(row.county, row.state_code),
-    formatShortDate(row.date),
+    formatArticleDate(row.date, row.date_precision),
   ].join(" · ");
 }

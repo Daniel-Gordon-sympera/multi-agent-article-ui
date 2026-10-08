@@ -16,7 +16,6 @@ import type { JobDetail } from "@/api/types/jobs";
 import type { DailyStats } from "@/api/types/stats";
 import { db } from "@/mocks/db";
 import { dateDaysAgo } from "@/mocks/fixtures/clock";
-import { buildRecentSignalRows } from "@/mocks/fixtures/overview";
 import { liveWorkerRow } from "@/mocks/fixtures/workers";
 import { guard } from "@/mocks/lib/session";
 
@@ -78,8 +77,8 @@ function costSummary(byDay: Map<string, DailyStats>): OverviewCost {
     usd,
     delta_usd:
       usd === null || yesterdayUsd === null ? null : Number((usd - yesterdayUsd).toFixed(4)),
-    series: series(byDay, (r) => r.cost_usd ?? r.known_cost_usd),
-    cost_complete: today ? today.cost_complete : true,
+    series: series(byDay, (r) => r.cost_usd ?? r.known_cost_usd ?? 0),
+    cost_complete: today ? today.cost_complete === true : true,
   };
 }
 
@@ -152,7 +151,7 @@ function jobLabel(job: JobDetail): string {
     typeof industry === "string"
       ? industry
       : job.kind === "seeds"
-        ? `${job.input.seeds?.length ?? 0} seeds`
+        ? `${Array.isArray(job.input.seeds) ? job.input.seeds.length : 0} seeds`
         : job.kind;
   return `${county}, ${job.state_code} · ${target}`;
 }
@@ -237,21 +236,6 @@ export const overviewHandlers = [
     return HttpResponse.json({ items: buildAttentionItems() });
   }),
 
-  /** Fallback only: B3's handler in `signals.ts` is registered earlier and wins. */
-  http.get("/app/signals", ({ request }) => {
-    const { error } = guard(request);
-    if (error) return error;
-    const limit = Math.min(200, Number(new URL(request.url).searchParams.get("limit") ?? 50) || 50);
-    const rows = buildRecentSignalRows(db);
-    return HttpResponse.json({
-      items: rows.slice(0, limit),
-      next_cursor: null,
-      degraded: true,
-      scanned_jobs: Math.min(20, db.jobs.length),
-      truncated: rows.length > limit,
-    });
-  }),
-
   http.get("/app/estimate", ({ request }) => {
     const { error } = guard(request);
     if (error) return error;
@@ -259,7 +243,7 @@ export const overviewHandlers = [
       median_cost_usd: 2.95,
       p90_cost_usd: 3.4,
       samples: 10,
-      basis: "recent_jobs",
+      basis: "recorded_model_calls",
     });
   }),
 

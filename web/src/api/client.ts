@@ -73,6 +73,7 @@ export interface FetchJsonInit extends Omit<RequestInit, "body"> {
 interface EtagEntry {
   etag: string;
   data: unknown;
+  status: number;
 }
 
 /** URL → last `ETag` + body, so a `304` can be answered from memory. */
@@ -168,7 +169,7 @@ export async function fetchJsonWithMeta<T>(
   }
 
   if (response.status === 304 && cached) {
-    return { data: cached.data as T, status: 200, headers: response.headers };
+    return { data: cached.data as T, status: cached.status, headers: response.headers };
   }
 
   if (!response.ok) {
@@ -188,7 +189,8 @@ export async function fetchJsonWithMeta<T>(
     : ((await response.text()) as unknown as T);
 
   const responseEtag = response.headers.get("etag");
-  if (etag && method === "GET" && responseEtag) etagCache.set(input, { etag: responseEtag, data });
+  if (etag && method === "GET" && responseEtag)
+    etagCache.set(input, { etag: responseEtag, data, status: response.status });
 
   return { data, status: response.status, headers: response.headers };
 }

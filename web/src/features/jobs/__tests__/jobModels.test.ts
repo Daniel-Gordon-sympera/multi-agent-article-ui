@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Task } from "@/api/types/tasks";
 import { buildTaskFixtures } from "@/mocks/fixtures/tasks";
 import { createdBounds, createdLabel } from "../runs/createdFilter";
-import { apiFiltersFor, clientFilter } from "../runs/useRunsData";
+import { apiFiltersFor } from "../runs/useRunsData";
 import { buildJobFixtures } from "@/mocks/fixtures/jobs";
 import { costRows, stageLabel } from "../overview/costModel";
 import { MAIN_JOB_COSTS } from "@/mocks/fixtures/jobIds";
@@ -40,17 +40,20 @@ describe("Runs filters", () => {
     expect(createdLabel("custom", { after: "2026-10-01" })).toBe("since 2026-10-01");
   });
 
-  it("keeps 'running' and the industry (without B3) on the client", () => {
+  it("sends search, running state and industry before pagination, newest first", () => {
     const search = { status: "running", industry: "Construction", q: "orange" };
-    expect(apiFiltersFor(search, false).status).toBeUndefined();
-    expect(apiFiltersFor(search, false).industry).toBeUndefined();
-    expect(apiFiltersFor({ ...search, status: "partial" }, true)).toMatchObject({
+    expect(apiFiltersFor(search)).toMatchObject({
+      status: undefined,
+      status_group: "running",
+      industry: "Construction",
+      q: "orange",
+      order: "created_desc",
+    });
+    expect(apiFiltersFor({ ...search, status: "partial" })).toMatchObject({
       status: "partial",
+      status_group: undefined,
       industry: "Construction",
     });
-    const rows = clientFilter(buildJobFixtures(), search, false);
-    expect(rows.map((job) => job.status)).toEqual(["analysing"]);
-    expect(clientFilter(buildJobFixtures(), { q: "0192e8c0" }, false)).toHaveLength(1);
   });
 });
 

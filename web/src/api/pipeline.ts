@@ -191,6 +191,7 @@ export function getCompany(
   companyKey: string,
   params: {
     state?: string;
+    job_id?: string;
     limit?: number;
     after?: string;
     signals_after?: string;
@@ -263,9 +264,9 @@ export function getExport(exportId: string): Promise<ExportRecord> {
 
 /* -------------------------------------------------------------- api keys */
 
-/** Needs capability `api_keys_list` (B4). */
-export function listApiKeys(): Promise<Page<ApiKey>> {
-  return fetchPage<ApiKey>("/v1/api-keys");
+/** The admin-only inventory; secrets are never returned. */
+export function listApiKeys(page: PageParams = {}): Promise<Page<ApiKey>> {
+  return fetchPage<ApiKey>("/v1/api-keys", page);
 }
 
 export function createApiKey(input: {

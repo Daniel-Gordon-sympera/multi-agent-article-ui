@@ -18,7 +18,7 @@ export function buildTaskTree(tasks: readonly Task[]): TaskNode[] {
   const children = new Map<number | null, Task[]>();
   for (const task of tasks) {
     const parent =
-      task.parent_task_id !== null && ids.has(task.parent_task_id) ? task.parent_task_id : null;
+      task.parent_task_id != null && ids.has(task.parent_task_id) ? task.parent_task_id : null;
     const list = children.get(parent) ?? [];
     list.push(task);
     children.set(parent, list);
@@ -63,7 +63,9 @@ export function taskStatusCounts(tasks: readonly Task[]): Record<TaskStatus, num
     cancelled: 0,
   };
   for (const task of tasks) {
-    if (task.status in counts) counts[task.status] += 1;
+    for (const status of TASK_STATUS_ORDER) {
+      if (task.status === status) counts[status] += 1;
+    }
   }
   return counts;
 }

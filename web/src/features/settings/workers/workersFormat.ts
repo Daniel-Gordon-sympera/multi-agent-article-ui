@@ -108,7 +108,7 @@ export function queueTile(queue: QueueSummary | undefined): HealthTileModel {
       { label: "Running", value: queue ? String(queue.running) : "—" },
       {
         label: "Failed · retrying",
-        value: queue ? (queue.failed === null ? "unknown without B3" : String(queue.failed)) : "—",
+        value: queue ? (queue.failed === null ? "unavailable" : String(queue.failed)) : "—",
         tone: queue?.failed === null ? "muted" : undefined,
       },
       { label: "Dead", value: queue ? String(queue.dead) : "—" },

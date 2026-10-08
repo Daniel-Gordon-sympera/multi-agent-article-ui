@@ -9,16 +9,21 @@ import { detailParam } from "./signalColumns";
 
 export interface SignalDetailLinkProps extends Omit<ComponentProps<"a">, "href" | "children"> {
   signalId: number | string;
+  jobId?: string | null;
   children: ReactNode;
 }
 
 type AnySearch = Record<string, unknown>;
 
-export function SignalDetailLink({ signalId, children, ...props }: SignalDetailLinkProps) {
+export function SignalDetailLink({ signalId, jobId, children, ...props }: SignalDetailLinkProps) {
   return (
     <Link
       to="."
-      search={(previous: AnySearch) => ({ ...previous, detail: detailParam(signalId) })}
+      search={(previous: AnySearch) => ({
+        ...previous,
+        detail: detailParam(signalId),
+        detail_job: jobId ?? undefined,
+      })}
       replace={false}
       {...(props as Record<string, unknown>)}
     >

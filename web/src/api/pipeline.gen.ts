@@ -38,7 +38,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/api-keys": {
+    "/v1/access-policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Access Policies */
+        get: operations["get_access_policies_v1_access_policies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/access-policies/{host}/reset": {
         parameters: {
             query?: never;
             header?: never;
@@ -46,6 +63,24 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        put?: never;
+        /** Post Reset Access Policy */
+        post: operations["post_reset_access_policy_v1_access_policies__host__reset_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/api-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Keys */
+        get: operations["list_keys_v1_api_keys_get"];
         put?: never;
         /** Create Api Key */
         post: operations["create_api_key_v1_api_keys_post"];
@@ -362,6 +397,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/jobs/{job_id}/retry-dead": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Dead Tasks */
+        post: operations["retry_dead_tasks_v1_jobs__job_id__retry_dead_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/jobs/{job_id}/sections": {
         parameters: {
             query?: never;
@@ -481,6 +533,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/signals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Signals */
+        get: operations["get_signals_v1_signals_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/signals/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Signals */
+        get: operations["export_signals_v1_signals_export_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/signals/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Signal Summary */
+        get: operations["get_signal_summary_v1_signals_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/site-runs/{site_run_id}/exploration": {
         parameters: {
             query?: never;
@@ -515,6 +618,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/sources/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Source Statistics */
+        get: operations["get_source_statistics_v1_sources_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/stats/cost-estimate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Cost Estimate */
+        get: operations["get_cost_estimate_v1_stats_cost_estimate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/stats/daily": {
         parameters: {
             query?: never;
@@ -524,6 +661,23 @@ export interface paths {
         };
         /** Get Daily Stats */
         get: operations["get_daily_stats_v1_stats_daily_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Tasks */
+        get: operations["list_tasks_v1_tasks_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -587,6 +741,389 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccessPolicyRecord */
+        AccessPolicyRecord: {
+            /** Active */
+            active: boolean;
+            /** Bot Blocked */
+            bot_blocked: boolean;
+            /**
+             * First Seen
+             * Format: date-time
+             */
+            first_seen: string;
+            /** Host */
+            host: string;
+            /** Last Error */
+            last_error: string;
+            /** Last Page Type */
+            last_page_type: string;
+            /** Last Provider */
+            last_provider: string;
+            /** Last Reason */
+            last_reason: string;
+            /**
+             * Last Seen
+             * Format: date-time
+             */
+            last_seen: string;
+            /** Last Url */
+            last_url: string;
+            /** Reset At */
+            reset_at: string | null;
+            /** Reset By */
+            reset_by: string | null;
+            /** Subscription Required */
+            subscription_required: boolean;
+        } & {
+            [key: string]: unknown;
+        };
+        /** ApiKeyRecord */
+        ApiKeyRecord: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Revoked At */
+            revoked_at?: string | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "operator" | "reader";
+        };
+        /** ArticleRow */
+        ArticleRow: {
+            /** Accepted At */
+            accepted_at?: string | null;
+            /**
+             * Access Profile
+             * @default
+             */
+            access_profile: string;
+            /** Article Key */
+            article_key?: string | null;
+            /** Canonical Url */
+            canonical_url: string;
+            /** Created At */
+            created_at?: string | null;
+            /**
+             * Date Policy Version
+             * @default
+             */
+            date_policy_version: string;
+            /**
+             * Date Precision
+             * @default unknown
+             */
+            date_precision: string;
+            /**
+             * Date Source
+             * @default
+             */
+            date_source: string;
+            /** Domain */
+            domain: string;
+            /** First Job Id */
+            first_job_id?: string | null;
+            /** First Site Run Id */
+            first_site_run_id?: string | null;
+            /** Html Sha */
+            html_sha?: string | null;
+            /** Id */
+            id: number;
+            /** Link Key */
+            link_key?: string | null;
+            /** Origin */
+            origin?: string | null;
+            /**
+             * Published Date
+             * Format: date
+             */
+            published_date: string;
+            /** Site Run Id */
+            site_run_id?: string | null;
+            /** Snapshot */
+            snapshot?: {
+                [key: string]: unknown;
+            } | null;
+            /** Snapshot Id */
+            snapshot_id?: number | null;
+            /** Text Sha */
+            text_sha?: string | null;
+            /** Title */
+            title: string;
+            /** Updated At */
+            updated_at?: string | null;
+            /** Url Id */
+            url_id?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** BulkRetryResult */
+        BulkRetryResult: {
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Retried */
+            retried: number;
+            /** Skipped Task Ids */
+            skipped_task_ids: number[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "finding" | "exploring" | "discovering" | "analysing" | "finalizing" | "completed" | "partial" | "failed" | "cancelling" | "cancelled";
+            /** Task Ids */
+            task_ids: number[];
+        };
+        /** CompanyFlags */
+        CompanyFlags: {
+            /** Articles */
+            articles?: number | null;
+            /** Authoritative */
+            authoritative?: boolean | null;
+            /** Company Id */
+            company_id?: number | null;
+            /** Company Industry */
+            company_industry?: string | null;
+            /** Company Key */
+            company_key?: string | null;
+            /** Company Name */
+            company_name?: string | null;
+            /** Company Sub Industry */
+            company_sub_industry?: string | null;
+            /** Enrichment Source */
+            enrichment_source?: string | null;
+            /** Enrichment Version */
+            enrichment_version?: string | null;
+            /** Entity Flag */
+            entity_flag?: string | null;
+            /** Evidence Articles */
+            evidence_articles?: number | null;
+            /** Hq County */
+            hq_county?: string | null;
+            /** Hq Scope */
+            hq_scope?: string | null;
+            /** Hq State */
+            hq_state?: string | null;
+            /** Industry Basis */
+            industry_basis?: string | null;
+            /** Job Id */
+            job_id?: string | null;
+            /** Known Count */
+            known_count?: number | null;
+            /** Org Kind */
+            org_kind?: string | null;
+            /** Org Kind Basis */
+            org_kind_basis?: string | null;
+            /** Place Hints */
+            place_hints?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Revenue Basis */
+            revenue_basis?: string | null;
+            /** Revenue Bin */
+            revenue_bin?: string | null;
+            /** Revenue Confidence */
+            revenue_confidence?: number | null;
+            /** Scope Basis */
+            scope_basis?: string | null;
+            /** Scope Place */
+            scope_place?: string | null;
+            /** Size Cues */
+            size_cues?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** State Code */
+            state_code?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
+            /** Warnings */
+            warnings?: string[] | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CompanyMention */
+        CompanyMention: {
+            /** Article Id */
+            article_id: number;
+            /** Article Key */
+            article_key?: string | null;
+            /** Articles */
+            articles?: number | null;
+            /** Authoritative */
+            authoritative?: boolean | null;
+            /** Checks */
+            checks: string[];
+            /** Company */
+            company?: string | null;
+            /** Company Id */
+            company_id: number;
+            /** Company Industry */
+            company_industry?: string | null;
+            /** Company Key */
+            company_key?: string | null;
+            /** Company Name */
+            company_name?: string | null;
+            /** Company Sub Industry */
+            company_sub_industry?: string | null;
+            /** Confidence */
+            confidence?: string | null;
+            /** Confidence Level */
+            confidence_level: string;
+            /** Confidence Score */
+            confidence_score: number;
+            /** Connection */
+            connection?: string | null;
+            /** Date */
+            date?: string | null;
+            /** Date Precision */
+            date_precision?: string | null;
+            /** Date Source */
+            date_source?: string | null;
+            /** Enrichment Source */
+            enrichment_source?: string | null;
+            /** Enrichment Version */
+            enrichment_version?: string | null;
+            /** Entity Flag */
+            entity_flag?: string | null;
+            /** Entity Type */
+            entity_type: string;
+            /** Evidence */
+            evidence: string;
+            /** Evidence Articles */
+            evidence_articles?: number | null;
+            /** Fetch Status */
+            fetch_status?: string | null;
+            /** Hq County */
+            hq_county?: string | null;
+            /** Hq Scope */
+            hq_scope?: string | null;
+            /** Hq State */
+            hq_state?: string | null;
+            /** Id */
+            id: number;
+            /** Industry Basis */
+            industry_basis?: string | null;
+            /** Job Id */
+            job_id?: string | null;
+            /** Known Count */
+            known_count?: number | null;
+            /** Materiality */
+            materiality?: string | null;
+            /** Name As Written */
+            name_as_written: string;
+            /** Number Company */
+            number_company: number;
+            /** Org Kind */
+            org_kind?: string | null;
+            /** Org Kind Basis */
+            org_kind_basis?: string | null;
+            /** Place Hints */
+            place_hints?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Published Date */
+            published_date?: string | null;
+            /** Quote Id */
+            quote_id: number;
+            /** Revenue Basis */
+            revenue_basis?: string | null;
+            /** Revenue Bin */
+            revenue_bin?: string | null;
+            /** Revenue Confidence */
+            revenue_confidence?: number | null;
+            /** Role */
+            role?: string | null;
+            /** Scope Basis */
+            scope_basis?: string | null;
+            /** Scope Place */
+            scope_place?: string | null;
+            /** Signal */
+            signal?: string | null;
+            /** Signal Evidence */
+            signal_evidence?: string | null;
+            /** Signal Quote Id */
+            signal_quote_id?: number | null;
+            /** Signal Title */
+            signal_title?: string | null;
+            /** Size Cues */
+            size_cues?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Source Domain */
+            source_domain?: string | null;
+            /** State Code */
+            state_code?: string | null;
+            /** Summary Id */
+            summary_id: number;
+            /** Title */
+            title?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
+            /** Url */
+            url?: string | null;
+            /** Warnings */
+            warnings?: string[] | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CompanyProfile */
+        CompanyProfile: {
+            /**
+             * Access Profile
+             * @default
+             */
+            access_profile: string;
+            articles: components["schemas"]["ResultPage_ArticleRow_"];
+            /** Company Key */
+            company_key: string;
+            /**
+             * First Seen
+             * Format: date-time
+             */
+            first_seen: string;
+            flags: components["schemas"]["CompanyFlags"] | null;
+            /** Id */
+            id: number;
+            /**
+             * Last Seen
+             * Format: date-time
+             */
+            last_seen: string;
+            mentions: components["schemas"]["ResultPage_CompanyMention_"];
+            /** Name */
+            name: string;
+            signals: components["schemas"]["ResultPage_CompanyMention_"];
+            /** State Code */
+            state_code: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CostEstimate */
+        CostEstimate: {
+            /**
+             * Basis
+             * @constant
+             */
+            basis: "recorded_model_calls";
+            /** Excluded Incomplete Jobs */
+            excluded_incomplete_jobs: number;
+            /** Median Cost Usd */
+            median_cost_usd: number | null;
+            /** P90 Cost Usd */
+            p90_cost_usd: number | null;
+            /** Samples */
+            samples: number;
+        };
         /** CreateApiKey */
         CreateApiKey: {
             /** Name */
@@ -597,6 +1134,44 @@ export interface components {
              * @enum {string}
              */
             role: "operator" | "reader";
+        };
+        /** CreatedApiKey */
+        CreatedApiKey: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Revoked At */
+            revoked_at?: string | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "operator" | "reader";
+        };
+        /** CreatedExport */
+        CreatedExport: {
+            /**
+             * Export Id
+             * Format: uuid
+             */
+            export_id: string;
+            /** Links */
+            links: {
+                [key: string]: string;
+            };
+            /**
+             * Status
+             * @constant
+             */
+            status: "queued";
         };
         /** CreatedJob */
         CreatedJob: {
@@ -656,14 +1231,483 @@ export interface components {
             location?: string | null;
             /** Seeds */
             seeds?: components["schemas"]["SeedInput"][] | null;
-            /** Settings */
+            /**
+             * JobSettings
+             * @description Persisted once; explicit resume changes belong to task payloads.
+             */
             settings?: {
-                [key: string]: unknown;
+                /**
+                 * Agent Timeout
+                 * @default 18000
+                 */
+                agent_timeout: number;
+                /**
+                 * Candidate Concurrency
+                 * @default 4
+                 */
+                candidate_concurrency: number;
+                /**
+                 * Days
+                 * @default 30
+                 */
+                days: number;
+                /**
+                 * Discovery Unlocker Max Requests Per Site
+                 * @default 100
+                 */
+                discovery_unlocker_max_requests_per_site: number;
+                /**
+                 * Early Date Filter
+                 * @default true
+                 */
+                early_date_filter: boolean;
+                /**
+                 * Engine
+                 * @default ddgs
+                 * @enum {string}
+                 */
+                engine: "ddgs" | "duckduckgo";
+                /**
+                 * Explore
+                 * @default false
+                 */
+                explore: boolean;
+                /**
+                 * Firecrawl Max Requests Per Site
+                 * @default 100
+                 */
+                firecrawl_max_requests_per_site: number;
+                /**
+                 * Hard Retrieval Enabled
+                 * @default true
+                 */
+                hard_retrieval_enabled: boolean;
+                /**
+                 * Hard Retrieval Timeout Seconds
+                 * @default 180
+                 */
+                hard_retrieval_timeout_seconds: number;
+                /**
+                 * Max Parallel Sites
+                 * @default 2
+                 */
+                max_parallel_sites: number;
+                /**
+                 * Max Queries
+                 * @default 200
+                 */
+                max_queries: number;
+                /**
+                 * Max Runtime
+                 * @default 18000
+                 */
+                max_runtime: number;
+                /** Max Sites */
+                max_sites?: number | null;
+                /**
+                 * Max Steps
+                 * @default 1000
+                 */
+                max_steps: number;
+                /**
+                 * Memory Mode
+                 * @default full
+                 * @enum {string}
+                 */
+                memory_mode: "full" | "pages_only" | "off";
+                /**
+                 * Model Spec
+                 * @default deepseek:deepseek-v4-pro
+                 */
+                model_spec: string;
+                /**
+                 * Prompt Version
+                 * @default 2026.10
+                 */
+                prompt_version: string;
+                /**
+                 * Reanalyze
+                 * @default false
+                 */
+                reanalyze: boolean;
+                /**
+                 * Recent Scheduling
+                 * @default true
+                 */
+                recent_scheduling: boolean;
+                /**
+                 * Reenrich
+                 * @default false
+                 */
+                reenrich: boolean;
+                /**
+                 * Sections Unlocker Max Requests Per Site
+                 * @default 100
+                 */
+                sections_unlocker_max_requests_per_site: number;
+                /**
+                 * Site Timeout
+                 * @default 0
+                 */
+                site_timeout: number;
+                /**
+                 * Sites
+                 * @default 5
+                 */
+                sites: number | "all" | null;
+                /**
+                 * Warm
+                 * @default true
+                 */
+                warm: boolean;
             };
             /** State */
             state: string;
             /** Url */
             url?: string | null;
+        };
+        /** DailyStatsRow */
+        DailyStatsRow: {
+            /** Articles */
+            articles: number;
+            /** Companies */
+            companies: number;
+            /** Cost Complete */
+            cost_complete: boolean | null;
+            /** Cost Usd */
+            cost_usd: number | null;
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /** Failures */
+            failures: {
+                [key: string]: number;
+            };
+            /** Input Tokens */
+            input_tokens: number | null;
+            /** Jobs */
+            jobs: number;
+            /** Known Cost Usd */
+            known_cost_usd: number | null;
+            /** Output Tokens */
+            output_tokens: number | null;
+            /** Signals */
+            signals: number;
+            /** Site Runs */
+            site_runs: number;
+            /** Unknown Usage Calls */
+            unknown_usage_calls: number | null;
+            /** Unpriced Calls */
+            unpriced_calls: number | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** EventRow */
+        EventRow: {
+            /** Attrs */
+            attrs: {
+                [key: string]: unknown;
+            };
+            /** Duration Ms */
+            duration_ms?: number | null;
+            /** Error Category */
+            error_category?: string | null;
+            /** Event */
+            event: string;
+            /** Id */
+            id: number;
+            /** Job Id */
+            job_id?: string | null;
+            /** Service */
+            service: string;
+            /** Site Run Id */
+            site_run_id?: string | null;
+            /** Stage */
+            stage?: string | null;
+            /** Status */
+            status?: string | null;
+            /** Task Id */
+            task_id?: number | null;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+            /** Url */
+            url?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** ExplorationRow */
+        ExplorationRow: {
+            /** Domain */
+            domain: string;
+            /** Error */
+            error: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Kept */
+            kept: number;
+            /** Memory Source */
+            memory_source: string | null;
+            /** Model */
+            model: string | null;
+            /** Origin */
+            origin: string;
+            /** Outcome */
+            outcome: string;
+            /** Output Tokens */
+            output_tokens: number;
+            /** Prompt Version */
+            prompt_version: string | null;
+            /** Seed Url */
+            seed_url: string;
+            /**
+             * Site Run Id
+             * Format: uuid
+             */
+            site_run_id: string;
+            /** Skipped */
+            skipped: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Steps */
+            steps: number;
+            /** Transcript Sha */
+            transcript_sha?: string | null;
+            /** Transcript Url */
+            transcript_url?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** ExportRecord */
+        ExportRecord: {
+            /** Artifact Sha */
+            artifact_sha: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Download Expired
+             * @default false
+             */
+            download_expired: boolean;
+            /** Download Url */
+            download_url: string | null;
+            /** Filters */
+            filters: {
+                [key: string]: unknown;
+            };
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Job Id */
+            job_id: string | null;
+            /** Kind */
+            kind: string;
+            /** Scope */
+            scope: string;
+            /** Status */
+            status: string;
+            /** Tables */
+            tables: string[];
+        } & {
+            [key: string]: unknown;
+        };
+        /** FinderMemoryRow */
+        FinderMemoryRow: {
+            /** Coverage */
+            coverage: string | null;
+            /** Domain */
+            domain: string;
+            /** Industry Key */
+            industry_key: string;
+            /**
+             * Judged At
+             * Format: date-time
+             */
+            judged_at: string;
+            /** Location Key */
+            location_key: string;
+            /** Name */
+            name: string | null;
+            /** Reason */
+            reason?: string | null;
+            /** Relevance */
+            relevance: string | null;
+            /**
+             * Search Id
+             * Format: uuid
+             */
+            search_id: string;
+            /** Source Order */
+            source_order: number | null;
+            /** Url */
+            url: string | null;
+            /** Verdict */
+            verdict: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** GlobalSignalRow */
+        GlobalSignalRow: {
+            /** Article Id */
+            article_id: number;
+            /** Article Key */
+            article_key?: string | null;
+            /** Articles */
+            articles?: number | null;
+            /** Authoritative */
+            authoritative?: boolean | null;
+            /** Checks */
+            checks: string[];
+            /** Client Reference */
+            client_reference: string | null;
+            /** Company */
+            company?: string | null;
+            /** Company Id */
+            company_id: number;
+            /** Company Industry */
+            company_industry?: string | null;
+            /** Company Key */
+            company_key?: string | null;
+            /** Company Name */
+            company_name?: string | null;
+            /** Company Sub Industry */
+            company_sub_industry?: string | null;
+            /** Confidence */
+            confidence?: string | null;
+            /** Confidence Level */
+            confidence_level: string;
+            /** Confidence Score */
+            confidence_score: number;
+            /** Connection */
+            connection?: string | null;
+            /** County */
+            county: string;
+            /** Date */
+            date?: string | null;
+            /** Date Precision */
+            date_precision?: string | null;
+            /** Date Source */
+            date_source?: string | null;
+            /** Enrichment Source */
+            enrichment_source?: string | null;
+            /** Enrichment Version */
+            enrichment_version?: string | null;
+            /** Entity Flag */
+            entity_flag?: string | null;
+            /** Entity Type */
+            entity_type: string;
+            /** Evidence */
+            evidence: string;
+            /** Evidence Articles */
+            evidence_articles?: number | null;
+            /** Fetch Status */
+            fetch_status?: string | null;
+            /** Hq County */
+            hq_county?: string | null;
+            /** Hq Scope */
+            hq_scope?: string | null;
+            /** Hq State */
+            hq_state?: string | null;
+            /** Id */
+            id: number;
+            /** Industry Basis */
+            industry_basis?: string | null;
+            /**
+             * Job Created At
+             * Format: date-time
+             */
+            job_created_at: string;
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Job Industry */
+            job_industry: string | null;
+            /** Known Count */
+            known_count?: number | null;
+            /** Materiality */
+            materiality?: string | null;
+            /** Name As Written */
+            name_as_written: string;
+            /** Number Company */
+            number_company: number;
+            /** Org Kind */
+            org_kind?: string | null;
+            /** Org Kind Basis */
+            org_kind_basis?: string | null;
+            /** Place Hints */
+            place_hints?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Published Date */
+            published_date?: string | null;
+            /** Quote Id */
+            quote_id: number;
+            /** Revenue Basis */
+            revenue_basis?: string | null;
+            /** Revenue Bin */
+            revenue_bin?: string | null;
+            /** Revenue Confidence */
+            revenue_confidence?: number | null;
+            /** Role */
+            role?: string | null;
+            /** Scope Basis */
+            scope_basis?: string | null;
+            /** Scope Place */
+            scope_place?: string | null;
+            /** Signal */
+            signal?: string | null;
+            /** Signal Evidence */
+            signal_evidence?: string | null;
+            /** Signal Quote Id */
+            signal_quote_id?: number | null;
+            /** Signal Title */
+            signal_title?: string | null;
+            /** Size Cues */
+            size_cues?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Source Domain */
+            source_domain?: string | null;
+            /** State Code */
+            state_code: string;
+            /** Summary Id */
+            summary_id: number;
+            /** Title */
+            title?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
+            /** Url */
+            url?: string | null;
+            /** Warnings */
+            warnings?: string[] | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** HealthStatus */
+        HealthStatus: {
+            /**
+             * Status
+             * @constant
+             */
+            status: "ok";
         };
         /** JobCommandResult */
         JobCommandResult: {
@@ -747,10 +1791,7 @@ export interface components {
             prompt_version: string;
             /** Sessions */
             sessions: components["schemas"]["JobSession"][];
-            /** Settings */
-            settings: {
-                [key: string]: unknown;
-            };
+            settings: components["schemas"]["JobSettings"];
             /** Started At */
             started_at: string | null;
             /** State Code */
@@ -840,10 +1881,7 @@ export interface components {
             prompt_version: string;
             /** Sessions */
             sessions: components["schemas"]["JobSession"][];
-            /** Settings */
-            settings: {
-                [key: string]: unknown;
-            };
+            settings: components["schemas"]["JobSettings"];
             /** Started At */
             started_at: string | null;
             /** State Code */
@@ -871,6 +1909,136 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /**
+         * JobSettings
+         * @description Persisted once; explicit resume changes belong to task payloads.
+         */
+        JobSettings: {
+            /**
+             * Agent Timeout
+             * @default 18000
+             */
+            agent_timeout: number;
+            /**
+             * Candidate Concurrency
+             * @default 4
+             */
+            candidate_concurrency: number;
+            /**
+             * Days
+             * @default 30
+             */
+            days: number;
+            /**
+             * Discovery Unlocker Max Requests Per Site
+             * @default 100
+             */
+            discovery_unlocker_max_requests_per_site: number;
+            /**
+             * Early Date Filter
+             * @default true
+             */
+            early_date_filter: boolean;
+            /**
+             * Engine
+             * @default ddgs
+             * @enum {string}
+             */
+            engine: "ddgs" | "duckduckgo";
+            /**
+             * Explore
+             * @default false
+             */
+            explore: boolean;
+            /**
+             * Firecrawl Max Requests Per Site
+             * @default 100
+             */
+            firecrawl_max_requests_per_site: number;
+            /**
+             * Hard Retrieval Enabled
+             * @default true
+             */
+            hard_retrieval_enabled: boolean;
+            /**
+             * Hard Retrieval Timeout Seconds
+             * @default 180
+             */
+            hard_retrieval_timeout_seconds: number;
+            /**
+             * Max Parallel Sites
+             * @default 2
+             */
+            max_parallel_sites: number;
+            /**
+             * Max Queries
+             * @default 200
+             */
+            max_queries: number;
+            /**
+             * Max Runtime
+             * @default 18000
+             */
+            max_runtime: number;
+            /** Max Sites */
+            max_sites?: number | null;
+            /**
+             * Max Steps
+             * @default 1000
+             */
+            max_steps: number;
+            /**
+             * Memory Mode
+             * @default full
+             * @enum {string}
+             */
+            memory_mode: "full" | "pages_only" | "off";
+            /**
+             * Model Spec
+             * @default deepseek:deepseek-v4-pro
+             */
+            model_spec: string;
+            /**
+             * Prompt Version
+             * @default 2026.10
+             */
+            prompt_version: string;
+            /**
+             * Reanalyze
+             * @default false
+             */
+            reanalyze: boolean;
+            /**
+             * Recent Scheduling
+             * @default true
+             */
+            recent_scheduling: boolean;
+            /**
+             * Reenrich
+             * @default false
+             */
+            reenrich: boolean;
+            /**
+             * Sections Unlocker Max Requests Per Site
+             * @default 100
+             */
+            sections_unlocker_max_requests_per_site: number;
+            /**
+             * Site Timeout
+             * @default 0
+             */
+            site_timeout: number;
+            /**
+             * Sites
+             * @default 5
+             */
+            sites: number | "all" | null;
+            /**
+             * Warm
+             * @default true
+             */
+            warm: boolean;
+        };
         /** LiveJobSummary */
         LiveJobSummary: {
             /** Costs */
@@ -896,6 +2064,188 @@ export interface components {
             status: "queued" | "finding" | "exploring" | "discovering" | "analysing" | "finalizing" | "completed" | "partial" | "failed" | "cancelling" | "cancelled";
             /** Stop Reason */
             stop_reason: string | null;
+        };
+        /** MaterialityCounts */
+        MaterialityCounts: {
+            /** High */
+            high: number;
+            /** Low */
+            low: number;
+            /** Medium */
+            medium: number;
+        };
+        /** RankingRow */
+        RankingRow: {
+            /** Chosen */
+            chosen: boolean;
+            /** Coverage */
+            coverage?: string | null;
+            /** Finder Reason */
+            finder_reason?: string | null;
+            /**
+             * Name
+             * @default
+             */
+            name: string;
+            /** Overall Rank */
+            overall_rank: number;
+            /** Pages Opened */
+            pages_opened: number;
+            /** Reason */
+            reason?: string | null;
+            /** Relevance */
+            relevance?: string | null;
+            /**
+             * Search Id
+             * Format: uuid
+             */
+            search_id: string;
+            /** Tier */
+            tier: string;
+            /** Tier Rank */
+            tier_rank: number;
+            /** Url */
+            url: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** ReadinessStatus */
+        ReadinessStatus: {
+            /** Checks */
+            checks: {
+                [key: string]: boolean;
+            };
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "not_ready";
+        };
+        /** ResultPage[AccessPolicyRecord] */
+        ResultPage_AccessPolicyRecord_: {
+            /** Items */
+            items: components["schemas"]["AccessPolicyRecord"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[ApiKeyRecord] */
+        ResultPage_ApiKeyRecord_: {
+            /** Items */
+            items: components["schemas"]["ApiKeyRecord"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[ArticleRow] */
+        ResultPage_ArticleRow_: {
+            /** Items */
+            items: components["schemas"]["ArticleRow"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[CompanyFlags] */
+        ResultPage_CompanyFlags_: {
+            /** Items */
+            items: components["schemas"]["CompanyFlags"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[CompanyMention] */
+        ResultPage_CompanyMention_: {
+            /** Items */
+            items: components["schemas"]["CompanyMention"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[DailyStatsRow] */
+        ResultPage_DailyStatsRow_: {
+            /** Items */
+            items: components["schemas"]["DailyStatsRow"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[EventRow] */
+        ResultPage_EventRow_: {
+            /** Items */
+            items: components["schemas"]["EventRow"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[FinderMemoryRow] */
+        ResultPage_FinderMemoryRow_: {
+            /** Items */
+            items: components["schemas"]["FinderMemoryRow"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[GlobalSignalRow] */
+        ResultPage_GlobalSignalRow_: {
+            /** Items */
+            items: components["schemas"]["GlobalSignalRow"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[RankingRow] */
+        ResultPage_RankingRow_: {
+            /** Items */
+            items: components["schemas"]["RankingRow"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[SectionRow] */
+        ResultPage_SectionRow_: {
+            /** Items */
+            items: components["schemas"]["SectionRow"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[SiteRunRow] */
+        ResultPage_SiteRunRow_: {
+            /** Items */
+            items: components["schemas"]["SiteRunRow"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[SourceRow] */
+        ResultPage_SourceRow_: {
+            /** Items */
+            items: components["schemas"]["SourceRow"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[SummaryRow] */
+        ResultPage_SummaryRow_: {
+            /** Items */
+            items: components["schemas"]["SummaryRow"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[TaskRow] */
+        ResultPage_TaskRow_: {
+            /** Items */
+            items: components["schemas"]["TaskRow"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[UrlRow] */
+        ResultPage_UrlRow_: {
+            /** Items */
+            items: components["schemas"]["UrlRow"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[WorkerRow] */
+        ResultPage_WorkerRow_: {
+            /** Items */
+            items: components["schemas"]["WorkerRow"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** ResultPage[WorkRow] */
+        ResultPage_WorkRow_: {
+            /** Items */
+            items: components["schemas"]["WorkRow"][];
+            /** Next Cursor */
+            next_cursor: string | null;
         };
         /** ResumedJob */
         ResumedJob: {
@@ -934,6 +2284,41 @@ export interface components {
             /** Site Timeout */
             site_timeout?: number | null;
         };
+        /** SectionRow */
+        SectionRow: {
+            /** Canonical Url */
+            canonical_url: string;
+            /**
+             * Decided At
+             * Format: date-time
+             */
+            decided_at: string;
+            /** Domain */
+            domain: string;
+            /** Id */
+            id: number;
+            /** Kept */
+            kept: boolean;
+            /** Kind */
+            kind: string;
+            /** Origin */
+            origin: string;
+            /** Reason */
+            reason?: string | null;
+            /** Section No */
+            section_no?: number | null;
+            /**
+             * Site Run Id
+             * Format: uuid
+             */
+            site_run_id: string;
+            /** Title */
+            title: string;
+            /** Url */
+            url: string;
+        } & {
+            [key: string]: unknown;
+        };
         /** SeedInput */
         SeedInput: {
             /**
@@ -943,6 +2328,113 @@ export interface components {
             title: string;
             /** Url */
             url: string;
+        };
+        /** SignalSummary */
+        SignalSummary: {
+            by_materiality: components["schemas"]["MaterialityCounts"];
+            /** Companies */
+            companies: number;
+            /** Jobs */
+            jobs: number;
+            /** Signals */
+            signals: number;
+            top_signal: components["schemas"]["TopSignal"] | null;
+        };
+        /** SiteRunRow */
+        SiteRunRow: {
+            /** Domain */
+            domain: string;
+            /** Finished At */
+            finished_at?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Rank */
+            rank?: number | null;
+            /** Seed Url */
+            seed_url: string;
+            /** Started At */
+            started_at?: string | null;
+            /** Stats */
+            stats: {
+                [key: string]: unknown;
+            };
+            /** Status */
+            status: string;
+            /** Stop Reason */
+            stop_reason?: string | null;
+            /** Title */
+            title: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** SourceRow */
+        SourceRow: {
+            /** Coverage */
+            coverage?: string | null;
+            /** Created At */
+            created_at?: string | null;
+            /** Domain */
+            domain: string;
+            /** Name */
+            name?: string | null;
+            /** Origin */
+            origin: string;
+            /** Reason */
+            reason?: string | null;
+            /** Relevance */
+            relevance?: string | null;
+            /** Round */
+            round?: number | null;
+            /**
+             * Search Id
+             * Format: uuid
+             */
+            search_id: string;
+            /** Source Order */
+            source_order?: number | null;
+            /** Url */
+            url: string;
+            /** Verdict */
+            verdict: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** SourceStatistics */
+        SourceStatistics: {
+            /** Accepted Articles */
+            accepted_articles: number;
+            /**
+             * Basis
+             * @constant
+             */
+            basis: "site_run_candidates_v1";
+            /** Candidates */
+            candidates: number | null;
+            /** Complete */
+            complete: boolean;
+            /** Domain */
+            domain: string;
+            /** Last Job At */
+            last_job_at: string | null;
+            /** Last Job Id */
+            last_job_id: string | null;
+            /** Ratio */
+            ratio: number | null;
+        };
+        /** SourceStatisticsPage */
+        SourceStatisticsPage: {
+            /** Items */
+            items: components["schemas"]["SourceStatistics"][];
+            /** Next Cursor */
+            next_cursor: string | null;
         };
         /**
          * StoredJobSummary
@@ -967,8 +2459,15 @@ export interface components {
             } | null;
             /** Articles */
             articles?: number | null;
-            /** Bytes Fetched */
+            /**
+             * Bytes Fetched
+             * @description Known decoded response-payload subtotal; not wire or proxy billing bytes.
+             */
             bytes_fetched?: number | null;
+            /** Bytes Fetched Basis */
+            bytes_fetched_basis?: "decoded_response_body" | null;
+            /** Bytes Fetched Complete */
+            bytes_fetched_complete?: boolean | null;
             /** Chosen Seeds */
             chosen_seeds?: number | null;
             /** Companies */
@@ -1019,6 +2518,14 @@ export interface components {
             prompt_version?: string | null;
             /** Resumed */
             resumed?: number | null;
+            /** Retrieval Byte Events */
+            retrieval_byte_events?: number | null;
+            /** Retrieval Byte History Complete */
+            retrieval_byte_history_complete?: boolean | null;
+            /** Retrieval Byte Last Event Id */
+            retrieval_byte_last_event_id?: number | null;
+            /** Retrieval Unknown Byte Events */
+            retrieval_unknown_byte_events?: number | null;
             /** Sections */
             sections?: number | null;
             /** Seeds */
@@ -1068,6 +2575,282 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** SummaryRow */
+        SummaryRow: {
+            /** Article Id */
+            article_id: number;
+            /** Article Key */
+            article_key?: string | null;
+            /** Article Materiality */
+            article_materiality?: string | null;
+            /** Article Signal */
+            article_signal?: string | null;
+            /** Content Type */
+            content_type?: string | null;
+            /** Created At */
+            created_at?: string | null;
+            /** Date */
+            date?: string | null;
+            /** Date Precision */
+            date_precision?: string | null;
+            /** Date Source */
+            date_source?: string | null;
+            /** Failure */
+            failure?: string | null;
+            /**
+             * Focus Topics
+             * @default []
+             */
+            focus_topics: string[];
+            /** Id */
+            id: number;
+            /** Industry */
+            industry?: string | null;
+            /**
+             * Is List Page
+             * @default false
+             */
+            is_list_page: boolean;
+            /**
+             * Kept Count
+             * @default 0
+             */
+            kept_count: number;
+            /** Main Idea */
+            main_idea?: string | null;
+            /** Model */
+            model?: string | null;
+            /** Narrative */
+            narrative?: string | null;
+            /** Prompt Version */
+            prompt_version: string;
+            /** Record */
+            record?: {
+                [key: string]: unknown;
+            } | null;
+            /** Snippet */
+            snippet?: string | null;
+            /** Source Domain */
+            source_domain?: string | null;
+            /**
+             * Sponsored
+             * @default false
+             */
+            sponsored: boolean;
+            /** Sub Industry */
+            sub_industry?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Url */
+            url?: string | null;
+            /**
+             * Warnings
+             * @default []
+             */
+            warnings: string[];
+        } & {
+            [key: string]: unknown;
+        };
+        /** TaskRetryResult */
+        TaskRetryResult: {
+            /** Attempts */
+            attempts: number;
+            /**
+             * Status
+             * @constant
+             */
+            status: "queued";
+            /** Task Id */
+            task_id: number;
+        };
+        /** TaskRow */
+        TaskRow: {
+            /** Attempts */
+            attempts: number;
+            /** Claimed At */
+            claimed_at?: string | null;
+            /** Claimed By */
+            claimed_by?: string | null;
+            /** County */
+            county?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Dedupe Key */
+            dedupe_key?: string | null;
+            /** Error Category */
+            error_category?: string | null;
+            /** Finished At */
+            finished_at?: string | null;
+            /** Id */
+            id: number;
+            /** Job Id */
+            job_id?: string | null;
+            /** Job Status */
+            job_status?: string | null;
+            /** Kind */
+            kind: string;
+            /** Last Error */
+            last_error?: string | null;
+            /** Lease Until */
+            lease_until?: string | null;
+            /** Max Attempts */
+            max_attempts: number;
+            /** Parent Task Id */
+            parent_task_id?: number | null;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /** Priority */
+            priority: number;
+            /** Result */
+            result?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Run After
+             * Format: date-time
+             */
+            run_after: string;
+            /** Site Run Id */
+            site_run_id?: string | null;
+            /** Started At */
+            started_at?: string | null;
+            /** State Code */
+            state_code?: string | null;
+            /** Status */
+            status: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** TopSignal */
+        TopSignal: {
+            /** Count */
+            count: number;
+            /** Key */
+            key: string;
+            /** Title */
+            title: string | null;
+        };
+        /** UrlRow */
+        UrlRow: {
+            /** Canonical Url */
+            canonical_url: string;
+            /** Date Precision */
+            date_precision?: string | null;
+            /** Date Source */
+            date_source?: string | null;
+            /** Domain */
+            domain: string;
+            /**
+             * First Seen
+             * Format: date-time
+             */
+            first_seen: string;
+            /** Id */
+            id: number;
+            /** Last Classification */
+            last_classification?: string | null;
+            /** Last Fetched At */
+            last_fetched_at?: string | null;
+            /**
+             * Last Seen
+             * Format: date-time
+             */
+            last_seen: string;
+            /** Published Date */
+            published_date?: string | null;
+            /** Times Seen */
+            times_seen: number;
+        } & {
+            [key: string]: unknown;
+        };
+        /** WorkerRow */
+        WorkerRow: {
+            /** Attrs */
+            attrs?: {
+                [key: string]: unknown;
+            } | null;
+            /** Current Tasks */
+            current_tasks: number[];
+            /** Gone At */
+            gone_at?: string | null;
+            /** Heartbeat Age Seconds */
+            heartbeat_age_seconds: number;
+            /** Hostname */
+            hostname: string;
+            /** Instance Id */
+            instance_id: string;
+            /**
+             * Last Seen
+             * Format: date-time
+             */
+            last_seen: string;
+            /** Live */
+            live: boolean;
+            /** Proxy Checked At */
+            proxy_checked_at?: string | null;
+            /** Proxy Ok */
+            proxy_ok?: boolean | null;
+            /** Role */
+            role: string;
+            /** Running Tasks */
+            running_tasks: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Version */
+            version: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** WorkRow */
+        WorkRow: {
+            /** Attempts */
+            attempts: number;
+            /** Candidate */
+            candidate: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Discovery Sequence */
+            discovery_sequence: number;
+            /** Error Category */
+            error_category: string;
+            /** Outcome */
+            outcome: string;
+            /** Result */
+            result?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Site Run Id
+             * Format: uuid
+             */
+            site_run_id: string;
+            /** Snapshot Id */
+            snapshot_id?: number | null;
+            /** Stage */
+            stage: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Work Key */
+            work_key: string;
+        } & {
+            [key: string]: unknown;
+        };
     };
     responses: never;
     parameters: never;
@@ -1092,7 +2875,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["HealthStatus"];
                 };
             };
         };
@@ -1112,7 +2895,847 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ReadinessStatus"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessStatus"];
+                };
+            };
+        };
+    };
+    get_access_policies_v1_access_policies_get: {
+        parameters: {
+            query?: {
+                active?: boolean | null;
+                after?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultPage_AccessPolicyRecord_"];
+                };
+            };
+            /** @description Invalid request or cursor. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description API key is missing, invalid, or revoked. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description An operator key is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The requested resource does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request conflicts with the saved state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The saved artifact is expired or unavailable. */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Invalid body, path, query parameter, or filter. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request could not be completed. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The database or artifact store is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    post_reset_access_policy_v1_access_policies__host__reset_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                host: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessPolicyRecord"];
+                };
+            };
+            /** @description Invalid request or cursor. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description API key is missing, invalid, or revoked. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description An operator key is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The requested resource does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request conflicts with the saved state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The saved artifact is expired or unavailable. */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Invalid body, path, query parameter, or filter. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request could not be completed. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The database or artifact store is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    list_keys_v1_api_keys_get: {
+        parameters: {
+            query?: {
+                /** @description Opaque next_cursor from the same resource and filters. */
+                after?: string | null;
+                /** @description Maximum number of rows in this page. */
+                limit?: number;
+                /** @description Only revoked or active keys. */
+                revoked?: boolean | null;
+                /** @description Exact key role. */
+                role?: ("operator" | "reader") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultPage_ApiKeyRecord_"];
+                };
+            };
+            /** @description Invalid request or cursor. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description API key is missing, invalid, or revoked. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description An operator key is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The requested resource does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request conflicts with the saved state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The saved artifact is expired or unavailable. */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Invalid body, path, query parameter, or filter. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request could not be completed. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The database or artifact store is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -1136,7 +3759,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["CreatedApiKey"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -1685,7 +4308,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ArticleRow"];
+                    "text/plain": string;
                 };
             };
             /** @description Invalid request or cursor. */
@@ -1968,7 +4592,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_SummaryRow_"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -2244,6 +4868,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                    "application/octet-stream": string;
                 };
             };
             /** @description Invalid request or cursor. */
@@ -2507,6 +5132,8 @@ export interface operations {
                 after?: string | null;
                 /** @description Opaque next_cursor from this company's articles page. */
                 articles_after?: string | null;
+                /** @description Read this job's company profile, including its subscriber evidence. */
+                job_id?: string | null;
                 /** @description Maximum number of rows in this page. */
                 limit?: number;
                 /** @description Opaque next_cursor from this company's signals page. */
@@ -2528,7 +5155,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["CompanyProfile"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -2804,7 +5431,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["CreatedExport"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -3078,7 +5705,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ExportRecord"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -3365,7 +5992,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_FinderMemoryRow_"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -3627,18 +6254,30 @@ export interface operations {
             query?: {
                 /** @description Opaque next_cursor from the same resource and filters. */
                 after?: string | null;
+                /** @description Literal client-reference prefix, not a wildcard pattern. */
+                client_reference_prefix?: string | null;
                 /** @description County name; an optional County suffix is removed. */
                 county?: string | null;
                 /** @description Created after this ISO timestamp, including timezone. */
                 created_after?: string | null;
                 /** @description Created before this ISO timestamp, including timezone. */
                 created_before?: string | null;
+                /** @description Case-insensitive job input industry. */
+                industry?: string | null;
+                /** @description Exact job input kind. */
+                kind?: ("url" | "seeds" | "location_industry") | null;
                 /** @description Maximum number of rows in this page. */
                 limit?: number;
+                /** @description Preserve ID order or request newest-created jobs first. */
+                order?: "id_asc" | "created_desc";
+                /** @description Literal text search over job identity and input. */
+                q?: string | null;
                 /** @description US state name or two-letter code. */
                 state?: string | null;
                 /** @description Exact job status. */
                 status?: string | null;
+                /** @description The finding, exploring, discovering, analysing and finalizing stages. */
+                status_group?: "running" | null;
             };
             header?: never;
             path?: never;
@@ -4500,7 +7139,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_ArticleRow_"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -5061,7 +7700,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_CompanyMention_"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -5348,7 +7987,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_EventRow_"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -5909,7 +8548,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_CompanyFlags_"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -6192,7 +8831,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_RankingRow_"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -6727,6 +9366,280 @@ export interface operations {
             };
         };
     };
+    retry_dead_tasks_v1_jobs__job_id__retry_dead_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkRetryResult"];
+                };
+            };
+            /** @description Invalid request or cursor. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description API key is missing, invalid, or revoked. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description An operator key is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The requested resource does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request conflicts with the saved state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The saved artifact is expired or unavailable. */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Invalid body, path, query parameter, or filter. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request could not be completed. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The database or artifact store is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     list_job_sections_v1_jobs__job_id__sections_get: {
         parameters: {
             query?: {
@@ -6753,7 +9666,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_SectionRow_"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -7019,6 +9932,8 @@ export interface operations {
                 company_key?: string | null;
                 /** @description Exact headquarters scope relative to this job. */
                 hq_scope?: string | null;
+                /** @description Exact saved company-mention ID. */
+                id?: number | null;
                 /** @description Maximum number of rows in this page. */
                 limit?: number;
                 /** @description Exact company signal materiality. */
@@ -7042,7 +9957,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_CompanyMention_"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -7323,7 +10238,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_SiteRunRow_"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -7606,7 +10521,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_SourceRow_"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -7893,7 +10808,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_SummaryRow_"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -8477,7 +11392,893 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_TaskRow_"];
+                };
+            };
+            /** @description Invalid request or cursor. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description API key is missing, invalid, or revoked. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description An operator key is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The requested resource does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request conflicts with the saved state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The saved artifact is expired or unavailable. */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Invalid body, path, query parameter, or filter. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request could not be completed. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The database or artifact store is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_signals_v1_signals_get: {
+        parameters: {
+            query?: {
+                /** @description Opaque next_cursor from the same resource and filters. */
+                after?: string | null;
+                client_reference_prefix?: string | null;
+                company_key?: string | null;
+                county?: string | null;
+                /** @description Inclusive publication interval start. */
+                date_after?: string | null;
+                /** @description Inclusive publication interval end. */
+                date_before?: string | null;
+                hq_scope?: string | null;
+                industry?: string | null;
+                job_id?: string | null;
+                job_industry?: string | null;
+                /** @description Maximum number of rows in this page. */
+                limit?: number;
+                materiality?: string | null;
+                org_kind?: string | null;
+                /** @description Case-insensitive literal signal text search. */
+                q?: string | null;
+                revenue_bin?: string | null;
+                signal?: string | null;
+                state?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultPage_GlobalSignalRow_"];
+                };
+            };
+            /** @description Invalid request or cursor. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description API key is missing, invalid, or revoked. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description An operator key is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The requested resource does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request conflicts with the saved state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The saved artifact is expired or unavailable. */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Invalid body, path, query parameter, or filter. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request could not be completed. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The database or artifact store is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    export_signals_v1_signals_export_csv_get: {
+        parameters: {
+            query?: {
+                /** @description Opaque next_cursor from the same resource and filters. */
+                after?: string | null;
+                client_reference_prefix?: string | null;
+                company_key?: string | null;
+                county?: string | null;
+                /** @description Inclusive publication interval start. */
+                date_after?: string | null;
+                /** @description Inclusive publication interval end. */
+                date_before?: string | null;
+                hq_scope?: string | null;
+                industry?: string | null;
+                job_id?: string | null;
+                job_industry?: string | null;
+                /** @description Maximum number of rows in this page. */
+                limit?: number;
+                materiality?: string | null;
+                org_kind?: string | null;
+                /** @description Case-insensitive literal signal text search. */
+                q?: string | null;
+                revenue_bin?: string | null;
+                signal?: string | null;
+                state?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    "Content-Disposition"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            /** @description Invalid request or cursor. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description API key is missing, invalid, or revoked. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description An operator key is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The requested resource does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request conflicts with the saved state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The saved artifact is expired or unavailable. */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Invalid body, path, query parameter, or filter. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request could not be completed. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The database or artifact store is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_signal_summary_v1_signals_summary_get: {
+        parameters: {
+            query?: {
+                /** @description Opaque next_cursor from the same resource and filters. */
+                after?: string | null;
+                client_reference_prefix?: string | null;
+                company_key?: string | null;
+                county?: string | null;
+                /** @description Inclusive publication interval start. */
+                date_after?: string | null;
+                /** @description Inclusive publication interval end. */
+                date_before?: string | null;
+                hq_scope?: string | null;
+                industry?: string | null;
+                job_id?: string | null;
+                job_industry?: string | null;
+                /** @description Maximum number of rows in this page. */
+                limit?: number;
+                materiality?: string | null;
+                org_kind?: string | null;
+                /** @description Case-insensitive literal signal text search. */
+                q?: string | null;
+                revenue_bin?: string | null;
+                signal?: string | null;
+                state?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignalSummary"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -8751,7 +12552,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ExplorationRow"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -9036,7 +12837,566 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_WorkRow_"];
+                };
+            };
+            /** @description Invalid request or cursor. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description API key is missing, invalid, or revoked. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description An operator key is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The requested resource does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request conflicts with the saved state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The saved artifact is expired or unavailable. */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Invalid body, path, query parameter, or filter. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request could not be completed. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The database or artifact store is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_source_statistics_v1_sources_stats_get: {
+        parameters: {
+            query?: {
+                /** @description Opaque next_cursor from the same resource and filters. */
+                after?: string | null;
+                domain?: string | null;
+                /** @description Maximum number of rows in this page. */
+                limit?: number;
+                since?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceStatisticsPage"];
+                };
+            };
+            /** @description Invalid request or cursor. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description API key is missing, invalid, or revoked. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description An operator key is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The requested resource does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request conflicts with the saved state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The saved artifact is expired or unavailable. */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Invalid body, path, query parameter, or filter. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request could not be completed. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The database or artifact store is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_cost_estimate_v1_stats_cost_estimate_get: {
+        parameters: {
+            query: {
+                /** @description Saved article recency window in days. */
+                days?: number | null;
+                /** @description Requested location-industry input industry. */
+                industry?: string | null;
+                kind: "url" | "seeds" | "location_industry";
+                /** @description Requested settings.sites value. */
+                sites?: number | "all" | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CostEstimate"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -9315,7 +13675,288 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_DailyStatsRow_"];
+                };
+            };
+            /** @description Invalid request or cursor. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description API key is missing, invalid, or revoked. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description An operator key is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The requested resource does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request conflicts with the saved state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The saved artifact is expired or unavailable. */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Invalid body, path, query parameter, or filter. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The request could not be completed. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The database or artifact store is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        /** Detail */
+                        detail: string;
+                        /** Error Category */
+                        error_category: string;
+                        /** Errors */
+                        errors?: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /** Instance */
+                        instance: string;
+                        /** Status */
+                        status: number;
+                        /** Title */
+                        title: string;
+                        /** Type */
+                        type: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    list_tasks_v1_tasks_get: {
+        parameters: {
+            query?: {
+                /** @description Opaque next_cursor from the same resource and filters. */
+                after?: string | null;
+                created_after?: string | null;
+                job_id?: string | null;
+                kind?: string | null;
+                /** @description Maximum number of rows in this page. */
+                limit?: number;
+                status?: ("queued" | "running" | "succeeded" | "failed" | "dead" | "cancelled") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultPage_TaskRow_"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -9589,7 +14230,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["TaskRetryResult"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -9872,7 +14513,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_UrlRow_"];
                 };
             };
             /** @description Invalid request or cursor. */
@@ -10151,7 +14792,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResultPage_WorkerRow_"];
                 };
             };
             /** @description Invalid request or cursor. */

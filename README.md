@@ -13,29 +13,19 @@ for day-to-day operation. Current version: **0.1.0** (`bff/scout_bff/version.py`
 
 ## Status
 
-Phases from `docs/plan/07-ui-service-plan.md` §13. Every phase is built and merged on
-`main`; what remains is Daniel's part of U6.
+The console connects to the pipeline API contract version **1**. Deploy the matching
+backend and UI together. The API provides global signals and tasks, source acceptance
+statistics, recorded model-cost estimates, job filters and the API-key inventory.
+The BFF checks required paths, fields and authenticated key access in `/readyz`.
+Missing or incompatible APIs produce a clear error; bounded result fallbacks have
+been removed.
 
-- [x] **U0 — scaffold.** Repo, pnpm + uv, Vite/React/TS, Tailwind v4 + tokens, router skeleton with every route, AppShell + sidebar + sign-in, MSW fixtures from the mockup, CI, Dockerfile + `compose.ui.yaml` + Caddyfile, `AGENTS.md`.
-- [x] **U1 — BFF core.** Settings, db, Alembic `ui` schema + roles + bootstrap admin, auth/sessions/CSRF, users, `/v1` proxy with allowlist and streaming, health, structlog, pytest suite.
-- [x] **U2 — jobs.** Runs list, New run form with fan-out, job detail (header, stepper, overview, results tabs, operations tabs, retry / retry-all-dead), Export CSV menu.
-- [x] **U3 — Scouts and Data Sources.** Scouts CRUD + Run + history; sources CRUD, CSV import, suggestions + promote, seeds jobs, precision column.
-- [x] **U4 — Signals explorer.** Cross-job list, filter bar + chips, saved views, column chooser + density, detail drawer, filtered CSV export (runs in the bounded fallback until B1 lands).
-- [x] **U5 — Overview and Settings.** Tiles, attention, workers, recent signals; API keys, Workers & health, Stats & costs, Exports, System, Preferences, Users.
-- [x] **U6 — harden and release** (all but deployment). Playwright + axe suite, dark theme pass, empty/error/loading audit, README + runbook, version 0.1.0, image tag.
-
-**Remaining:** deploy to the VM and a day of real jobs run through the UI only — both
-Daniel's steps, on his Mac / the VM (see [What was verified](#what-was-verified)).
-
-Backend PRs **B1–B4** (`GET /v1/signals`, `GET /v1/sources/stats` + `GET /v1/stats/cost-estimate`,
-`POST /v1/jobs/{id}/retry-dead` + `GET /v1/tasks` + job filters, `GET /v1/api-keys`) are not
-in the pipeline API yet; the console probes for them and treats them as optional
-capabilities (see [Troubleshooting](#troubleshooting)).
+Local Docker is the supported integration setup. VM deployment is outside this work.
 
 ## Architecture
 
 ```
- browser (SPA) ──HTTPS──► Caddy ──► ui (FastAPI BFF, :8080)
+ browser (SPA) ──HTTP localhost:8080──► ui (FastAPI BFF, :8080)
    React 19 · TanStack Router/Query/Table        │  GET /            static SPA (built by Vite)
    shadcn/ui · Tailwind v4 · Lucide              │  /app/*           UI-owned API: auth, scouts, batches, sources, views, prefs
    polling 5 s / 30 s · ETag                     │  /v1/*            reverse proxy → api:8000, injects X-API-Key by role
@@ -44,7 +34,7 @@ capabilities (see [Troubleshooting](#troubleshooting)).
                              ┌────────────────────────────────┐        ┌──────────────────────────┐
                              │ PostgreSQL 16 (existing)       │        │ api (existing FastAPI)   │
                              │  ui.*  users · sessions ·      │◄─SQL───┤ platform.* finder.* …    │
-                             │        scouts · batches ·      │        │ + new reads (B1–B4)      │
+                             │        scouts · batches ·      │        │ contract version 1 reads      │
                              │        sources · saved_views · │        └──────────────────────────┘
                              │        preferences · audit_log │
                              └────────────────────────────────┘
@@ -61,38 +51,38 @@ creates one job per industry (a **batch**, coupled to the API only through
 
 ## Features
 
-Every screen of the mockup exists and runs against the real pipeline API. "Until Bn"
-notes name the bounded fallback in use while that backend PR is not deployed.
+Every screen uses the real API through the same-origin BFF. MSW remains available for isolated UI tests.
 
 | Screen | Route | Phase | Status |
 |---|---|---|---|
 | Sign-in | `/sign-in` | U0/U1 | done |
 | Change password (forced after bootstrap or admin reset) | `/account/password` | U1 | done |
-| Overview — tiles, active runs, needs attention, workers, recent signals | `/` | U5 | done — dead-task and queue counts from recent jobs and daily stats until B3 |
-| Jobs › Runs — filters, polling, cancel / resume / re-run, batch chips, CSV of the page | `/jobs` | U2 | done — industry filter is client-side until B3 |
+| Overview — tiles, active runs, needs attention, workers, recent signals | `/` | U5 | done — global task counts and recorded daily statistics |
+| Jobs › Runs — filters, polling, cancel / resume / re-run, batch chips, CSV of the page | `/jobs` | U2 | done — server search, running-state group and filters; newest jobs first |
 | Jobs › Scouts — saved setups, run (one job per industry), last run + signals, edit / archive | `/jobs/scouts` | U3 | done — ⋯ › Duplicate starts a new Scout from the saved setup ("<name> (copy)") |
-| New run / Scout — mode toggle, fan-out preview, advanced settings, save as Scout | `/jobs/new` | U2 · U3 | done — `?scout=` edits / runs a Scout, `?from=` re-runs a job, `?mode=seeds&source=` pre-ticks a seed; cost estimate from the last 10 completed jobs until B2 |
+| New run / Scout — mode toggle, fan-out preview, advanced settings, save as Scout | `/jobs/new` | U2 · U3 | done — `?scout=` edits / runs a Scout, `?from=` re-runs a job, `?mode=seeds&source=` pre-ticks a seed; estimate from comparable completed jobs with complete recorded model cost |
 | Job › Overview — header, stepper, counters, site runs, cost by stage, settings | `/jobs/$jobId` | U2 | done — "—" where the API has no fact |
 | Job › Signals (shared SignalsTable + drawer, server filters, `signals.csv`) | `/jobs/$jobId/signals` (`?detail=` opens the drawer) | U2 | done |
 | Job › Companies (flags switch) · Summaries · Articles | `/jobs/$jobId/{companies,summaries,articles}` | U2 | done — keyset paging, URL-bound filters, CSV per table |
-| Job › Site runs (+ finder sources and ranking) · Sections · Tasks (tree, retry, retry all dead) · Events | `/jobs/$jobId/{site-runs,sections,tasks,events}` | U2 | done — retry-all-dead loops per task until B3; events are paged oldest first (API order) |
-| Signals explorer — filters, chips, saved views, column chooser, drawer, CSV | `/signals` (`?detail=` opens the drawer) | U4 | done — merges the 20 most recent matching jobs until B1 ("degraded" banner; ADR-UI-007, 012) |
-| Data Sources — curated list, add / edit / remove / restore, CSV import, finder suggestions, promote / dismiss, CSV export | `/sources` | U3 | done — precision column and median tile read "needs pipeline API update (B2)" until B2 |
-| Settings › API keys (admin) · Workers & health · Stats & costs · Exports · System · Preferences · Users (admin) | `/settings/{keys,workers,stats,exports,system,preferences,users}` | U5 | done — key list needs B4 (keys created in this browser are listed meanwhile); Logs/Drain, proxy zone/traffic, storage and maintenance results read "not exposed by the API" |
+| Job › Site runs (+ finder sources and ranking) · Sections · Tasks (tree, retry, retry all dead) · Events | `/jobs/$jobId/{site-runs,sections,tasks,events}` | U2 | done — atomic retry action; events are paged oldest first (API order) |
+| Signals explorer — filters, chips, saved views, column chooser, drawer, CSV | `/signals` (`?detail=<id>&detail_job=<job_id>`) | U4 | done — every matching job; list, summary and CSV share filters |
+| Data Sources — curated list, add / edit / remove / restore, CSV import, finder suggestions, promote / dismiss, CSV export | `/sources` | U3 | done — article acceptance rate; incomplete candidate history is unavailable |
+| Settings › API keys (admin) · Website access (operator) · Workers & health · Stats & costs · Exports · System · Preferences · Users (admin) | `/settings/{keys,access-policies,workers,stats,exports,system,preferences,users}` | U5 | done — server key inventory; website access read/reset is operator-only; unavailable telemetry is labelled |
 
 ## Quick start (Docker)
 
-Scout runs inside the pipeline's Compose project (`article-pipeline`): same PostgreSQL,
-same Caddy, one extra image. Everything below happens on the machine that runs the
-pipeline (Daniel's Mac or the VM).
+Scout runs in the pipeline's local Compose project (`article-pipeline`) and shares
+PostgreSQL. Check out this repository as the sibling `../multi-agent-articles-ui`.
+Use the pipeline's `.env.platform` for both services; append the settings documented
+in [the shared backend template](../multi-agent-article/.env.platform.example). Keep `UI_SECURE_COOKIES=false` and
+`UI_PUBLIC_URL=http://localhost:8080` for local HTTP. Caddy is optional and is not
+required for this setup.
 
-**Prerequisites.** The pipeline repo checked out and running (`docker compose up -d`
-there; `curl --fail http://127.0.0.1:8000/readyz` answers), Docker with BuildKit, and
-this repo checked out **as a sibling folder** named `multi-agent-articles-ui`
-(`compose.ui.yaml` refers to `../multi-agent-articles-ui`).
+Start the pipeline with `docker compose --env-file .env.platform up -d` and check
+`http://localhost:8000/readyz` before adding the UI.
 
 1. **Create the two pipeline API keys** the BFF will use (once). With the pipeline's
-   bootstrap key from its `.env`:
+   bootstrap key from its `.env.platform`:
 
    ```bash
    curl -sS -X POST http://127.0.0.1:8000/v1/api-keys \
@@ -105,45 +95,29 @@ this repo checked out **as a sibling folder** named `multi-agent-articles-ui`
 
    Each `201` response contains the plaintext `key` exactly once.
 
-2. **Add the UI variables to the pipeline's `.env`** — the variables are listed and
-   explained in [`.env.ui.example`](.env.ui.example). Required:
+2. **Add the UI variables to the pipeline's `.env.platform`** — the variables are listed and
+   explained in [the shared backend template](../multi-agent-article/.env.platform.example). Required:
    `UI_DATABASE_PASSWORD` (new random value), `PIPELINE_OPERATOR_KEY`,
    `PIPELINE_READER_KEY` (from step 1), `SESSION_SECRET` (`openssl rand -hex 32`),
    `UI_BOOTSTRAP_ADMIN_EMAIL` and `UI_BOOTSTRAP_ADMIN_PASSWORD` (your first admin).
-   Optional: `UI_DOMAIN` (default `scout.localhost`), `UI_PORT` (default `8080`),
-   `UI_IMAGE_TAG` (default `local`).
+   Optional: `UI_PORT` (default `8080`) and `UI_IMAGE_TAG` (default `local`).
 
-3. **Let Caddy serve the UI host** (one of two options; `http://127.0.0.1:${UI_PORT}`
-   works without either):
-   - **A (plan §11):** add the line `import /etc/caddy/Caddyfile.ui` to the pipeline
-     repo's `deploy/Caddyfile`. `compose.ui.yaml` mounts the UI site block there. Caddy
-     refuses to start if that file is missing, so from then on always start the
-     project with both compose files (or write the line as
-     `import /etc/caddy/Caddyfile.ui*`, which tolerates its absence).
-   - **B (no change in the pipeline repo):** uncomment the
-     `deploy/Caddyfile:/etc/caddy/Caddyfile:ro` line in `compose.ui.yaml`. This repo's
-     [`deploy/Caddyfile`](deploy/Caddyfile) serves both hosts (the API block is the
-     pipeline's own, verbatim) and overrides the pipeline's mount.
-
-4. **Build and start**, from the pipeline repo:
+3. **Build and start**, from the pipeline repo:
 
    ```bash
-   docker compose -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml config --quiet
-   docker compose -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml up -d --build
+   docker compose --env-file .env.platform -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml config --quiet
+   docker compose --env-file .env.platform -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml up -d --build
    curl --fail http://127.0.0.1:8080/readyz
-   docker compose -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml ps
+   docker compose --env-file .env.platform -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml ps
    ```
 
    `ui_migrate` runs first (creates schema `ui`, roles `svc_ui`/`app_ui`, applies the
    Alembic history, creates the admin when `ui.users` is empty; idempotent), then `ui`
    starts once the pipeline API is healthy.
 
-5. **Sign in** at `https://scout.localhost` (or your `UI_DOMAIN`; `*.localhost` names
-   get a Caddy-internal certificate your browser may warn about) or directly at
-   `http://127.0.0.1:8080`. Use the bootstrap admin; you are taken to
-   `/account/password` to set a new password, then to the Overview. Create further
-   accounts under Settings › Users (roles `admin`, `operator`, `viewer`) and remove
-   `UI_BOOTSTRAP_ADMIN_PASSWORD` from `.env`.
+4. **Sign in** at `http://localhost:8080`. Use the bootstrap admin and change its
+   password. Create accounts under Settings › Users, then remove
+   `UI_BOOTSTRAP_ADMIN_PASSWORD` from `.env.platform`.
 
 Step-by-step operator tasks (keys, users, runs, retries, exports, upgrades, backups)
 are in [HOWTO.md](HOWTO.md).
@@ -159,18 +133,16 @@ cd web && pnpm install --frozen-lockfile && pnpm dev:mock        # http://localh
 # mock accounts: admin@sympera.ai / scout-admin · operator@sympera.ai / scout-operator
 #                viewer@sympera.ai / scout-viewer · newcomer@sympera.ai / scout-newcomer (forced password change)
 
-# SPA + local BFF against a PostgreSQL and the pipeline API (Docker or bare processes, HOWTO.md §12)
-cp .env.ui.example .env.ui       # fill UI_DATABASE_URL (owner URL for bootstrap), UI_DATABASE_PASSWORD,
-                                 # PIPELINE_API_URL=http://localhost:8000, the two keys, SESSION_SECRET,
-                                 # UI_BOOTSTRAP_ADMIN_EMAIL/PASSWORD, UI_SECURE_COOKIES=false, LOG_FORMAT=console
-uv sync --frozen
-uv run python -m scout_bff.bootstrap                               # schema, roles, migrations, first admin
-uv run uvicorn scout_bff.app:app --reload --port 8080              # the BFF (serves bff/scout_bff/static if built)
-cd web && pnpm dev                                                 # Vite proxies /app, /v1, /healthz, /readyz to :8080
+# Real integration: start the local Compose stack described above.
+# Vite can also proxy to that BFF for UI editing:
+cd web && pnpm dev                                              # http://localhost:5173
 ```
 
-After bootstrap, switch `UI_DATABASE_URL` in `.env.ui` to the `app_ui` login for the
-running BFF (bootstrap needs the owner, the app does not).
+For a bare BFF during development, settings default to the sibling pipeline file
+`../multi-agent-article/.env.platform`. `PLATFORM_ENV_FILE=/absolute/path/.env.platform`
+selects another file; process environment takes precedence. Use an owner
+`UI_DATABASE_URL` only for bootstrap, and the `app_ui` login for the running BFF.
+The Docker services set these two URLs separately.
 
 Builds: `pnpm build` (`pnpm gen:routes && tsc -b && vite build`) writes the real SPA to
 `web/dist` — it never includes the MSW worker; copy or symlink `web/dist` to
@@ -191,14 +163,20 @@ API types from `docs/api/openapi-pipeline.json` and `docs/api/openapi-bff.json`
 | bff | `uv run ruff check . && uv run ruff format --check .` | lint + format |
 | bff | `uv run lint-imports` | import boundaries (never from the pipeline repo) |
 | bff | `uv run pytest -q` | unit tests always; the integration tests need `UI_TEST_DATABASE_URL` (a disposable database), otherwise they are skipped with a reason |
-| image | `docker build --check .`, `docker build .` and `docker compose -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml config` | the compose check runs from the pipeline repo |
+| image | `docker build --check .`, `docker build .` and `docker compose --env-file .env.platform -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml config` | the compose check runs from the pipeline repo |
 
 CI (`.github/workflows/ci.yml`) runs the same four groups on every pull request and on
 `main`: `web`, `bff` (with a `postgres:16` service), `e2e` and `image` (build, no push).
-Tests never touch the network: the pipeline API is a `respx` stub in pytest and MSW
-fixtures in the browser.
+Unit and mock browser tests use respx/MSW. The separate combined acceptance harness
+uses the real API and BFF with a disposable local database and deterministic fixtures;
+it does not call external websites or models.
 
 ## What was verified
+
+On the integration branch: Node 22 `pnpm check` passes 103 tests and `pnpm build` passes.
+The combined acceptance and Docker verification results are recorded with the integration hand-back.
+
+Historical baseline:
 
 Checked in the development sandbox on 2026-10-04, on the merged `main`:
 
@@ -211,17 +189,13 @@ Checked in the development sandbox on 2026-10-04, on the merged `main`:
   created a URL run and a two-industry Scout (fan-out through `POST /v1/jobs`, batch
   chips on Runs), opened the job with all nine tabs, cancelled it, added a Data Source,
   created an API key and created a user — zero failed requests.
-- **Not run here.** The Docker image build and `compose.ui.yaml` could not be executed
-  because container registries are blocked by policy in the sandbox. The Dockerfile was
-  validated with `docker build --check` (on a base-image-free variant) and the compose
-  override with `docker compose config` and a dummy env. The first
-  `docker compose … up --build` must happen on Daniel's Mac (Quick start, step 4).
 
 ## Configuration
 
-All variables, with comments and defaults, are in [`.env.ui.example`](.env.ui.example)
-(contract §4.1). In Docker they are read from the pipeline's `.env` through
-`compose.ui.yaml`; locally the BFF reads `.env.ui` when present. Required at runtime:
+All variables, with comments and defaults, are in [the shared backend template](../multi-agent-article/.env.platform.example).
+In Docker, always pass `--env-file .env.platform`; Compose reads the shared pipeline
+file and sets container connection URLs. Bare BFF processes read the sibling platform
+file or `PLATFORM_ENV_FILE`. `.env` and `.env.ui` are not loaded. Vite also disables automatic `.env*` loading and reads only `VITE_BFF_URL` from the selected platform file for its development proxy. Required at runtime:
 `UI_DATABASE_URL`, `PIPELINE_API_URL`, `PIPELINE_OPERATOR_KEY`, `PIPELINE_READER_KEY`,
 `SESSION_SECRET` (≥ 32 characters). Bootstrap additionally needs `UI_DATABASE_PASSWORD`
 (password for `app_ui`) and, for the first admin, `UI_BOOTSTRAP_ADMIN_EMAIL` /
@@ -229,7 +203,7 @@ All variables, with comments and defaults, are in [`.env.ui.example`](.env.ui.ex
 `UI_CAPABILITY_REFRESH_SECONDS` (300), `UI_SESSION_IDLE_HOURS` (12),
 `UI_SESSION_ABSOLUTE_DAYS` (7), `UI_AUDIT_RETENTION_DAYS` (180), `LOG_LEVEL`,
 `LOG_FORMAT`. `UI_PORT` is the host port Compose binds and the port
-`python -m scout_bff` listens on. Compose-only: `UI_IMAGE_TAG`, `UI_DOMAIN`.
+`python -m scout_bff` listens on. Compose-only: `UI_IMAGE_TAG`; `UI_DOMAIN` applies only to optional HTTPS.
 
 ## Security model
 
@@ -247,9 +221,9 @@ All variables, with comments and defaults, are in [`.env.ui.example`](.env.ui.ex
   account exists.
 - **CSRF.** Every unsafe request carries `X-Requested-With: scout` and `X-CSRF-Token`
   (from `GET /app/auth/me`); otherwise `403 csrf_failed`.
-- **Roles.** `admin ⊃ operator ⊃ viewer`. The `/v1` proxy is an allowlist of the 33
-  `/v1` routes in `docs/api/pipeline-routes.txt`: `POST/DELETE /v1/api-keys*` admin
-  only; every other `POST` operator; every `GET` any role; anything else
+- **Roles.** `admin ⊃ operator ⊃ viewer`. The `/v1` proxy follows `docs/api/pipeline-routes.txt`: API-key inventory/create/revoke
+  are admin-only; website access read/reset are operator-only; other reads permit
+  viewers and other writes require an operator; anything else
   `404 not_proxied`. Viewers may download per-job CSVs but not start dataset exports.
 - **Headers.** CSP `default-src 'self'` (`font-src 'self'`: fonts self-hosted, no
   third-party requests), `X-Content-Type-Options: nosniff`,
@@ -266,17 +240,17 @@ All variables, with comments and defaults, are in [`.env.ui.example`](.env.ui.ex
   deployments (`UI_IMAGE_TAG=0.1.0`) and `local` on a dev box.
 - **Migrations.** `ui_migrate` runs on every `up` and is idempotent; migrations are
   additive. To apply them without restarting the console:
-  `docker compose -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml run --rm ui_migrate`.
+  `docker compose --env-file .env.platform -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml run --rm ui_migrate`.
 - **Upgrade.** Pull the new UI commit, set `UI_IMAGE_TAG`, then
-  `up -d --build` (or `build ui` then `up -d ui_migrate ui`). Caddy keeps serving while
-  `ui` restarts; sessions survive because they live in `ui.sessions` (as long as
+  `up -d --build` (or `build ui` then `up -d ui_migrate ui`). The local console briefly restarts; sessions survive because they live in `ui.sessions` (as long as
   `SESSION_SECRET` is unchanged).
 - **Rotating keys.** Pipeline keys: create new ones through `POST /v1/api-keys` (or
-  Settings › API keys), replace the two values in `.env`, `up -d ui`, then
+  Settings › API keys), replace the two values in `.env.platform`, `up -d ui`, then
   `DELETE /v1/api-keys/<old-name>`. `SESSION_SECRET`: change and `up -d ui` — every
   user is signed out. Database password: change `UI_DATABASE_PASSWORD`, re-run
   `ui_migrate` (it alters the role), then `up -d ui`.
-- **Backup.** The pipeline's daily database backup already contains schema `ui`. For a
+- **Backup.** The maintenance role has read access to schema `ui` for full database backups.
+  Verify both dump and restore in a disposable database after permission changes. For a
   UI-only snapshot before a risky change: `pg_dump -n ui` (HOWTO.md §11).
 - Runbook: [`docs/dev/runbook.md`](docs/dev/runbook.md).
 
@@ -289,25 +263,17 @@ All variables, with comments and defaults, are in [`.env.ui.example`](.env.ui.ex
   `pipeline_api` → the API's own `/readyz` is failing or `PIPELINE_API_URL` is wrong.
 - **Sign-in loops or "not authenticated" right after login.** The browser did not keep
   the cookie: over plain `http://` on an address other than `localhost`/`127.0.0.1`,
-  set `UI_SECURE_COOKIES=false` (development only) or use the Caddy HTTPS host.
+  use the local default `UI_SECURE_COOKIES=false` at `http://localhost:8080`.
 - **`403 csrf_failed` from a script.** Send `X-Requested-With: scout` and the
   `csrf_token` from `GET /app/auth/me` on every `POST/PUT/PATCH/DELETE`.
 - **`503 pipeline_api_unavailable` / `504 pipeline_api_timeout`.** The BFF could not
   reach `PIPELINE_API_URL` (connect timeout 5 s, up to 3 attempts on GET) or the API
   did not answer within 30 s. Check `docker compose ps api` and the API's `/readyz`.
-- **"Needs pipeline API update (B1…B4)" notes.** The BFF probes the pipeline's
-  `/openapi.json` (at startup and every `UI_CAPABILITY_REFRESH_SECONDS`, default 300)
-  and publishes a capability map (`GET /app/capabilities`; Settings › System shows it).
-  Until the backend PRs land: the Signals explorer shows signals from the 20 most
-  recent matching jobs (`degraded: true`), "Retry all dead" loops over the job's dead
-  tasks, needs-attention and dead-task counts come from recent jobs and daily stats,
-  Settings › API keys can create and revoke but lists only the keys created in this
-  browser, source precision tiles read "needs pipeline API update (B2)", the cost
-  estimate uses the last 10 completed jobs, and the Runs industry filter applies
-  client-side. Nothing breaks; the note disappears once the capability is detected.
-- **Caddy fails to start after adding the import line.** The project was started
-  without `compose.ui.yaml`, so `/etc/caddy/Caddyfile.ui` is not mounted — start with
-  both files or use the glob form of the import (Quick start, step 3).
+- **Contract or API-key readiness errors.** Open Settings › System or
+  `GET /app/capabilities`. Contract version 1, required response fields, filters and
+  role-specific key reads must pass. Upgrade the backend and UI together or correct
+  the BFF keys. The BFF re-probes periodically; the browser refreshes the capability
+  map every 30 seconds and invalidates affected queries when it changes.
 - **Logs.** `docker compose … logs -f ui` — one JSON line per request and per proxied
   call (`user_id, role, method, path, status, duration_ms`; never a key).
 
@@ -320,9 +286,9 @@ multi-agent-articles-ui/
 ├── pyproject.toml · uv.lock       BFF package `scout_bff` (hatchling, packages = ["bff/scout_bff"])
 ├── alembic.ini                    script_location = bff/scout_bff/migrations (version table in schema ui)
 ├── Dockerfile · .dockerignore     two-stage build: node:22-alpine → python:3.12-slim, UID 10001, :8080
-├── compose.ui.yaml                override for the pipeline project: ui_migrate, ui, caddy
+├── compose.ui.yaml                local override: ui_migrate, ui; optional https profile
 ├── deploy/Caddyfile.ui            the UI site block (UI_DOMAIN → ui:8080); deploy/Caddyfile = both hosts
-├── .env.ui.example                every UI_* / PIPELINE_* / SESSION_SECRET variable, documented
+├── .env.ui.example                notice pointing to the shared backend template
 ├── .github/workflows/ci.yml       web · bff (Postgres 16) · e2e · image
 ├── docs/
 │   ├── dev/engineering-contract.md   the binding contract (names, paths, commands, shapes)

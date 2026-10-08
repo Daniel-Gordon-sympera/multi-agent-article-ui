@@ -2,14 +2,6 @@
 import type { CrossJobSignalsSummary } from "@/api/types/bff";
 import { datePresetOf } from "./signalFilters";
 
-export function degradedBannerText(scannedJobs: number | undefined, truncated: boolean): string {
-  const count = scannedJobs === undefined ? "the" : `the ${scannedJobs}`;
-  const base = `Showing signals from ${count} most recent matching jobs — the cross-job read (B1) is not deployed yet.`;
-  return truncated
-    ? `${base} At least one job holds more than 1,000 signals; only its first 1,000 are included.`
-    : base;
-}
-
 /** "128 signals · 61 companies · 9 jobs" at the right of the chip row. */
 export function summaryText(
   summary: Pick<CrossJobSignalsSummary, "signals" | "companies" | "jobs"> | undefined,

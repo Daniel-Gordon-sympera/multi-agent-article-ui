@@ -90,6 +90,10 @@ export const authHandlers = [
     if (error) return error;
     return HttpResponse.json({
       capabilities: MOCK_CAPABILITIES,
+      contract_version: 1,
+      required_contract_version: 1,
+      compatible: true,
+      contract_errors: [],
       probed_at: NOW.toISOString(),
       pipeline_api_version: PIPELINE_VERSION,
     });

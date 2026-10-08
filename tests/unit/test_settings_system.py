@@ -10,27 +10,9 @@ from scout_bff.system.maintenance import MAINTENANCE_JOBS, maintenance_schedule
 from scout_bff.system.service import (
     dead_by_category,
     queue_from_counts,
-    sum_queue_from_progress,
 )
 
 TODAY = date(2026, 10, 4)
-
-
-def test_queue_from_recent_jobs_sums_progress_and_leaves_failed_unknown():
-    details = [
-        {"progress": {"tasks_pending": 9, "tasks_running": 2, "tasks_dead": 1}},
-        {"progress": {"tasks_pending": 4, "tasks_running": 1, "tasks_dead": 0}},
-        {"progress": None},
-        {},
-    ]
-    assert sum_queue_from_progress(details) == {
-        "queued": 13,
-        "running": 3,
-        "failed": None,
-        "dead": 1,
-        "basis": "recent_jobs",
-        "jobs_scanned": 4,
-    }
 
 
 def test_queue_from_global_counts():

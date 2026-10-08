@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 import { db, signInMockUser } from "@/mocks/db";
 import { SLOW_WORKER_ID } from "@/mocks/fixtures/workers";
 import { renderApp } from "@/test/render";
-import { LOCAL_KEYS_STORAGE_KEY } from "../keys/localKeys";
 import { apiTile, proxyTile, queueTile } from "../workers/workersFormat";
 
 describe("Settings › Workers & health", () => {
@@ -79,11 +78,11 @@ describe("Settings › Preferences", () => {
 });
 
 describe("Settings › API keys", () => {
-  it("creates a key, shows the plaintext once and remembers it locally", async () => {
+  it("creates a key, shows the plaintext once and refreshes the server inventory", async () => {
     const user = userEvent.setup();
     signInMockUser("admin@sympera.ai");
     await renderApp({ initialEntries: ["/settings/keys"] });
-    expect(await screen.findByText(/needs pipeline API update \(B4\)/)).toBeInTheDocument();
+    await screen.findByRole("table", { name: "API keys" });
     await user.click(screen.getByRole("button", { name: "Create key" }));
     const dialog = await screen.findByRole("dialog", { name: "Create API key" });
     await user.type(within(dialog).getByLabelText("Name"), "bad name!");
@@ -101,12 +100,9 @@ describe("Settings › API keys", () => {
     await user.click(within(created).getByRole("button", { name: "I stored it" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 
-    const table = screen.getByRole("table", { name: "Keys created in this browser" });
+    const table = screen.getByRole("table", { name: "API keys" });
     expect(within(table).getByText("nightly-report")).toBeInTheDocument();
     expect(document.body.textContent).not.toContain(secret.value);
-    const stored = JSON.parse(window.localStorage.getItem(LOCAL_KEYS_STORAGE_KEY) ?? "[]");
-    expect(stored).toEqual([expect.objectContaining({ name: "nightly-report", role: "operator" })]);
-    expect(JSON.stringify(stored)).not.toContain(secret.value);
     expect(db.apiKeys.some((k) => k.name === "nightly-report")).toBe(true);
 
     await user.click(within(table).getByRole("button", { name: "Revoke key nightly-report" }));

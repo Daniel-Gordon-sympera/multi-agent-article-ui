@@ -33,7 +33,7 @@ interface Span {
   end: number | null;
 }
 
-function spanOf(items: Array<{ start: string | null; end: string | null }>): Span | null {
+function spanOf(items: Array<{ start?: string | null; end?: string | null }>): Span | null {
   let start = Number.POSITIVE_INFINITY;
   let end: number | null = Number.NEGATIVE_INFINITY;
   let any = false;

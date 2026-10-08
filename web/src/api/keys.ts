@@ -51,7 +51,8 @@ export const qk = {
         ["v1", "site-runs", id, "work", normaliseFilters(filters)] as const,
     },
     companies: {
-      detail: (key: string, state?: string) => ["v1", "companies", key, state ?? ""] as const,
+      detail: (key: string, state?: string, jobId?: string) =>
+        ["v1", "companies", key, state ?? "", jobId ?? ""] as const,
     },
     articles: {
       detail: (id: number | string) => ["v1", "articles", String(id)] as const,

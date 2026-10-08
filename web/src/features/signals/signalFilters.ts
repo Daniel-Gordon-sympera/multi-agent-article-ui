@@ -14,7 +14,6 @@ import {
   SIGNAL_OPTIONS,
   signalTitle,
 } from "./signalCatalog";
-import type { SignalTableRow } from "./signalColumns";
 import type { SignalFilterKey, SignalsSearch } from "./searchSchema";
 
 export type FilterControl = "select" | "text" | "date-range";
@@ -144,36 +143,4 @@ function chipValueLabel(definition: SignalFilterDefinition, value: string): stri
   if (definition.key === "batch_id") return shortId(value);
   const option = definition.options?.find((o) => o.value === value);
   return option?.label ?? value;
-}
-
-/** The job tab filters the API lacks (`industry`, `revenue_bin`) and the free text, over the page. */
-export function filterJobSignalRows(
-  rows: readonly SignalTableRow[],
-  filters: { industry?: string; revenue_bin?: string; q?: string },
-): SignalTableRow[] {
-  const q = filters.q?.trim().toLowerCase();
-  return rows.filter((row) => {
-    if (filters.industry && row.company_industry.toLowerCase() !== filters.industry.toLowerCase())
-      return false;
-    if (filters.revenue_bin && row.revenue_bin.toLowerCase() !== filters.revenue_bin.toLowerCase())
-      return false;
-    if (q) {
-      const haystack = [
-        row.company,
-        row.name_as_written,
-        row.evidence,
-        row.signal_evidence ?? "",
-        row.signal ?? "",
-        row.signal_title ?? "",
-        row.source_domain,
-      ];
-      if (!haystack.some((v) => v.toLowerCase().includes(q))) return false;
-    }
-    return true;
-  });
-}
-
-/** Distinct companies on a page — the footer's "· M companies". */
-export function countCompanies(rows: readonly Pick<SignalTableRow, "company_key">[]): number {
-  return new Set(rows.map((r) => r.company_key)).size;
 }

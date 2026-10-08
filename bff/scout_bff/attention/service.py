@@ -1,8 +1,7 @@
-"""Assemble the "Needs attention" items (contract §4.3) from bounded pipeline reads.
+"""Assemble attention items from global tasks, jobs, workers and readiness.
 
-Sources: dead tasks (`GET /v1/tasks?status=dead` with capability `tasks_global`, else the
-dead tasks of the 20 most recent non-terminal/partial jobs), partial and failed jobs of
-the last 7 days, workers with slow or missing heartbeats, and the pipeline readiness.
+Sources: global dead tasks, partial and failed jobs of the last 7 days,
+workers with slow or missing heartbeats, and the pipeline readiness.
 Every source degrades on its own: a pipeline problem turns into an `api_not_ready` item
 instead of failing the card.
 """
@@ -15,11 +14,7 @@ from typing import Any
 from scout_bff.capabilities import CapabilityCache
 from scout_bff.logging import get_logger
 from scout_bff.overview.pipeline_reads import (
-    NON_TERMINAL_STATUSES,
-    RECENT_JOBS_FOR_FALLBACKS,
-    created_at_key,
     fetch_job_details,
-    fetch_job_resources,
     iso_days_ago,
     job_label,
     list_all_items,
@@ -213,26 +208,14 @@ class AttentionBuilder:
         return api_not_ready_item(readiness_detail(body))
 
     async def dead_tasks(self) -> list[dict[str, Any]]:
-        if self.capabilities.capabilities.get("tasks_global"):
-            tasks = await list_all_items(
-                self.pipeline, "/v1/tasks", role=self.role, status="dead"
-            )
-            by_job: dict[str, list[dict[str, Any]]] = {}
-            for task in tasks:
-                by_job.setdefault(str(task.get("job_id") or ""), []).append(task)
-            by_job.pop("", None)
-            jobs = await fetch_job_details(self.pipeline, by_job, role=self.role)
-            return dead_task_items(by_job, jobs)
-        recent = await list_jobs_by_status(
-            self.pipeline, (*NON_TERMINAL_STATUSES, "partial"), role=self.role
+        tasks = await list_all_items(
+            self.pipeline, "/v1/tasks", role=self.role, status="dead"
         )
-        recent = sorted(recent, key=created_at_key, reverse=True)[
-            :RECENT_JOBS_FOR_FALLBACKS
-        ]
-        jobs = {str(job["id"]): job for job in recent}
-        by_job = await fetch_job_resources(
-            self.pipeline, jobs, "tasks", role=self.role, status="dead"
-        )
+        by_job: dict[str, list[dict[str, Any]]] = {}
+        for task in tasks:
+            by_job.setdefault(str(task.get("job_id") or ""), []).append(task)
+        by_job.pop("", None)
+        jobs = await fetch_job_details(self.pipeline, by_job, role=self.role)
         return dead_task_items(by_job, jobs)
 
     async def partial_jobs(self) -> list[dict[str, Any]]:
@@ -254,5 +237,4 @@ class AttentionBuilder:
         return failed_job_items(jobs)
 
     async def workers(self) -> list[dict[str, Any]]:
-        page = await self.pipeline.workers(role=self.role, limit=200)
-        return [row for row in page.get("items", []) if isinstance(row, dict)]
+        return await list_all_items(self.pipeline, "/v1/workers", role=self.role)

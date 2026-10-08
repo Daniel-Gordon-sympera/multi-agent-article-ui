@@ -1,0 +1,28 @@
+import type { JobDetail } from "@/api/types/jobs";
+
+export const defaultSettings: JobDetail["settings"] = {
+  days: 30,
+  model_spec: "deepseek:deepseek-v4-pro",
+  max_steps: 1000,
+  agent_timeout: 18000,
+  site_timeout: 0,
+  max_runtime: 18000,
+  sections_unlocker_max_requests_per_site: 100,
+  discovery_unlocker_max_requests_per_site: 100,
+  hard_retrieval_enabled: true,
+  hard_retrieval_timeout_seconds: 180,
+  firecrawl_max_requests_per_site: 100,
+  warm: true,
+  early_date_filter: true,
+  recent_scheduling: true,
+  candidate_concurrency: 4,
+  max_parallel_sites: 2,
+  sites: 5,
+  engine: "ddgs",
+  max_queries: 200,
+  prompt_version: "2026.10",
+  memory_mode: "full",
+  explore: false,
+  reanalyze: false,
+  reenrich: false,
+};

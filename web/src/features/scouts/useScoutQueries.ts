@@ -26,12 +26,12 @@ export function useActiveSources() {
   });
 }
 
-/** Rows of the first `/v1/jobs` page (the API has no totals; the badge counts what the Runs tab loads). */
+/** Rows of the first `/v1/jobs` page (the API has no totals; hide the badge when more pages exist). */
 export function useRunsCount() {
   return useQuery({
     queryKey: qk.v1.jobs.list({ limit: RUNS_COUNT_PAGE }),
     queryFn: () => listJobs({}, { limit: RUNS_COUNT_PAGE }),
-    select: (page) => page.items.length,
+    select: (page) => (page.next_cursor ? null : page.items.length),
     ...pollingOptions("calm"),
   });
 }

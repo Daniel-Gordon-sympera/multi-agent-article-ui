@@ -11,7 +11,6 @@ from scout_bff.auth.roles import role_satisfies
 from scout_bff.estimate.service import (
     EstimateCache,
     estimate_from_api,
-    estimate_from_recent_jobs,
 )
 from scout_bff.pipeline_client import KeyRole
 
@@ -33,6 +32,7 @@ async def estimate(
     request: Request,
     kind: JobKind = Query("location_industry"),
     sites: int | None = Query(None, ge=1, le=1000),
+    days: int | None = Query(None, ge=1, le=3650),
     industry: str | None = Query(None, max_length=200),
     user: AuthenticatedUser = Depends(current_user),
 ) -> dict[str, Any]:
@@ -40,22 +40,11 @@ async def estimate(
     industry = industry.strip() if industry and industry.strip() else None
     role: KeyRole = "operator" if role_satisfies(user.role, "operator") else "viewer"
     cache = estimate_cache(request)
-    key = (kind, sites, industry.lower() if industry else None)
+    key = (kind, sites, days, industry.lower() if industry else None)
     cached = cache.get(key)
     if cached is not None:
         return cached
     pipeline = request.app.state.pipeline
-    capabilities = request.app.state.capabilities.capabilities
-    if capabilities.get("cost_estimate"):
-        result = await estimate_from_api(pipeline, role, kind, sites, industry)
-    else:
-        result = await estimate_from_recent_jobs(
-            pipeline,
-            role,
-            kind,
-            sites,
-            industry,
-            industry_filter_on_api=bool(capabilities.get("jobs_industry_filter")),
-        )
+    result = await estimate_from_api(pipeline, role, kind, sites, industry, days)
     cache.put(key, result)
     return result

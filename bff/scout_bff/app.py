@@ -84,17 +84,19 @@ def create_app(
         pipeline_client, settings.ui_capability_refresh_seconds
     )
 
+    pipeline_client.contract_check = capability_cache.require_compatible
+
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         app.state.started_at = datetime.now(timezone.utc)
         tasks: list[asyncio.Task[Any]] = []
+        await capability_cache.probe()
         if background_tasks:
             tasks.append(asyncio.create_task(capability_cache.run(), name="caps"))
             tasks.append(
                 asyncio.create_task(run_retention(engine, settings), name="retention")
             )
-        else:
-            await capability_cache.probe()
+
         logger.info("bff_started", version=__version__)
         try:
             yield

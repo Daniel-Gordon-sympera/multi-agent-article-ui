@@ -1,3 +1,4 @@
+import { defaultSettings } from "@/mocks/fixtures/jobSettings";
 /**
  * `/v1/jobs*` — list with exact-match filters and keyset pagination, detail with ETag/304,
  * summary (202 live / 200 stored), the per-job sub-lists, create/cancel/resume and the CSV
@@ -81,6 +82,12 @@ const coreJobHandlers = [
       "state",
       "created_after",
       "created_before",
+      "industry",
+      "q",
+      "status_group",
+      "order",
+      "kind",
+      "client_reference_prefix",
     ]);
     if (rejected) return rejected;
     let rows = [...db.jobs].sort((a, b) => b.created_at.localeCompare(a.created_at));
@@ -94,6 +101,24 @@ const coreJobHandlers = [
     if (after) rows = rows.filter((j) => j.created_at >= after);
     const before = url.searchParams.get("created_before");
     if (before) rows = rows.filter((j) => j.created_at <= before);
+    const industry = url.searchParams.get("industry");
+    if (industry)
+      rows = rows.filter(
+        (j) => String(j.input.industry ?? "").toLowerCase() === industry.toLowerCase(),
+      );
+    if (url.searchParams.get("status_group") === "running")
+      rows = rows.filter((j) =>
+        ["finding", "exploring", "discovering", "analysing", "finalizing"].includes(j.status),
+      );
+    const q = url.searchParams.get("q")?.toLowerCase();
+    if (q)
+      rows = rows.filter((j) =>
+        JSON.stringify([j.id, j.county, j.state_code, j.input, j.client_reference])
+          .toLowerCase()
+          .includes(q),
+      );
+    const prefix = url.searchParams.get("client_reference_prefix");
+    if (prefix) rows = rows.filter((j) => j.client_reference?.startsWith(prefix));
     const page = paginate(rows, url, (j) => j.id);
     return HttpResponse.json({
       items: page.items.map(({ progress: _p, costs: _c, ...record }) => record),
@@ -126,12 +151,7 @@ const coreJobHandlers = [
       county: body.county,
       state_code: body.state.length === 2 ? body.state.toUpperCase() : body.state,
       settings: {
-        days: 30,
-        sites: 5,
-        site_timeout: 0,
-        max_runtime: 18000,
-        memory_mode: "full",
-        reanalyze: false,
+        ...defaultSettings,
         ...body.settings,
       },
       prompt_version: PROMPT_VERSION,
@@ -233,8 +253,6 @@ const coreJobHandlers = [
     if (body.memory_mode) job.settings.memory_mode = body.memory_mode;
     if (body.reanalyze !== undefined) job.settings.reanalyze = body.reanalyze;
     if (body.reenrich !== undefined) job.settings.reenrich = body.reenrich;
-    if (body.refetch_dead_articles !== undefined)
-      job.settings.refetch_dead_articles = body.refetch_dead_articles;
     job.status = job.progress.articles > 0 ? "analysing" : "exploring";
     job.stop_reason = null;
     job.finished_at = null;

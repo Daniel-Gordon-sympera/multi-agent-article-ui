@@ -85,6 +85,7 @@ async def proxy(
             f"{rule.min_role}_required",
             f"This action requires the {rule.min_role} role.",
         )
+    request.app.state.capabilities.require_compatible()
     settings = request.app.state.settings
     client: httpx.AsyncClient = request.app.state.http
     query = request.url.query

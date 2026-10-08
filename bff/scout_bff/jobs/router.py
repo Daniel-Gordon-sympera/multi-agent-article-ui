@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from scout_bff.auth.deps import AuthenticatedUser, current_user, require_role
 from scout_bff.auth.roles import role_satisfies
 from scout_bff.jobs.progress import ProgressCache, collect_progress, parse_job_ids
-from scout_bff.jobs.retry_dead import retry_dead_by_looping, retry_dead_via_api
+from scout_bff.jobs.retry_dead import retry_dead_via_api
 from scout_bff.pipeline_client import KeyRole, PipelineClient
 
 router = APIRouter(prefix="/app", tags=["jobs"])
@@ -55,17 +55,11 @@ async def retry_dead(
 ) -> dict[str, Any]:
     """Re-queue every dead task of the job → `{retried, task_ids, skipped_task_ids}`."""
     pipeline = pipeline_of(request)
-    capabilities = request.app.state.capabilities.capabilities
-    if capabilities.get("retry_dead"):
-        result = await retry_dead_via_api(pipeline, job_id)
-        basis = "api"
-    else:
-        result = await retry_dead_by_looping(pipeline, job_id)
-        basis = "per_task"
+    result = await retry_dead_via_api(pipeline, job_id)
     request.state.audit_target = {
         "job_id": job_id,
         "retried": result["retried"],
         "task_ids": result["task_ids"],
-        "basis": basis,
+        "basis": "api",
     }
     return result

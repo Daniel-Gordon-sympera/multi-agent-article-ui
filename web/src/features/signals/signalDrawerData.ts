@@ -3,7 +3,7 @@
  * jobs" counts of a company profile, the header location line and the confidence label.
  */
 import type { EvidenceCheck } from "@/components/EvidenceQuote";
-import type { CompanyProfile } from "@/api/types/companies";
+import type { CompanyProfile, CompanyProfileMention } from "@/api/types/companies";
 import type { SignalRow } from "@/api/types/signals";
 import { formatLocation, formatScore } from "@/lib/format";
 import type { SignalTableRow } from "./signalColumns";
@@ -45,7 +45,7 @@ export interface AcrossJobsCounts {
   more: boolean;
 }
 
-function jobIdOf(row: SignalRow): string | null {
+function jobIdOf(row: CompanyProfileMention): string | null {
   const record = row as unknown as Record<string, unknown>;
   const candidate = record.job_id ?? record.first_job_id;
   return typeof candidate === "string" && candidate ? candidate : null;
@@ -77,6 +77,7 @@ export function formatAcrossJobs(counts: AcrossJobsCounts): string {
 }
 
 export interface DrawerJobContext {
+  id?: string;
   county: string | null | undefined;
   stateCode: string | null | undefined;
   industry: string | null | undefined;
@@ -97,11 +98,11 @@ export function confidenceLabel(row: Pick<SignalRow, "confidence_score" | "confi
   return row.confidence_level ? `${score} · ${row.confidence_level}` : score;
 }
 
-/** The state to ask `/v1/companies/{key}` for: the row's HQ state, else the job's state. */
+/** The company identity state comes from the job, not its headquarters location. */
 export function companyStateFor(
   row: SignalTableRow,
   job?: DrawerJobContext | null,
 ): string | undefined {
-  const candidate = (row.hq_state || job?.stateCode || row.state_code || "").trim().toUpperCase();
+  const candidate = (job?.stateCode || row.state_code || "").trim().toUpperCase();
   return candidate || undefined;
 }

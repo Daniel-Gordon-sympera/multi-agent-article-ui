@@ -1,6 +1,6 @@
 /**
  * The four Data Sources tiles (mockup §3.10): Active sources · Promoted from the finder ·
- * Median precision · last run (needs capability `sources_stats`) · Removed.
+ * Median article acceptance rate (needs capability `sources_stats`) · Removed.
  */
 import type { Source, SourceStats } from "@/api/types/bff";
 import { StatTile } from "@/components/StatTile";
@@ -33,7 +33,7 @@ export function SourceStatTiles({ stats, rows, loading }: SourceStatTilesProps) 
         note="finder-judged, kept by you"
       />
       <StatTile
-        label="Median precision · last run"
+        label="Median article acceptance rate"
         value={
           stats?.median_precision === null || stats?.median_precision === undefined
             ? "—"
@@ -45,7 +45,7 @@ export function SourceStatTiles({ stats, rows, loading }: SourceStatTilesProps) 
             ? { text: PRECISION_NOTE, tone: "muted" }
             : undefined
         }
-        note="accepted articles ÷ candidates"
+        note="accepted articles ÷ candidates · last 30 days"
       />
       <StatTile
         label="Removed"

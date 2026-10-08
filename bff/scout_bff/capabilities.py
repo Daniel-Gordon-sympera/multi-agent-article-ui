@@ -1,4 +1,4 @@
-"""Probe the pipeline's /openapi.json and publish which optional routes exist."""
+"""Verify the required pipeline contract and both configured key roles."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, Request
 from scout_bff.auth.deps import current_user
 from scout_bff.logging import get_logger
 from scout_bff.pipeline_client import PipelineClient, PipelineError
+from scout_bff.pipeline_contract import CONTRACT_VERSION, contract_errors
 
 logger = get_logger("scout_bff.capabilities")
 
@@ -93,6 +94,10 @@ class CapabilityCache:
         self.probed_at: datetime | None = None
         self.probe_error: str | None = "not probed yet"
         self.pipeline_api_version: str | None = None
+        self.contract_version: int | None = None
+        self.contract_errors: list[str] = ["Pipeline contract has not been checked."]
+        self.compatible = False
+        self.keys_valid = False
         self.api_ready: bool = False
         self.api_checks: dict[str, Any] = {}
         self.api_checked_at: datetime | None = None
@@ -105,19 +110,72 @@ class CapabilityCache:
                 document = await self.pipeline.openapi()
                 self.capabilities = derive_capabilities(document)
                 self.pipeline_api_version = (document.get("info") or {}).get("version")
+                self.contract_version = document.get("x-scout-contract-version")
+                self.contract_errors = contract_errors(document)
+                self.compatible = not self.contract_errors
                 self.probe_error = None
             except (PipelineError, ValueError, TypeError) as error:
                 self.capabilities = all_false()
+                self.compatible = False
+                self.contract_errors = ["Pipeline contract could not be read."]
                 self.probe_error = str(error)
                 logger.warning("capability_probe_failed", error=str(error))
             self.probed_at = datetime.now(timezone.utc)
+            await self._check_keys()
             await self._check_ready()
+
+    def require_compatible(self) -> None:
+        if not self.compatible:
+            raise PipelineError(
+                503,
+                "pipeline_contract_incompatible",
+                "Install matching UI and pipeline releases. "
+                + " ".join(self.contract_errors),
+            )
+        if not self.keys_valid:
+            raise PipelineError(
+                503,
+                "pipeline_keys_invalid",
+                "Configure valid, separate pipeline reader and operator keys.",
+            )
+
+    async def _check_keys(self) -> None:
+        self.keys_valid = False
+        try:
+            await self.pipeline.request(
+                "GET",
+                "/v1/jobs",
+                role="viewer",
+                params={"limit": 1},
+                check_contract=False,
+            )
+            await self.pipeline.request(
+                "GET",
+                "/v1/api-keys",
+                role="operator",
+                params={"limit": 1},
+                check_contract=False,
+            )
+            denied = await self.pipeline.request(
+                "GET",
+                "/v1/api-keys",
+                role="viewer",
+                params={"limit": 1},
+                check_contract=False,
+                accept_statuses=(403,),
+            )
+            self.keys_valid = denied.status_code == 403
+        except PipelineError:
+            self.keys_valid = False
 
     async def _check_ready(self) -> None:
         try:
             body = await self.pipeline.readyz()
-            self.api_ready = body.get("status") == "ready"
+            self.api_ready = (
+                body.get("status") == "ready" and self.compatible and self.keys_valid
+            )
             self.api_checks = dict(body.get("checks") or {})
+            self.api_checks.update(contract=self.compatible, keys=self.keys_valid)
         except PipelineError as error:
             self.api_ready = False
             self.api_checks = {"error": error.category}
@@ -126,18 +184,24 @@ class CapabilityCache:
     async def check_ready(self) -> bool:
         """On-demand readiness check used by GET /readyz."""
         async with self._lock:
+            await self._check_keys()
             await self._check_ready()
         return self.api_ready
 
     async def run(self) -> None:
         """Background loop: probe at startup and every refresh interval."""
         while True:
-            await self.probe()
             await asyncio.sleep(self.refresh_seconds)
+            await self.probe()
 
     def snapshot(self) -> dict[str, Any]:
         return {
             "capabilities": dict(self.capabilities),
+            "contract_version": self.contract_version,
+            "required_contract_version": CONTRACT_VERSION,
+            "compatible": self.compatible,
+            "contract_errors": list(self.contract_errors),
+            "keys_valid": self.keys_valid,
             "probed_at": self.probed_at.isoformat() if self.probed_at else None,
             "probe_error": self.probe_error,
             "pipeline_api_version": self.pipeline_api_version,

@@ -40,7 +40,7 @@ The pipeline API (`multi-agent-article`, FastAPI, `X-API-Key`) implements exactl
 - Finder `Source` row (`/jobs/{id}/sources`): `finder.sources` (`search_id, domain, name, url, verdict, reason, coverage, relevance, origin, …`) + `created_at`; `Ranking` row: `finder.rankings` (`search_id, url, name, tier, overall_rank, chosen, reason, pages_opened, coverage, relevance, finder_reason, …`).
 - Finder memory row (`/finder/memory`): `finder.judged_domains` (`location_key, industry_key, domain, verdict, reason, tier, judged_at, job_id, …`).
 
-**Not implemented yet (plan §8, B1–B4)** and therefore **optional capabilities** the UI must work without: `GET /v1/signals` (cross-job), `GET /v1/tasks` (global), `POST /v1/jobs/{id}/retry-dead`, `GET /v1/api-keys`, `GET /v1/sources/stats`, `GET /v1/stats/cost-estimate`, the `industry` / `client_reference_prefix` filters on `GET /v1/jobs`. The BFF probes `GET /openapi.json` of the pipeline API and publishes a capability map (§4.6); for every missing capability the BFF either provides a bounded fallback or the SPA shows a short "needs pipeline API update (B1…B4)" note. Never let a missing capability break a screen.
+**Required integration contract:** the backend publishes `x-scout-contract-version: 1` and all required query operations, including global signals/summary/export, global tasks, bulk retry, API-key metadata, source statistics, model-cost estimates and complete Runs filters. The BFF verifies this contract and separate authenticated reader/operator keys. An incompatible or unavailable backend produces an explicit error; bounded legacy fallbacks have been removed.
 
 ---
 
@@ -55,7 +55,7 @@ alembic.ini                    script_location = bff/scout_bff/migrations
 Dockerfile · .dockerignore     two-stage build (node:22-alpine → python:3.12-slim), UID 10001, port 8080
 compose.ui.yaml                override for the pipeline Compose project: services ui_migrate, ui, caddy (volumes/env)
 deploy/Caddyfile.ui            the UI site block
-.env.ui.example                every UI_* / PIPELINE_* / SESSION_SECRET variable, documented
+.env.ui.example                notice pointing to the shared backend template
 .github/workflows/ci.yml       lint + typecheck + unit (web) · ruff + pytest with Postgres service (bff) · build
 .gitignore · .editorconfig · .prettierrc · .prettierignore
 docs/plan/                     06, 07 (approved plan)      docs/design/mockup-spec.md     docs/api/*   docs/dev/*
@@ -91,7 +91,7 @@ web/
 ```
 bff/scout_bff/
   __init__.py · __main__.py (uvicorn runner)
-  settings.py            pydantic-settings, prefix-less names exactly as §3; `Settings()` reads .env.ui when present
+  settings.py            pydantic-settings, prefix-less names exactly as §3; `Settings()` reads the sibling backend .env.platform or PLATFORM_ENV_FILE
   app.py                 create_app(): routers, static SPA, error handlers, security headers, lifespan (capability probe, retention task)
   db.py                  async engine (SQLAlchemy 2 Core + psycopg 3), `transaction()` helper
   migrations/            Alembic env.py + versions/0001_ui_schema.py (the whole §4.8 DDL) 
@@ -158,7 +158,7 @@ Docker (Daniel's machine; registries are unreachable from the cloud sandbox): `d
 
 ## 4. BFF contract
 
-### 4.1 Settings (environment variables; `.env.ui` is read when present; names are exact)
+### 4.1 Settings (environment variables; shared `.env.platform` is read; names are exact)
 
 | Variable | Required | Meaning |
 |---|---|---|
@@ -354,4 +354,4 @@ Status maps (`lib/status.ts`): job `queued→neutral "Queued"`, `finding/explori
 | B3 Signals | Signals explorer + drawer, **Job › Signals tab**, the shared `SignalsTable`/`SignalRecordCell`/`SignalDrawer` | `features/signals/**`, `routes/_app/signals.tsx`, `routes/_app/jobs/$jobId/signals.tsx`, `mocks/handlers/signals.ts`, `mocks/fixtures/signals.ts` | `views/`, `signals/` (aggregate + CSV export) | HOWTO §9 |
 | B4 Overview + Settings | Overview; Settings › API keys, Workers & health, Stats & costs, Exports, System, Preferences, Users | `features/overview/**`, `features/settings/**`, `routes/_app/index.tsx`, `routes/_app/settings/*.tsx`, `mocks/handlers/{overview,settings}.ts`, `mocks/fixtures/{overview,settings,workers,stats}.ts` | `attention/`, `system/`, `prefs/` | HOWTO §3 (users part) §10 |
 
-Cross-feature links are URL contracts only: a signal opens at `/signals?detail=<mention id>`; a job at `/jobs/$jobId`; a scout's runs at `/jobs?scout=<id>`; a worker at `/settings/workers#<instance_id>`. Shared mock state lives in `web/src/mocks/db.ts` (additive changes only; keep the reset function complete).
+Cross-feature links are URL contracts only: a signal opens at `/signals?detail=<mention id>&detail_job=<job id>`; a job at `/jobs/$jobId`; a scout's runs at `/jobs?scout=<id>`; a worker at `/settings/workers#<instance_id>`. Shared mock state lives in `web/src/mocks/db.ts` (additive changes only; keep the reset function complete).

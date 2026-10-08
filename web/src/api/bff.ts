@@ -50,7 +50,7 @@ import type {
 } from "@/api/types/bff";
 import type { JobsProgressMap } from "@/api/types/jobsProgress";
 import type { Page, PageParams } from "@/api/types/common";
-import type { JobRecord } from "@/api/types/jobs";
+import type { JobListFilters, JobRecord } from "@/api/types/jobs";
 import type {
   ActiveRun,
   DeadByCategory,
@@ -136,8 +136,12 @@ export function runScout(id: string, input: RunScoutInput = {}): Promise<Batch> 
 }
 
 /** `GET /app/scouts/{id}/jobs` — the runs a Scout launched, newest first (`{items, next_cursor}`). */
-export function listScoutJobs(id: string, page: PageParams = {}): Promise<Page<JobRecord>> {
-  return fetchPage<JobRecord>(`/app/scouts/${encodeURIComponent(id)}/jobs`, page);
+export function listScoutJobs(
+  id: string,
+  page: PageParams = {},
+  filters: JobListFilters = {},
+): Promise<Page<JobRecord>> {
+  return fetchPage<JobRecord>(`/app/scouts/${encodeURIComponent(id)}/jobs`, page, asQuery(filters));
 }
 
 /* ---------------------------------------------------------------- batches */
@@ -301,9 +305,6 @@ export async function listCrossJobSignals(
   return {
     items: result.items ?? [],
     next_cursor: result.next_cursor ?? null,
-    degraded: result.degraded ?? false,
-    scanned_jobs: result.scanned_jobs,
-    truncated: result.truncated,
   };
 }
 
@@ -323,9 +324,6 @@ export async function getCrossJobSignalsSummary(
       low: result.by_materiality?.low ?? 0,
     },
     top_signal: result.top_signal ?? null,
-    degraded: result.degraded,
-    scanned_jobs: result.scanned_jobs,
-    truncated: result.truncated,
   };
 }
 
@@ -335,7 +333,7 @@ export function crossJobSignalsExportUrl(filters: CrossJobSignalFilters = {}): s
 
 /* ------------------------------------------------------------------- jobs */
 
-/** Proxied when capability `retry_dead` exists; else the BFF loops over the dead tasks. */
+/** Retries the dead tasks through the pipeline action. */
 export function retryDeadTasks(jobId: string): Promise<RetryDeadResult> {
   return apiPost<RetryDeadResult>(`/app/jobs/${encodeURIComponent(jobId)}/retry-dead`);
 }
@@ -350,7 +348,7 @@ export async function getJobsProgress(jobIds: readonly string[]): Promise<JobsPr
 }
 
 export function getEstimate(
-  params: { kind?: string; sites?: number; industry?: string } = {},
+  params: { kind?: string; sites?: number; days?: number; industry?: string } = {},
 ): Promise<Estimate> {
   return apiGet<Estimate>(withQuery("/app/estimate", params));
 }

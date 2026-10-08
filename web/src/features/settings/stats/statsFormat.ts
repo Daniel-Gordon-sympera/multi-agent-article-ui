@@ -16,7 +16,7 @@ export function sumOf(rows: readonly DailyStats[], pick: (r: DailyStats) => numb
   return rows.reduce((total, row) => total + pick(row), 0);
 }
 
-export const dayCost = (row: DailyStats): number => row.cost_usd ?? row.known_cost_usd;
+export const dayCost = (row: DailyStats): number => row.cost_usd ?? row.known_cost_usd ?? 0;
 
 export function failuresCount(row: DailyStats): number {
   return Object.values(row.failures ?? {}).reduce((sum, n) => sum + n, 0);

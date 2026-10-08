@@ -30,7 +30,17 @@ def _rule(method: str, path: str, min_role: str = "viewer") -> ProxyRule:
 # Keep in step with docs/api/pipeline-routes.txt (34 routes; /healthz and /readyz
 # are not proxied because the BFF has its own). Never widen beyond that file.
 RULES: tuple[ProxyRule, ...] = (
+    _rule("GET", r"/v1/api-keys", "admin"),
     _rule("POST", r"/v1/api-keys", "admin"),
+    _rule("GET", r"/v1/access-policies", "operator"),
+    _rule("POST", rf"/v1/access-policies/{_ID}/reset", "operator"),
+    _rule("GET", r"/v1/signals"),
+    _rule("GET", r"/v1/signals/summary"),
+    _rule("GET", r"/v1/signals/export\.csv"),
+    _rule("GET", r"/v1/tasks"),
+    _rule("GET", r"/v1/sources/stats"),
+    _rule("GET", r"/v1/stats/cost-estimate"),
+    _rule("POST", rf"/v1/jobs/{_ID}/retry-dead", "operator"),
     _rule("DELETE", rf"/v1/api-keys/{_ID}", "admin"),
     _rule("GET", rf"/v1/articles/{_ID}"),
     _rule("GET", rf"/v1/articles/{_ID}/summaries"),

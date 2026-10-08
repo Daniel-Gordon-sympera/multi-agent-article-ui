@@ -24,7 +24,7 @@ export function buildMentionColumns(jobId: string): ColumnDef<CompanyMentionRow,
         <CompanyCell
           jobId={jobId}
           companyKey={row.original.company_key}
-          name={row.original.company}
+          name={row.original.company ?? row.original.name_as_written}
           orgKind={row.original.org_kind}
         />
       ),
@@ -56,7 +56,7 @@ export function buildMentionColumns(jobId: string): ColumnDef<CompanyMentionRow,
           <div className="flex flex-wrap items-center gap-2">
             <Link
               to="/signals"
-              search={{ detail: String(row.original.id) }}
+              search={{ detail: String(row.original.id), detail_job: jobId }}
               className="font-medium text-ink hover:text-brand-700"
             >
               {row.original.signal_title ?? row.original.signal}
@@ -105,11 +105,11 @@ export function buildMentionColumns(jobId: string): ColumnDef<CompanyMentionRow,
       cell: ({ row }) => (
         <div className="flex min-w-0 flex-col">
           <a
-            href={row.original.url}
+            href={row.original.url ?? undefined}
             target="_blank"
             rel="noopener noreferrer"
             className="truncate font-medium text-brand-600 hover:underline"
-            title={row.original.title}
+            title={row.original.title ?? undefined}
           >
             {row.original.source_domain}
           </a>

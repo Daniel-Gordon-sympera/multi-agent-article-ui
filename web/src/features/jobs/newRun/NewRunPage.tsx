@@ -113,9 +113,17 @@ function NewRunForm({ initial, scoutId }: { initial: NewRunValues; scoutId?: str
     mode: "onSubmit",
     reValidateMode: "onChange",
   });
-  const [county, stateCode, mode, sourceMode, industries, sites] = useWatch({
+  const [county, stateCode, mode, sourceMode, industries, sites, days] = useWatch({
     control: form.control,
-    name: ["county", "state_code", "mode", "source_mode", "industries", "settings.sites"],
+    name: [
+      "county",
+      "state_code",
+      "mode",
+      "source_mode",
+      "industries",
+      "settings.sites",
+      "settings.days",
+    ],
   });
   const county_sources = useCountySources(county, stateCode);
   const promptVersion = useLatestPromptVersion();
@@ -124,6 +132,7 @@ function NewRunForm({ initial, scoutId }: { initial: NewRunValues; scoutId?: str
     kind,
     Number.isFinite(sites) ? sites : 5,
     industries.length === 1 ? industries[0] : undefined,
+    Number.isFinite(days) ? days : 30,
   );
   const submit = useNewRunSubmit();
 

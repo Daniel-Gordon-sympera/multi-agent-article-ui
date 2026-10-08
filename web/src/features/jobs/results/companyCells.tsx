@@ -12,26 +12,30 @@ export function CompanyCell({
   orgKind,
 }: {
   jobId: string;
-  companyKey: string;
-  name: string;
-  orgKind: string;
+  companyKey?: string | null;
+  name?: string | null;
+  orgKind?: string | null;
 }) {
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-      <Link
-        to="/signals"
-        search={{ job_id: jobId, company_key: companyKey }}
-        className="truncate font-semibold text-ink hover:text-brand-700"
-        title="Signals of this company"
-      >
-        {name}
-      </Link>
+      {companyKey ? (
+        <Link
+          to="/signals"
+          search={{ job_id: jobId, company_key: companyKey ?? undefined }}
+          className="truncate font-semibold text-ink hover:text-brand-700"
+          title="Signals of this company"
+        >
+          {name || "Unknown company"}
+        </Link>
+      ) : (
+        <span className="truncate font-semibold text-ink">{name || "Unknown company"}</span>
+      )}
       <Tag>{orgKind || "unknown"}</Tag>
     </div>
   );
 }
 
-export function PlaceCell({ place, scope }: { place: string; scope: string }) {
+export function PlaceCell({ place, scope }: { place?: string | null; scope?: string | null }) {
   return (
     <div className="flex flex-col items-start gap-1">
       <span className="whitespace-nowrap">{place || dash}</span>
@@ -40,7 +44,7 @@ export function PlaceCell({ place, scope }: { place: string; scope: string }) {
   );
 }
 
-export function IndustryCell({ industry, sub }: { industry: string; sub: string }) {
+export function IndustryCell({ industry, sub }: { industry?: string | null; sub?: string | null }) {
   return (
     <div className="flex max-w-[160px] flex-col">
       <span className="truncate">{industry || "unknown"}</span>

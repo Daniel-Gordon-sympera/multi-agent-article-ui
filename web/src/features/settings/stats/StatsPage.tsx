@@ -35,7 +35,7 @@ export function StatsPage() {
     <SettingsSection
       id="settings-stats"
       title="Stats & costs"
-      description="One row per day from the pipeline's ledger: throughput, tokens, model + proxy cost and the failures by category."
+      description="Daily stored-data totals and model cost. Reused articles and signals are counted once when first stored, not once per job. Proxy transfer fees are not included."
       actions={
         <Button variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>
           <Download aria-hidden />
@@ -51,13 +51,13 @@ export function StatsPage() {
           sparkline={recentSeries(recent, (r) => r.jobs)}
         />
         <StatTile
-          label="Signals · last 14 days"
+          label="New stored signals · last 14 days"
           loading={pages.isPending}
           value={formatInteger(sumOf(recent, (r) => r.signals))}
           sparkline={recentSeries(recent, (r) => r.signals)}
         />
         <StatTile
-          label="Model + proxy cost · last 14 days"
+          label="Model cost · last 14 days"
           loading={pages.isPending}
           value={formatMoney(sumOf(recent, dayCost))}
           delta={

@@ -19,13 +19,17 @@ export function buildArticles(signals: SignalRow[], siteRuns: SiteRun[]): Articl
   const runFor = (domain: string) => siteRuns.find((r) => r.domain === domain) ?? siteRuns[0]!;
   for (const s of signals) {
     if (byId.has(s.article_id)) continue;
-    const run = runFor(s.source_domain);
+    const run = runFor(s.source_domain ?? "");
     byId.set(s.article_id, {
       id: s.article_id,
-      canonical_url: s.url,
-      domain: s.source_domain,
-      title: s.title,
-      published_date: s.date,
+      canonical_url: s.url ?? "",
+      domain: s.source_domain ?? "",
+      title: s.title ?? "Article",
+      published_date: s.date ?? "",
+      access_profile: "public",
+      date_precision: "day",
+      date_source: "page",
+      date_policy_version: "1",
       snapshot_id: 500_000 + s.article_id,
       text_sha: `sha-${s.article_id}`,
       html_sha: `html-${s.article_id}`,
@@ -57,6 +61,10 @@ export function buildArticles(signals: SignalRow[], siteRuns: SiteRun[]): Articl
       domain: run.domain,
       title,
       published_date: dateDaysAgo(1 + (id % 14)),
+      access_profile: "public",
+      date_precision: "day",
+      date_source: "page",
+      date_policy_version: "1",
       snapshot_id: 500_000 + id,
       text_sha: `sha-${id}`,
       html_sha: `html-${id}`,
@@ -85,14 +93,13 @@ export function buildSummaries(articles: ArticleRow[], signals: SignalRow[]): Su
       main_idea: signal
         ? `${signal.company}: ${signal.evidence}`
         : `${a.title} — the article reports on local construction activity in Orange County.`,
-      short_snippet: a.title,
+      snippet: a.title,
       focus_topics: ["construction", "orange county"],
       industry: signal?.company_industry ?? "Construction",
       sub_industry: signal?.company_sub_industry ?? "Nonresidential building",
       article_signal: signal?.signal ?? null,
       article_materiality: signal?.materiality ?? null,
-      companies: signal ? 3 : 2,
-      company_mentions: signal ? 3 : 2,
+      kept_count: signal ? 3 : 2,
       sponsored: false,
       is_list_page: false,
       warnings: [],
@@ -227,7 +234,7 @@ export function buildFlags(mentions: CompanyMentionRow[]): FlagRow[] {
       revenue_basis: m.revenue_basis,
       revenue_confidence: m.revenue_confidence,
       enrichment_source: m.enrichment_source,
-      place_hints: m.scope_place ? [m.scope_place] : [],
+      place_hints: m.scope_place ? [{ place: m.scope_place }] : [],
       size_cues: [],
       warnings: [],
       evidence_articles: 1,

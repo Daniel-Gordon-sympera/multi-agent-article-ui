@@ -33,7 +33,7 @@ export function buildSections(siteRuns: SiteRun[]): SectionRow[] {
   const rows: SectionRow[] = [];
   let id = 2000;
   for (const run of siteRuns) {
-    const kept = run.stats.sections ?? 0;
+    const kept = typeof run.stats.sections === "number" ? run.stats.sections : 0;
     const total = kept + 4;
     for (let i = 0; i < total; i += 1) {
       const name = SECTION_NAMES[(i + run.rank!) % SECTION_NAMES.length]!;
@@ -41,7 +41,7 @@ export function buildSections(siteRuns: SiteRun[]): SectionRow[] {
       rows.push({
         id,
         site_run_id: run.id,
-        section_id: isKept ? i + 1 : null,
+        section_no: isKept ? i + 1 : null,
         domain: run.domain,
         url: `https://${run.domain}/${name.toLowerCase().replace(/\s+/g, "-")}`,
         canonical_url: `https://${run.domain}/${name.toLowerCase().replace(/\s+/g, "-")}`,
@@ -50,7 +50,7 @@ export function buildSections(siteRuns: SiteRun[]): SectionRow[] {
         kept: isKept,
         reason: isKept ? "business coverage with dated articles" : "no local business relevance",
         origin: run.rank === 1 ? "memory" : "agent",
-        recorded_at: addSeconds(run.started_at ?? jobStart, 60 + i * 15),
+        decided_at: addSeconds(run.started_at ?? jobStart, 60 + i * 15),
       });
       id += 1;
     }
@@ -188,7 +188,7 @@ const FETCH_EVENTS_PER_RUN = 10;
 /** Page fetches and accepted articles of one site run (the bulk of a job's event log). */
 function fetchEvents(run: SiteRun, firstId: number): PipelineEvent[] {
   const started = run.started_at ?? jobStart;
-  const pages = run.stats.pages ?? 0;
+  const pages = typeof run.stats.pages === "number" ? run.stats.pages : 0;
   const events: PipelineEvent[] = [];
   for (let i = 0; i < FETCH_EVENTS_PER_RUN; i += 1) {
     const page = i % 2 === 0;

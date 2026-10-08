@@ -21,7 +21,6 @@ from scout_bff.system.service import (
     dead_by_category,
     latest_prompt_version,
     migrations_head,
-    pipeline_readiness,
     queue_summary,
 )
 from scout_bff.version import __version__
@@ -34,7 +33,8 @@ async def build_system(request: Request, user: AuthenticatedUser) -> dict[str, A
     capabilities: CapabilityCache = request.app.state.capabilities
     pipeline = request.app.state.pipeline
     role = key_role_for(user.role)
-    ready, checks = await pipeline_readiness(pipeline)
+    ready = await capabilities.check_ready()
+    checks = capabilities.api_checks
     started_at = getattr(request.app.state, "started_at", None)
     return {
         "bff": {
@@ -52,6 +52,10 @@ async def build_system(request: Request, user: AuthenticatedUser) -> dict[str, A
         "capabilities": {
             **capabilities.capabilities,
             "probe_error": capabilities.probe_error,
+            "contract_version": capabilities.contract_version,
+            "compatible": capabilities.compatible,
+            "contract_errors": capabilities.contract_errors,
+            "keys_valid": capabilities.keys_valid,
         },
         "capabilities_probed_at": (
             capabilities.probed_at.isoformat() if capabilities.probed_at else None

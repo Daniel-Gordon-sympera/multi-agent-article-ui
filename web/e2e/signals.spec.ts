@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { expectAccessible } from "./accessibility";
 import { expect, test, type Page } from "@playwright/test";
 
 const MAIN_JOB_ID = "0192f1c2-7e0a-4c1b-9d33-5a1e8b2f0c41";
@@ -9,20 +9,6 @@ async function signIn(page: Page, email = "admin@sympera.ai", password = "scout-
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
-}
-
-async function expectAccessible(page: Page, label: string) {
-  const results = await new AxeBuilder({ page })
-    .exclude("[data-sonner-toaster]")
-    .withTags(["wcag2a", "wcag2aa", "best-practice"])
-    .analyze();
-  const serious = results.violations.filter(
-    (v) => v.impact === "serious" || v.impact === "critical",
-  );
-  const summary = serious
-    .map((v) => `${v.id}: ${v.help} (${v.nodes.map((n) => n.target.join(" ")).join("; ")})`)
-    .join("\n");
-  expect(serious, `${label} has accessibility violations:\n${summary}`).toEqual([]);
 }
 
 function trackConsole(page: Page): string[] {
@@ -47,7 +33,6 @@ test.describe("Signals explorer (mock mode)", () => {
     await expect(page.getByRole("group", { name: "Active filters" })).toContainText(
       /\d+ signals · \d+ companies · \d+ jobs/,
     );
-    await expect(page.getByTestId("degraded-banner")).toContainText("B1");
     await expect(page.getByRole("link", { name: /Export CSV/ })).toHaveAttribute(
       "href",
       "/app/signals/export.csv",
@@ -111,6 +96,7 @@ test.describe("Signals explorer (mock mode)", () => {
     const drawer = page.getByRole("dialog", { name: "Signal details" });
     await expect(drawer).toBeVisible();
     await expect(page).toHaveURL(/detail=\d+/);
+    await expect(page).toHaveURL(/detail_job=/);
     await expect(drawer.getByRole("heading", { level: 2 })).toHaveText(name);
     await expect(drawer.getByRole("blockquote")).toContainText(/\S/);
     await expect(drawer.getByText("verbatim match")).toBeVisible();
@@ -151,7 +137,7 @@ test.describe("Signals explorer (mock mode)", () => {
     await expect(page.getByText(/Showing 1–24 of 24 signals/)).toBeVisible();
     await expect(page.getByRole("link", { name: /signals\.csv/ })).toHaveAttribute(
       "href",
-      `/v1/jobs/${MAIN_JOB_ID}/export/signals.csv`,
+      `/app/signals/export.csv?job_id=${MAIN_JOB_ID}`,
     );
     await expectAccessible(page, "job signals tab");
 

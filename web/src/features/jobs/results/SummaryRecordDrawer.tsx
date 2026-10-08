@@ -1,3 +1,4 @@
+import { formatArticleDate } from "@/lib/articleDate";
 /**
  * Summary record drawer (`?record=<summary id>`): the full summary row (article, analysis,
  * model facts, warnings) and, on demand, the raw `record` JSON from
@@ -17,7 +18,7 @@ import { KeyValueGrid } from "@/components/KeyValueGrid";
 import { MaterialityPill } from "@/components/MaterialityPill";
 import { SkeletonLines } from "@/components/Skeleton";
 import { Tag } from "@/components/Tag";
-import { formatCompactNumber, formatDate } from "@/lib/format";
+import { formatCompactNumber } from "@/lib/format";
 import { companiesCount } from "./summariesColumns";
 
 function RawRecord({ summary }: { summary: SummaryRow }) {
@@ -71,15 +72,15 @@ export function SummaryRecordDrawer({ rows }: { rows: readonly SummaryRow[] }) {
       subtitle={
         summary ? (
           <span className="text-[13px] text-muted">
-            {summary.source_domain} · {formatDate(summary.date)} · prompt{" "}
-            <span className="font-mono">{summary.prompt_version}</span>
+            {summary.source_domain} · {formatArticleDate(summary.date, summary.date_precision)} ·
+            prompt <span className="font-mono">{summary.prompt_version}</span>
           </span>
         ) : undefined
       }
       footer={
         summary ? (
           <Button asChild variant="secondary" size="sm">
-            <a href={summary.url} target="_blank" rel="noopener noreferrer">
+            <a href={summary.url ?? undefined} target="_blank" rel="noopener noreferrer">
               <ExternalLink aria-hidden />
               Open article
             </a>
@@ -95,9 +96,7 @@ export function SummaryRecordDrawer({ rows }: { rows: readonly SummaryRow[] }) {
         <>
           <DrawerSection title="Analysis">
             <p className="text-[14px] leading-[1.55] text-ink">{summary.main_idea ?? "—"}</p>
-            {summary.short_snippet ? (
-              <p className="text-[13px] text-ink-2">{summary.short_snippet}</p>
-            ) : null}
+            {summary.snippet ? <p className="text-[13px] text-ink-2">{summary.snippet}</p> : null}
             {summary.narrative ? (
               <p className="text-[13px] text-ink-2">{summary.narrative}</p>
             ) : null}
@@ -129,7 +128,7 @@ export function SummaryRecordDrawer({ rows }: { rows: readonly SummaryRow[] }) {
                 { label: "Prompt version", value: summary.prompt_version, mono: true },
                 {
                   label: "Tokens",
-                  value: `${formatCompactNumber(summary.input_tokens)} in · ${formatCompactNumber(summary.output_tokens)} out`,
+                  value: `${formatCompactNumber(typeof summary.input_tokens === "number" ? summary.input_tokens : null)} in · ${formatCompactNumber(typeof summary.output_tokens === "number" ? summary.output_tokens : null)} out`,
                 },
                 { label: "Task", value: `#${summary.task_id}`, mono: true },
                 { label: "Sponsored", value: summary.sponsored ? "yes" : "no" },

@@ -15,7 +15,7 @@ async def test_viewer_sees_capabilities_and_rows_land_in_the_database(
     client_factory, engine, pipeline
 ):
     viewer = await client_factory("viewer", email="viewer@example.com")
-    assert viewer.me["capabilities"]["signals_global"] is False
+    assert viewer.me["capabilities"]["signals_global"] is True
     pipeline.state["jobs"][JOB_ANALYSING]["status"] = "completed"  # mutate the stub
     job = await viewer.get(f"/v1/jobs/{JOB_ANALYSING}")
     assert job.json()["status"] == "completed"

@@ -16,7 +16,7 @@ import {
   relativeDayLabel,
 } from "./sourcePresentation";
 
-export const PRECISION_NOTE = "needs pipeline API update (B2)";
+export const PRECISION_NOTE = "No complete candidate measurements";
 
 export interface SourceColumnsOptions {
   canOperate: boolean;
@@ -89,8 +89,8 @@ export function sourceColumns({
     },
     {
       id: "precision",
-      header: "Precision · last run",
-      meta: { minWidth: 190, label: "Precision · last run" },
+      header: "Article acceptance rate",
+      meta: { minWidth: 190, label: "Article acceptance rate" },
       cell: ({ row }) => {
         const precision = row.original.precision;
         if (!precision) {
@@ -103,12 +103,16 @@ export function sourceColumns({
         }
         return (
           <div className="flex flex-col gap-1">
-            <Meter
-              value={precision.ratio ?? 0}
-              width={72}
-              label={precisionPercent(precision)}
-              ariaLabel={`Precision of ${row.original.name}`}
-            />
+            {precision.ratio === null ? (
+              <span className="text-muted">Unavailable: incomplete candidate history</span>
+            ) : (
+              <Meter
+                value={precision.ratio ?? 0}
+                width={72}
+                label={precisionPercent(precision)}
+                ariaLabel={`Article acceptance rate of ${row.original.name}`}
+              />
+            )}
             <span className="text-[12px] text-muted tabular">{precisionCounts(precision)}</span>
             {precision.job_id ? (
               <span className="text-[12px] text-muted">

@@ -26,7 +26,7 @@ export type SignalsTableRoute = "job" | "explorer";
 
 /** A row of either list; the job columns exist only on explorer rows. */
 export type SignalTableRow = SignalRow &
-  Partial<Pick<CrossJobSignalRow, "job_id" | "county" | "state_code" | "job_industry">>;
+  Partial<Pick<CrossJobSignalRow, "county" | "job_industry">>;
 
 export interface SignalColumnSpec {
   id: SignalColumnId;
@@ -158,4 +158,9 @@ export function confidenceRatio(value: number | string | null | undefined): numb
 export function detailParam(id: number | string): number | string {
   if (typeof id === "number") return id;
   return /^\d+$/.test(id) ? Number(id) : id;
+}
+
+/** A mention can occur once in each job that reuses the article summary. */
+export function signalRowKey(row: SignalTableRow): string {
+  return `${row.job_id ?? "job"}:${row.id}`;
 }

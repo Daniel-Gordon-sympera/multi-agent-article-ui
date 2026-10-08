@@ -316,11 +316,13 @@ def stats_capable_pipeline(pipeline):
         "get": {"parameters": [{"name": "domain", "in": "query"}], "responses": {}}
     }
     stats = {
-        "orlandomagazine.com": {"accepted": 18, "candidates": 142},
-        "rangewire.com": {"accepted": 9, "candidates": 88},
+        "orlandomagazine.com": {
+            "accepted_articles": 18,
+            "candidates": 142,
+            "ratio": 18 / 142,
+        },
+        "rangewire.com": {"accepted_articles": 9, "candidates": 88, "ratio": 9 / 88},
     }
-    fallback = pipeline.router.routes[len(pipeline.router.routes) - 1]
-    not_found = fallback.side_effect
 
     def dispatch(request: httpx.Request) -> httpx.Response:
         if request.url.path == "/v1/sources/stats":
@@ -330,13 +332,17 @@ def stats_capable_pipeline(pipeline):
             row = {
                 "domain": domain,
                 **stats[domain],
-                "job_id": "job-1",
-                "at": "2026-10-04",
+                "last_job_id": "job-1",
+                "last_job_at": "2026-10-04",
+                "basis": "site_run_candidates_v1",
+                "complete": True,
             }
             return httpx.Response(200, json={"items": [row], "next_cursor": None})
-        return not_found(request)
+        return httpx.Response(404)
 
-    fallback.side_effect = dispatch
+    pipeline.router.route(method="GET", path="/v1/sources/stats").mock(
+        side_effect=dispatch
+    )
     return pipeline
 
 
@@ -358,6 +364,8 @@ async def test_precision_when_the_sources_stats_capability_exists(
         "ratio": 18 / 142,
         "job_id": "job-1",
         "at": "2026-10-04",
+        "basis": "site_run_candidates_v1",
+        "complete": True,
     }
     assert by_domain["rangewire.com"]["ratio"] == 9 / 88
     assert by_domain["unknown.example"] is None
