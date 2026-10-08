@@ -94,7 +94,10 @@ describe("Overview", () => {
     const list = await screen.findByRole("list", { name: "Recent signals" });
     const links = within(list).getAllByRole("link");
     expect(links).toHaveLength(5);
-    expect(links[0]).toHaveAttribute("href", expect.stringMatching(/^\/signals\?detail=\d+$/));
+    expect(links[0]).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/signals\?detail=\d+&detail_job=/),
+    );
     expect(screen.getByRole("link", { name: "Open explorer" })).toHaveAttribute("href", "/signals");
   });
 });

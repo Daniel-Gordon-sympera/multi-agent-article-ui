@@ -15,7 +15,7 @@ export interface JobSeed {
   createdAt: string;
   startedAt?: string | null;
   durationSeconds?: number | null;
-  progress: Partial<Omit<JobProgress, "job_id">>;
+  progress: Partial<JobProgress>;
   /** Site runs finished so far (mockup §4.1 "Sites" column); the total is `progress.seeds`. */
   sitesDone?: number;
   costs?: JobCost[];

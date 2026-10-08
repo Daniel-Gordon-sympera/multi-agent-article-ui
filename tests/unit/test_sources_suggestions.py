@@ -127,7 +127,7 @@ def test_merge_dedupes_by_domain_and_drops_listed_dismissed_and_other_industries
     assert [m["domain"] for m in by_industry] == ["b.com"]
 
 
-def test_precision_parsing_accepts_pages_and_single_objects():
+def test_acceptance_rate_preserves_complete_and_incomplete_coverage():
     page = {
         "items": [
             {"domain": "other.com", "accepted": 1, "candidates": 2},
@@ -135,6 +135,9 @@ def test_precision_parsing_accepts_pages_and_single_objects():
                 "domain": "a.com",
                 "accepted_articles": 18,
                 "candidates": 142,
+                "ratio": 18 / 142,
+                "complete": True,
+                "basis": "site_run_candidates_v1",
                 "last_job_id": "j",
             },
         ],
@@ -145,12 +148,45 @@ def test_precision_parsing_accepts_pages_and_single_objects():
     assert parsed["job_id"] == "j"
     assert round(parsed["ratio"], 4) == round(18 / 142, 4)
     single = parse_precision(
-        {"accepted": 0, "candidates": 0, "at": "2026-10-04"}, "a.com"
+        {
+            "items": [
+                {
+                    "domain": "a.com",
+                    "accepted_articles": 4,
+                    "candidates": None,
+                    "ratio": None,
+                    "complete": False,
+                    "last_job_at": "2026-10-04",
+                }
+            ]
+        },
+        "a.com",
     )
-    assert single["ratio"] is None and single["at"] == "2026-10-04"
+    assert single["ratio"] is None and single["candidates"] is None
+    assert single["accepted"] == 4 and single["complete"] is False
     assert parse_precision({"items": []}, "a.com") is None
     assert parse_precision("nope", "a.com") is None
     assert (
         median_ratio([parsed, single, None, {"ratio": 0.3}])
         == (parsed["ratio"] + 0.3) / 2
     )
+
+
+def test_subdomain_source_uses_backend_registered_domain_statistics():
+    result = parse_precision(
+        {
+            "items": [
+                {
+                    "domain": "example.com",
+                    "accepted_articles": 3,
+                    "candidates": 6,
+                    "ratio": 0.5,
+                    "complete": True,
+                    "basis": "site_run_candidates_v1",
+                }
+            ],
+            "next_cursor": None,
+        },
+        "news.example.com",
+    )
+    assert result["accepted"] == 3 and result["ratio"] == 0.5

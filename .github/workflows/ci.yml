@@ -48,6 +48,11 @@ jobs:
           cache: pnpm
           cache-dependency-path: web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - name: Generated API types match the checked-in contracts
+        run: |
+          pnpm gen:api
+          pnpm exec prettier --write src/api/pipeline.gen.ts src/api/bff.gen.ts
+          git diff --exit-code -- src/api/pipeline.gen.ts src/api/bff.gen.ts
       - run: pnpm check
       - run: pnpm build
       - uses: actions/upload-artifact@v4.6.2

@@ -4,13 +4,17 @@ For the person on duty. Assumes the Docker deployment of `README.md` (the pipeli
 Compose project with `compose.ui.yaml`), run from the pipeline repository with
 
 ```bash
-alias dcu='docker compose -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml'
+alias dcu='docker compose --env-file .env.platform -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml'
 ```
 
 Operator tasks (first run, users, runs, upgrades) are in `HOWTO.md`; this file covers
 health, logs, sessions, the audit log, retention, secret rotation, recovery and the
-optional pipeline capabilities. Facts below are taken from the BFF modules named in
+required pipeline contract. Facts below are taken from the BFF modules named in
 each section.
+
+Use `http://localhost:8080` with `UI_SECURE_COOKIES=false`. The shared file is the
+pipeline `.env.platform`; bare BFF processes may select it with `PLATFORM_ENV_FILE`.
+Caddy is not required for local Docker.
 
 ## 1. What runs where
 
@@ -18,7 +22,7 @@ each section.
 |---|---|---|---|---|
 | `ui_migrate` | `scout-ui:${UI_IMAGE_TAG}` | one-shot: schema `ui`, roles, Alembic head, bootstrap admin (`bootstrap.py`) | — | `postgres` healthy, pipeline `migrate` completed |
 | `ui` | `scout-ui:${UI_IMAGE_TAG}` | FastAPI BFF: static SPA, `/app/*`, `/v1/*` proxy, `/healthz`, `/readyz` | `127.0.0.1:${UI_PORT:-8080}` → 8080 | `ui_migrate` completed, `api` healthy |
-| `caddy` (pipeline's) | `caddy:2` | TLS + reverse proxy for `${API_DOMAIN}` → `api:8000` and `${UI_DOMAIN}` → `ui:8080` | 80, 443 | `api`, `ui` |
+| `caddy` (optional `https` profile) | `caddy:2` | TLS + reverse proxy for `${API_DOMAIN}` → `api:8000` and `${UI_DOMAIN}` → `ui:8080` | 80, 443 | `api`, `ui` |
 
 The container runs as UID 10001, the application tree is read-only, logs go to stdout
 (json-file driver, 50 MB × 5). The BFF connects to PostgreSQL as `app_ui` (pool of
@@ -40,7 +44,7 @@ dcu ps                                            # ui should be "healthy" (Comp
 |---|---|---|
 | `database` | `app_ui` cannot connect or `SELECT 1` failed | `dcu logs ui`; `dcu ps postgres`; re-run `dcu up -d ui_migrate` if the password changed |
 | `migrations` | `ui.alembic_version` is missing or not at the code's head (`0001_ui_schema`) | `dcu run --rm ui_migrate` then `dcu restart ui` |
-| `pipeline_api` | the API's `/readyz` did not answer `status: ready` (checked on demand by each `/readyz` call) | fix the pipeline first; the console recovers on the next check without restart |
+| `pipeline_api` | API readiness, required contract or authenticated key reads failed | inspect `/app/capabilities`, deploy matching backend/UI versions, correct BFF keys if needed |
 
 Signed-in users see "API ready" / "API not ready" with the pipeline version and their
 role tag in the sidebar footer; the Overview's **Needs attention** card lists
@@ -65,7 +69,7 @@ tokens and the session secret are registered as secrets and redacted wherever th
 appear (also in audit targets and problem details); URL credentials and
 `Authorization` / `X-API-Key` header values are masked by pattern. `LOG_LEVEL` (default
 `INFO`) and `LOG_FORMAT` (`json`; `console` for development) are environment variables —
-change them in `.env` and `dcu up -d ui`. `httpx`, `httpcore`, `uvicorn.access` and
+change them in `.env.platform` and `dcu up -d ui`. `httpx`, `httpcore`, `uvicorn.access` and
 `alembic` are kept at `WARNING`.
 
 ## 4. Sessions
@@ -141,23 +145,25 @@ with the row counts removed.
 | `ui.audit_log` | keep `UI_AUDIT_RETENTION_DAYS` (default 180) | hourly task |
 | everything else (users, scouts, batches, sources, views, preferences) | kept | — |
 
-To keep the audit log longer, raise `UI_AUDIT_RETENTION_DAYS` in `.env` and `dcu up -d ui`;
+To keep the audit log longer, raise `UI_AUDIT_RETENTION_DAYS` in `.env.platform` and `dcu up -d ui`;
 to archive before purging, `pg_dump -n ui -t ui.audit_log` (section 8).
 
 ## 7. Rotating secrets
 
 | Secret | How | Effect |
 |---|---|---|
-| `PIPELINE_OPERATOR_KEY` / `PIPELINE_READER_KEY` | create new keys (`POST /v1/api-keys`, or Settings › API keys as an admin), update `.env`, `dcu up -d ui`, revoke the old names (`DELETE /v1/api-keys/<name>`) — HOWTO §11 | none for users; proxied calls use the new keys after the restart |
-| `SESSION_SECRET` | new `openssl rand -hex 32` in `.env`, `dcu up -d ui` | every session cookie becomes invalid: all users sign in again |
-| `UI_DATABASE_PASSWORD` | new value in `.env`, `dcu up -d ui_migrate ui` | bootstrap alters role `app_ui`; the BFF restarts with the new password |
-| `UI_BOOTSTRAP_ADMIN_PASSWORD` | remove it from `.env` after the first sign-in | it is only read while `ui.users` is empty |
+| `PIPELINE_OPERATOR_KEY` / `PIPELINE_READER_KEY` | create new keys (`POST /v1/api-keys`, or Settings › API keys as an admin), update `.env.platform`, `dcu up -d ui`, revoke the old names (`DELETE /v1/api-keys/<name>`) — HOWTO §11 | none for users; proxied calls use the new keys after the restart |
+| `SESSION_SECRET` | new `openssl rand -hex 32` in `.env.platform`, `dcu up -d ui` | every session cookie becomes invalid: all users sign in again |
+| `UI_DATABASE_PASSWORD` | new value in `.env.platform`, `dcu up -d ui_migrate ui` | bootstrap alters role `app_ui`; the BFF restarts with the new password |
+| `UI_BOOTSTRAP_ADMIN_PASSWORD` | remove it from `.env.platform` after the first sign-in | it is only read while `ui.users` is empty |
 | Caddy certificates | automatic (Let's Encrypt for public hosts, internal CA for `*.localhost`) | none |
 
 ## 8. Backup and restore of schema `ui`
 
 The pipeline's maintenance worker dumps the whole database daily (`backup_database`
-task; objects expire after 14 days) and that dump contains schema `ui`. For a UI-only
+task; objects expire after 14 days). Bootstrap grants `app_maintenance` read access
+to `ui` so the dump includes it. Rehearse dump and restore against a disposable
+database when changing schemas or grants. For a UI-only
 snapshot (before an upgrade, before bulk edits):
 
 ```bash
@@ -180,36 +186,44 @@ schema dump).
 
 ## 9. Upgrade and rollback
 
-Upgrade: HOWTO §11 (`dcu build ui && dcu up -d ui_migrate ui`). Migrations are
-additive; `ui_migrate` is idempotent (it takes an advisory lock, so two concurrent runs
-cannot collide).
+Upgrade: deploy compatible backend and UI revisions together, following the backend
+[local integration guide](../../../multi-agent-article/docs/user_manual/local_ui_integration.md).
+Let active jobs finish, preserve volumes, apply migrations, then replace both images.
+UI bootstrap is idempotent and uses an advisory lock to prevent concurrent migrations.
 
-Rollback: set `UI_IMAGE_TAG` back to the previous release and `dcu up -d ui`. Because
-migrations are additive, an older BFF runs against a newer schema. Only if a release
-notes a destructive migration: `dcu run --rm --entrypoint /app/.venv/bin/python ui_migrate -m alembic downgrade <revision>`
-with the owner `UI_DATABASE_URL` in the environment, then start the older image.
+Rollback: select a known compatible backend/UI pair and check the database revisions
+required by both images. Readiness requires each application's exact migration head;
+an additive migration does not guarantee that an older image is ready. Follow the
+release's recovery procedure, or restore a verified backup into an empty database
+and validate the pair there before switching. Changing `UI_IMAGE_TAG` alone is not a
+complete rollback plan.
 
-## 10. Optional pipeline capabilities ("needs pipeline API update")
+## 10. Required pipeline contract
 
-`capabilities.py` fetches the pipeline's `/openapi.json` at startup and every
-`UI_CAPABILITY_REFRESH_SECONDS` (default 300) and derives eight booleans:
-`signals_global`, `tasks_global`, `retry_dead`, `api_keys_list`, `sources_stats`,
-`cost_estimate`, `jobs_industry_filter`, `jobs_reference_filter` (the backend PRs
-B1–B4). A failed probe yields all `false` plus `probe_error` and a
-`capability_probe_failed` warning in the logs. The map is published by
-`GET /app/capabilities` (signed in) and shown on Settings › System ("Optional pipeline
-routes", with the probe time); `/readyz` only re-checks the pipeline's readiness, not
-the capabilities.
+`capabilities.py` reads `/openapi.json` at startup and every
+`UI_CAPABILITY_REFRESH_SECONDS` (default 300). It checks marker
+`x-scout-contract-version: 1`, every required method/path, and required query names.
+Response schemas are verified by the offline OpenAPI snapshot, generated-type and
+regression checks; readiness does not validate response schemas.
 
-While a capability is `false` the console uses a bounded fallback (ADR-UI-007) and says
-so on the screen: the Signals explorer merges the 20 most recent matching jobs
-("degraded" banner), "Retry all dead" loops over the job's dead tasks, attention and
-dead-task counts come from recent jobs and daily stats, Settings › API keys lists only
-the keys created in this browser, the precision column and median tile on Data Sources
-read "needs pipeline API update (B2)", the cost estimate uses the last 10 completed
-jobs, and the Runs industry filter applies client-side. Nothing to do on duty: once the
-pipeline is upgraded, the note disappears within one probe interval (or at once with
-**Refresh** on Settings › System, which re-reads the pipeline, or a `dcu restart ui`).
+`/readyz` uses the cached contract result and makes fresh backend readiness and
+reader/operator key checks. After replacing a backend, allow the next contract
+probe or restart the BFF. A responsive `/healthz` alone is not readiness. Worker
+availability is separate: inspect Settings › Workers & health before starting paid
+jobs; API/BFF readiness does not require workers to be running.
+
+Inspect `GET /app/capabilities` or Settings › System for `compatible`,
+`contract_version`, `required_contract_version`, `contract_errors` and the per-route
+capabilities. The browser refreshes this map every 30 seconds and invalidates cached
+queries when the contract changes. Missing capabilities are reported as unavailable;
+there is no limited cross-job result set, local API-key inventory or per-task retry
+fallback. Deploy the paired backend/UI versions or repair the key configuration.
+
+Source **article acceptance rate** is accepted articles divided by measured
+candidates. Missing/incomplete candidate history means unavailable, never zero.
+Cost estimates use only comparable completed jobs with complete recorded model-call
+costs; they exclude proxy transfer fees. Daily result counts count first stored
+objects, not each job that reuses an object.
 
 ## 11. Capacity and polling
 
@@ -224,14 +238,14 @@ only; a connection failure answers `503 pipeline_api_unavailable`, a slow respon
 
 ## 12. Incident quick list
 
-1. Console down → `dcu ps`, `dcu logs --since 10m ui caddy`; `dcu up -d ui`.
+1. Console down → `dcu ps`, `dcu logs --since 10m ui`; `dcu up -d ui`.
 2. Everyone signed out unexpectedly → `SESSION_SECRET` changed or `ui.sessions` emptied;
    nothing to fix beyond signing in.
 3. Runs cannot be created but reads work → the operator key was revoked or rotated
-   without updating `.env` (`401` from the pipeline on `proxy_call` lines in
+   without updating `.env.platform` (`401` from the pipeline on `proxy_call` lines in
    `dcu logs ui`); rotate again (section 7).
 4. Viewers see an error on mutations → expected (`403`); only `operator`/`admin` mutate.
 5. Pipeline down → the console stays up with `pipeline_api: false` on `/readyz`,
    "API not ready" in the sidebar and `503 pipeline_api_unavailable` on proxied calls;
    fix the pipeline.
-6. A screen says "needs pipeline API update (B…)" → not an incident (section 10).
+6. Contract unavailable → inspect contract/key readiness and deploy the matching backend (section 10).

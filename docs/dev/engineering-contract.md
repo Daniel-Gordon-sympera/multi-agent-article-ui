@@ -2,7 +2,7 @@
 
 **Purpose.** This file is the binding agreement between everyone (humans and coding agents) working on the `multi-agent-articles-ui` repository. It turns `docs/plan/07-ui-service-plan.md` (the approved plan) and `docs/design/mockup-spec.md` (the approved mockup, transcribed) into exact names, paths, commands and shapes so that work done in parallel fits together. When this file and the plan differ, this file wins; when this file is silent, the plan wins; when both are silent, the mockup spec wins.
 
-Companion references: `docs/api/openapi-pipeline.json` (the pipeline API as implemented today on branch `feature/platform-and-api`, 34 routes), `docs/api/pipeline-routes.txt` (same, one line per route), `docs/plan/06-ui-service-design.md` (tokens and decisions).
+Companion references: `docs/api/openapi-pipeline.json` (the API snapshot of the paired backend release), `docs/api/pipeline-routes.txt` (same, one line per route), `docs/plan/06-ui-service-design.md` (tokens and decisions).
 
 ---
 
@@ -25,22 +25,20 @@ The pipeline API (`multi-agent-article`, FastAPI, `X-API-Key`) implements exactl
 - `POST /v1/api-keys` (`{name, role}`) → `201 {id, name, role, created_at, key}`; `DELETE /v1/api-keys/{name}` → `204`.
 - `GET /readyz` → `{status: "ready"|"not_ready", checks: {database, artifact_store, migrations}}` (503 when not ready); `GET /openapi.json` is public.
 
-**Row shapes** of the per-job lists come from `api/read_queries.py` in the backend (one `SELECT` per resource) joined over the tables in `/home/claude/reference/pipeline-sql/*.sql` (reference copy; not part of this repo). The hand-written TypeScript row types in `web/src/api/types/*.ts` are the UI's single source for these shapes; keep them faithful to the SQL. Key columns:
+**Row shapes** come from the backend's published response schemas in
+`docs/api/openapi-pipeline.json`. `pnpm gen:api` generates `web/src/api/pipeline.gen.ts`;
+`web/src/api/types/*.ts` aliases those wire types and adds explicit UI view models.
+The generated schemas are authoritative. Regenerate them after a contract change;
+do not maintain separate hand-written copies of backend payloads.
 
-- `JobRecord`: `id, kind, input{url|seeds|location,industry}, county, state_code, settings{days,sites,site_timeout,max_runtime,memory_mode,reanalyze,…}, prompt_version, status, stop_reason, client_reference, created_by, created_at, started_at, deadline_at, finished_at, summary|null, sessions[]`; `JobDetail` adds `progress{seeds,sections,pages,links,articles,summaries,companies,signals,tasks_pending,tasks_running,tasks_dead}` and `costs[{stage,calls,input_tokens,output_tokens,total_tokens,cost_usd|null,known_cost_usd,unpriced_calls,unknown_usage_calls}]`.
-- Job status enum: `queued, finding, exploring, discovering, analysing, finalizing, completed, partial, failed, cancelling, cancelled`. Site-run status: `queued, exploring, no_sections, discovering, finished, partial, failed, cancelled`. Task status: `queued, running, succeeded, failed (= retry pending), dead, cancelled`.
-- `SiteRun`: `id, job_id, seed_url, domain, title, rank, status, stop_reason, started_at, finished_at, stats{sections,pages,links,articles,fetches,bytes,tokens,…}`.
-- `Task`: `id, kind, payload, job_id, site_run_id, parent_task_id, dedupe_key, status, priority, run_after, attempts, max_attempts, lease_until, lease_token?, claimed_by, last_error, error_category, result, created_at, started_at, finished_at`.
-- `Event`: `id, ts, job_id, site_run_id, task_id, service, event, stage, url, status, error_category, duration_ms, attrs{}`.
-- Signal / company mention row (`/signals`, `/companies`): `id, summary_id, article_id, company_id, number_company, name_as_written, entity_type, role, quote_id, evidence, confidence_score, confidence_level, checks, signal, signal_title, materiality, connection, signal_quote_id, signal_evidence, url, title, date, source_domain, article_key, company_key, company, confidence, fetch_status, org_kind, org_kind_basis, hq_scope, entity_flag, hq_county, hq_state, scope_place, scope_basis, company_industry, company_sub_industry, industry_basis, revenue_bin, revenue_basis, revenue_confidence, enrichment_source`.
-- `Flag` row (`/flags`): the `job_company_flags` columns + `company_name, company_key, articles`.
-- `Summary` row: `analysis.summaries` columns (`id, article_id, prompt_version, main_idea, short_snippet, focus_topics, industry, sub_industry, article_signal, article_materiality, companies, company_mentions, sponsored, is_list_page, warnings, model, input_tokens, output_tokens, …`) + `url, title, date, source_domain, article_key`; `record` only with `?include=record`.
-- `Article` row: `discovery.articles` columns (`id, canonical_url, domain, title, published_date, snapshot_id, text_sha, html_sha, first_seen, …`) + `site_run_id, article_key, link_key, origin, accepted_at`.
-- `Section` row: `sections.site_sections` (`id, site_run_id, exploration_id, section_id, url, title, kept, reason, origin, recorded_at, …`).
-- Finder `Source` row (`/jobs/{id}/sources`): `finder.sources` (`search_id, domain, name, url, verdict, reason, coverage, relevance, origin, …`) + `created_at`; `Ranking` row: `finder.rankings` (`search_id, url, name, tier, overall_rank, chosen, reason, pages_opened, coverage, relevance, finder_reason, …`).
-- Finder memory row (`/finder/memory`): `finder.judged_domains` (`location_key, industry_key, domain, verdict, reason, tier, judged_at, job_id, …`).
+Important display rules:
 
-**Not implemented yet (plan §8, B1–B4)** and therefore **optional capabilities** the UI must work without: `GET /v1/signals` (cross-job), `GET /v1/tasks` (global), `POST /v1/jobs/{id}/retry-dead`, `GET /v1/api-keys`, `GET /v1/sources/stats`, `GET /v1/stats/cost-estimate`, the `industry` / `client_reference_prefix` filters on `GET /v1/jobs`. The BFF probes `GET /openapi.json` of the pipeline API and publishes a capability map (§4.6); for every missing capability the BFF either provides a bounded fallback or the SPA shows a short "needs pipeline API update (B1…B4)" note. Never let a missing capability break a screen.
+- Article dates use `published_date`, `date_precision` and `date_source`; a month-only date must not display an invented day.
+- Summary rows use `snippet` and `kept_count`; distinct companies and company mentions are separate counts.
+- Company-profile signal dates use `published_date`.
+- Cross-job signals use `(job_id, id)` as their row identity; the same mention can appear in more than one job.
+
+**Required integration contract:** the backend publishes `x-scout-contract-version: 1` and all required query operations, including global signals/summary/export, global tasks, bulk retry, API-key metadata, source statistics, model-cost estimates and complete Runs filters. The BFF verifies this contract and separate authenticated reader/operator keys. An incompatible or unavailable backend produces an explicit error; bounded legacy fallbacks have been removed.
 
 ---
 
@@ -55,7 +53,7 @@ alembic.ini                    script_location = bff/scout_bff/migrations
 Dockerfile · .dockerignore     two-stage build (node:22-alpine → python:3.12-slim), UID 10001, port 8080
 compose.ui.yaml                override for the pipeline Compose project: services ui_migrate, ui, caddy (volumes/env)
 deploy/Caddyfile.ui            the UI site block
-.env.ui.example                every UI_* / PIPELINE_* / SESSION_SECRET variable, documented
+.env.ui.example                notice pointing to the shared backend template
 .github/workflows/ci.yml       lint + typecheck + unit (web) · ruff + pytest with Postgres service (bff) · build
 .gitignore · .editorconfig · .prettierrc · .prettierignore
 docs/plan/                     06, 07 (approved plan)      docs/design/mockup-spec.md     docs/api/*   docs/dev/*
@@ -91,7 +89,7 @@ web/
 ```
 bff/scout_bff/
   __init__.py · __main__.py (uvicorn runner)
-  settings.py            pydantic-settings, prefix-less names exactly as §3; `Settings()` reads .env.ui when present
+  settings.py            pydantic-settings, prefix-less names exactly as §3; `Settings()` reads the sibling backend .env.platform or PLATFORM_ENV_FILE
   app.py                 create_app(): routers, static SPA, error handlers, security headers, lifespan (capability probe, retention task)
   db.py                  async engine (SQLAlchemy 2 Core + psycopg 3), `transaction()` helper
   migrations/            Alembic env.py + versions/0001_ui_schema.py (the whole §4.8 DDL) 
@@ -109,7 +107,7 @@ bff/scout_bff/
   scouts/ · batches/ · sources/ · views/ · prefs/ · attention/ · system/ · signals/ · estimate/ · jobs/
                          one package per aggregate: router.py (+ repository.py / service.py when needed)
   static/                built SPA (Docker only; git-ignored)
-  version.py             __version__ = "0.1.0"
+  version.py             __version__ = "2.1.0"
 tests/
   conftest.py            app factory with a stub pipeline API (respx), a test database (UI_TEST_DATABASE_URL), helpers to sign in
   unit/ · integration/ · proxy/
@@ -158,7 +156,7 @@ Docker (Daniel's machine; registries are unreachable from the cloud sandbox): `d
 
 ## 4. BFF contract
 
-### 4.1 Settings (environment variables; `.env.ui` is read when present; names are exact)
+### 4.1 Settings (environment variables; shared `.env.platform` is read; names are exact)
 
 | Variable | Required | Meaning |
 |---|---|---|
@@ -180,7 +178,7 @@ Docker (Daniel's machine; registries are unreachable from the cloud sandbox): `d
 
 - Cookie `scout_session` = signed session id (itsdangerous `URLSafeTimedSerializer`); `HttpOnly; SameSite=Lax; Path=/; Secure` (unless `UI_SECURE_COOKIES=false`). Row in `ui.sessions` (idle expiry 12 h sliding, absolute 7 d). Sign-out deletes the row.
 - Every unsafe request (`POST/PUT/PATCH/DELETE`) to `/app/*` or `/v1/*` must carry `X-Requested-With: scout` **and** `X-CSRF-Token` equal to the session's `csrf_token`; otherwise `403 csrf_failed`. `POST /app/auth/login` needs only `X-Requested-With: scout`.
-- Roles: `admin` ⊃ `operator` ⊃ `viewer`. Role → pipeline key: admin/operator → operator key; viewer → reader key. Viewers may call every `GET /v1/*` in the allowlist plus per-job CSV exports; they may not call `POST /v1/exports` (dataset exports) nor any other mutation.
+- Roles: `admin` ⊃ `operator` ⊃ `viewer`. Role → pipeline key: admin/operator → operator key; viewer → reader key. Viewers may use ordinary allowlisted reads and per-job CSV exports. `GET /v1/api-keys` requires admin; `GET /v1/access-policies` requires operator. Viewers cannot use mutations, including `POST /v1/exports`.
 - Login rate limit: 10 failures per e-mail per 15 min and 60 per IP per hour (`ui.login_attempts`) → `429 too_many_attempts`. Messages never reveal whether the account exists (`401 invalid_credentials`).
 - `must_change_password = true` → every `/app/*` call except `GET /app/auth/me`, `POST /app/auth/password`, `POST /app/auth/logout` answers `403 password_change_required`; the SPA routes to `/account/password`.
 - Audit: every unsafe `/app` and proxied unsafe `/v1` call inserts `ui.audit_log(at, user_id, role, method, path, target jsonb, status, duration_ms)`.
@@ -237,7 +235,7 @@ Within one DB transaction create `ui.batches` (+ `run_number` = count of previou
 
 ### 4.6 Capabilities
 
-`capabilities.py` fetches `${PIPELINE_API_URL}/openapi.json` at startup and every `UI_CAPABILITY_REFRESH_SECONDS` (and on demand from `/readyz`), and derives:
+`capabilities.py` fetches `${PIPELINE_API_URL}/openapi.json` at startup and every `UI_CAPABILITY_REFRESH_SECONDS`. It verifies the contract marker, required methods/paths and query names, and derives:
 
 ```
 signals_global      GET  /v1/signals
@@ -249,11 +247,11 @@ cost_estimate       GET  /v1/stats/cost-estimate
 jobs_industry_filter   GET /v1/jobs has query parameter `industry`
 jobs_reference_filter  GET /v1/jobs has query parameter `client_reference_prefix`
 ```
-Unknown (probe failed) → all `false` + `probe_error`. The map is part of `GET /app/auth/me` so the SPA has it before rendering.
+Unknown (probe failed) → all `false` + `probe_error`. The map is part of `GET /app/auth/me` so the SPA has it before rendering. `/readyz` uses the cached contract result and makes fresh backend readiness and reader/operator key checks. Response schema agreement is checked offline through snapshots, generated types and regression tests. Worker health is checked separately.
 
 ### 4.7 `/v1` reverse proxy
 
-- Allowlist (method, path regex) — everything in `docs/api/pipeline-routes.txt` except: `POST /v1/api-keys`, `DELETE /v1/api-keys/*` → **admin** only; `POST /v1/exports` → operator; every other `POST` → operator; every `GET` → any role. Not matched → `404 not_proxied`.
+- Allowlist (method, path regex): `GET/POST /v1/api-keys` and `DELETE /v1/api-keys/*` require **admin**. `GET /v1/access-policies` and `POST /v1/access-policies/{host}/reset` require **operator**. Other allowlisted `GET` requests permit any signed-in role; other allowlisted `POST` requests require operator. Unmatched methods or paths return `404 not_proxied`.
 - Forward: method, path, query string, body, `Accept`, `Content-Type`, `If-None-Match`, `Accept-Encoding: identity`; strip any incoming `X-API-Key`/cookies; inject `X-API-Key` by role. Pass back: status, body (streamed), `Content-Type`, `ETag`, `Cache-Control`, `Content-Disposition`, `Content-Length` when known.
 - Timeouts: connect 5 s; read 30 s for JSON; none for `text/csv` and `/articles/{id}?include=text` / `/artifacts/*` (streams). Retries: up to 3 on connection errors for `GET` only. Pipeline unreachable → `503 pipeline_api_unavailable` (problem+json).
 - One structured log line per proxied call: `user_id, role, method, path, status, duration_ms` (never the key, never the query values of `X-API-Key`).
@@ -268,7 +266,7 @@ Exactly the DDL in plan §9 plus: `ui.dismissed_suggestions (domain text, county
 
 ### 4.10 Testing (BFF)
 
-- Unit (no DB): password hashing round-trip, CSRF enforcement, role → key mapping, allowlist matching, cursor encode/decode, fan-out leg naming, CSV import parsing, capability derivation from an OpenAPI document, signals merge/sort/page.
+- Unit (no DB): password hashing round-trip, CSRF enforcement, role → key mapping, allowlist matching, cursor encode/decode, fan-out leg naming, CSV import parsing, capability derivation from an OpenAPI document, signal filter forwarding, contract requirements and complete aggregate pagination.
 - Integration (`UI_TEST_DATABASE_URL`): bootstrap from empty + re-run; Alembic `upgrade head` then `downgrade base`; login/logout/session expiry; users CRUD and self-protection; scouts CRUD + run fan-out against a `respx` stub of the pipeline API (202/409/422 legs); sources CRUD/import/promote/suggestions; views; prefs; audit rows written; proxy passes status/headers/body and streams CSV; `/readyz`.
 - The stub pipeline API is a `respx` router seeded from a small fixture module (`tests/pipeline_stub.py`) serving `/openapi.json`, `/readyz`, `/v1/jobs…`, `/v1/workers`, `/v1/jobs/{id}/signals` with a few rows shaped like §1.
 
@@ -354,4 +352,4 @@ Status maps (`lib/status.ts`): job `queued→neutral "Queued"`, `finding/explori
 | B3 Signals | Signals explorer + drawer, **Job › Signals tab**, the shared `SignalsTable`/`SignalRecordCell`/`SignalDrawer` | `features/signals/**`, `routes/_app/signals.tsx`, `routes/_app/jobs/$jobId/signals.tsx`, `mocks/handlers/signals.ts`, `mocks/fixtures/signals.ts` | `views/`, `signals/` (aggregate + CSV export) | HOWTO §9 |
 | B4 Overview + Settings | Overview; Settings › API keys, Workers & health, Stats & costs, Exports, System, Preferences, Users | `features/overview/**`, `features/settings/**`, `routes/_app/index.tsx`, `routes/_app/settings/*.tsx`, `mocks/handlers/{overview,settings}.ts`, `mocks/fixtures/{overview,settings,workers,stats}.ts` | `attention/`, `system/`, `prefs/` | HOWTO §3 (users part) §10 |
 
-Cross-feature links are URL contracts only: a signal opens at `/signals?detail=<mention id>`; a job at `/jobs/$jobId`; a scout's runs at `/jobs?scout=<id>`; a worker at `/settings/workers#<instance_id>`. Shared mock state lives in `web/src/mocks/db.ts` (additive changes only; keep the reset function complete).
+Cross-feature links are URL contracts only: a signal opens at `/signals?detail=<mention id>&detail_job=<job id>`; a job at `/jobs/$jobId`; a scout's runs at `/jobs?scout=<id>`; a worker at `/settings/workers#<instance_id>`. Shared mock state lives in `web/src/mocks/db.ts` (additive changes only; keep the reset function complete).

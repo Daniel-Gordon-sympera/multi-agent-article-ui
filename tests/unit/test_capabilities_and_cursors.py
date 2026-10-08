@@ -18,54 +18,37 @@ from scout_bff.cursors import (
     encode_offset_cursor,
 )
 from scout_bff.errors import Problem
-from scout_bff.pipeline_client import PipelineClient
+from scout_bff.pipeline_client import PipelineClient, PipelineError
 from scout_bff.settings import placeholder_settings
 from tests.pipeline_fixtures import OPERATOR_KEY, PIPELINE_URL, READER_KEY
-from tests.pipeline_stub import PipelineStub, load_openapi_document
+from tests.pipeline_stub import PipelineStub
 
 
-def test_todays_document_has_no_optional_capability():
-    capabilities = derive_capabilities(load_openapi_document())
+def test_missing_contract_is_incompatible():
+    from scout_bff.pipeline_contract import contract_errors
+
+    assert contract_errors({})
+
+
+def test_required_routes_and_query_parameters_are_checked():
+    from scout_bff.pipeline_contract import contract_errors
+
+    stub = PipelineStub()
+    assert contract_errors(stub.openapi) == []
+    broken = copy.deepcopy(stub.openapi)
+    del broken["paths"]["/v1/signals/summary"]
+    broken["paths"]["/v1/jobs"]["get"]["parameters"] = []
+    errors = contract_errors(broken)
+    assert any("/v1/signals/summary" in error for error in errors)
+    assert any("order" in error for error in errors)
+    broken["x-scout-contract-version"] = 2
+    assert any("contract 1" in error for error in contract_errors(broken))
+
+
+def test_complete_document_has_all_capabilities():
+    capabilities = derive_capabilities(PipelineStub().openapi)
     assert set(capabilities) == set(CAPABILITY_NAMES)
-    assert capabilities == all_false()
-
-
-def test_document_with_b1_to_b4_routes_turns_capabilities_on():
-    document = copy.deepcopy(load_openapi_document())
-    paths = document["paths"]
-    paths["/v1/signals"] = {"get": {"responses": {"200": {}}}}
-    paths["/v1/tasks"] = {"get": {"responses": {"200": {}}}}
-    paths["/v1/jobs/{id}/retry-dead"] = {"post": {"responses": {"202": {}}}}
-    paths["/v1/api-keys"]["get"] = {"responses": {"200": {}}}
-    paths["/v1/sources/stats"] = {"get": {"responses": {"200": {}}}}
-    paths["/v1/stats/cost-estimate"] = {"get": {"responses": {"200": {}}}}
-    paths["/v1/jobs"]["get"]["parameters"].append(
-        {"name": "industry", "in": "query", "schema": {"type": "string"}}
-    )
-    capabilities = derive_capabilities(document)
-    assert capabilities == {
-        "signals_global": True,
-        "tasks_global": True,
-        "retry_dead": True,
-        "api_keys_list": True,
-        "sources_stats": True,
-        "cost_estimate": True,
-        "jobs_industry_filter": True,
-        "jobs_reference_filter": False,
-    }
-
-
-def test_only_signals_route_added():
-    document = copy.deepcopy(load_openapi_document())
-    document["paths"]["/v1/signals"] = {"get": {"responses": {"200": {}}}}
-    capabilities = derive_capabilities(document)
-    assert capabilities["signals_global"] is True
-    assert sum(capabilities.values()) == 1
-
-
-def test_garbage_documents_derive_all_false():
-    assert derive_capabilities({}) == all_false()
-    assert derive_capabilities({"paths": {"/v1/signals": "nope"}}) == all_false()
+    assert all(capabilities.values())
 
 
 def _client(stub: PipelineStub) -> PipelineClient:
@@ -79,15 +62,17 @@ def _client(stub: PipelineStub) -> PipelineClient:
 
 async def test_cache_probe_reads_version_and_readiness():
     stub = PipelineStub()
+    stub.openapi["info"]["version"] = "9.8.7"
     cache = CapabilityCache(_client(stub), refresh_seconds=300)
     assert cache.probe_error == "not probed yet"
     await cache.probe()
     assert cache.probe_error is None
-    assert cache.pipeline_api_version == "1.0.0"
-    assert cache.capabilities == all_false()
+    assert cache.pipeline_api_version == "9.8.7"
+    assert all(cache.capabilities.values())
+    assert cache.compatible and cache.keys_valid
     assert cache.api_ready is True
     snapshot = cache.snapshot()
-    assert snapshot["probed_at"] and snapshot["capabilities"] == all_false()
+    assert snapshot["probed_at"] and snapshot["compatible"]
     stub.ready = False
     assert await cache.check_ready() is False
     assert cache.api_status()["ready"] is False
@@ -95,8 +80,6 @@ async def test_cache_probe_reads_version_and_readiness():
 
 async def test_cache_probe_failure_sets_probe_error_and_all_false():
     stub = PipelineStub()
-    stub.openapi = copy.deepcopy(load_openapi_document())
-    stub.openapi["paths"]["/v1/signals"] = {"get": {}}
     cache = CapabilityCache(_client(stub), refresh_seconds=300)
     await cache.probe()
     assert cache.capabilities["signals_global"] is True
@@ -132,3 +115,46 @@ def test_offset_cursors():
     assert decode_offset_cursor(encode_offset_cursor(scope, 200), scope) == 200
     with pytest.raises(Problem):
         decode_offset_cursor(encode_cursor(scope, "abc"), scope)
+
+
+def test_captured_backend_contract_is_compatible_without_stub_repair():
+    from scout_bff.pipeline_contract import contract_errors
+    from tests.pipeline_stub import load_openapi_document
+
+    assert contract_errors(load_openapi_document()) == []
+
+
+@pytest.mark.parametrize(
+    "reader,operator",
+    [
+        (OPERATOR_KEY, OPERATOR_KEY),
+        (READER_KEY, READER_KEY),
+        (OPERATOR_KEY, READER_KEY),
+        ("invalid-reader", OPERATOR_KEY),
+        (READER_KEY, "invalid-operator"),
+    ],
+)
+async def test_key_roles_fail_closed(reader, operator):
+    stub = PipelineStub()
+    settings = placeholder_settings(
+        pipeline_api_url=PIPELINE_URL,
+        pipeline_reader_key=reader,
+        pipeline_operator_key=operator,
+    )
+    cache = CapabilityCache(PipelineClient(stub.http_client(), settings), 300)
+    await cache.probe()
+    assert cache.compatible
+    assert not cache.keys_valid and not cache.api_ready
+    with pytest.raises(PipelineError) as error:
+        cache.require_compatible()
+    assert error.value.status == 503
+    assert error.value.category == "pipeline_keys_invalid"
+
+
+def test_existing_screen_endpoints_are_required_too():
+    from scout_bff.pipeline_contract import contract_errors
+    from tests.pipeline_stub import load_openapi_document
+
+    document = load_openapi_document()
+    del document["paths"]["/v1/workers"]
+    assert any("/v1/workers" in error for error in contract_errors(document))

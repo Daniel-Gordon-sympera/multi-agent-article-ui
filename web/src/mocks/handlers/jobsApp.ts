@@ -96,12 +96,20 @@ export const jobAppHandlers = [
       .slice(0, 10)
       .map(jobCostUsd)
       .filter((v): v is number => v !== null);
-    if (samples.length === 0) return HttpResponse.json({ samples: 0 });
+    if (samples.length === 0)
+      return HttpResponse.json({
+        samples: 0,
+        median_cost_usd: null,
+        p90_cost_usd: null,
+        excluded_incomplete_jobs: 0,
+        basis: "recorded_model_calls",
+      });
     return HttpResponse.json({
       median_cost_usd: Math.round(median(samples) * 100) / 100,
       p90_cost_usd: Math.round(percentile90(samples) * 100) / 100,
       samples: samples.length,
-      basis: "recent_jobs",
+      basis: "recorded_model_calls",
+      excluded_incomplete_jobs: 0,
     });
   }),
 

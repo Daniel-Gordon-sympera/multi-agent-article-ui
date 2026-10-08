@@ -10,7 +10,7 @@ import { qk } from "@/api/keys";
 import { useKeysetPage } from "@/api/pagination";
 import { getCompany, listArticleSummaries, listJobSignals } from "@/api/pipeline";
 import { pollingOptions } from "@/api/polling";
-import type { CrossJobSignalFilters, CrossJobSignalsPage } from "@/api/types/bff";
+import type { CrossJobSignalFilters } from "@/api/types/bff";
 import type { CompanyProfile } from "@/api/types/companies";
 import type { CrossJobSignalRow, SignalListFilters, SignalRow } from "@/api/types/signals";
 
@@ -20,9 +20,9 @@ export interface PageCursorOptions {
   limit?: number;
 }
 
-/** The explorer's page; `meta` carries `degraded`, `scanned_jobs`, `truncated`. */
+/** One page from the global signal query. */
 export function useCrossJobSignals(filters: CrossJobSignalFilters, cursor: PageCursorOptions) {
-  const page = useKeysetPage<CrossJobSignalRow>(
+  return useKeysetPage<CrossJobSignalRow>(
     qk.app.signals({ ...filters }),
     (params) => listCrossJobSignals(filters, params),
     {
@@ -32,13 +32,6 @@ export function useCrossJobSignals(filters: CrossJobSignalFilters, cursor: PageC
       limit: cursor.limit,
     },
   );
-  const meta = page.query.data as CrossJobSignalsPage | undefined;
-  return {
-    ...page,
-    degraded: meta?.degraded ?? false,
-    scannedJobs: meta?.scanned_jobs,
-    truncated: meta?.truncated ?? false,
-  };
 }
 
 export function useCrossJobSignalsSummary(filters: CrossJobSignalFilters) {
@@ -73,10 +66,14 @@ export function companyStatesFromError(error: unknown): string[] | null {
   return Array.isArray(states) ? states.filter((s): s is string => typeof s === "string") : [];
 }
 
-export function useCompanyProfile(companyKey: string | undefined, state: string | undefined) {
+export function useCompanyProfile(
+  companyKey: string | undefined,
+  state: string | undefined,
+  jobId?: string,
+) {
   return useQuery<CompanyProfile>({
-    queryKey: qk.v1.companies.detail(companyKey ?? "", state),
-    queryFn: () => getCompany(companyKey ?? "", state ? { state } : {}),
+    queryKey: qk.v1.companies.detail(companyKey ?? "", state, jobId),
+    queryFn: () => getCompany(companyKey ?? "", { state, job_id: jobId }),
     enabled: Boolean(companyKey),
     retry: false,
     ...pollingOptions("static"),

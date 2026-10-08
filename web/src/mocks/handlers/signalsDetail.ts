@@ -30,7 +30,8 @@ export function crossJobRow(row: SignalRow): CrossJobSignalRow {
     county: job?.county ?? "Orange",
     state_code: job?.state_code ?? "FL",
     job_industry: typeof job?.input.industry === "string" ? job.input.industry : null,
-    job_created_at: job?.created_at ?? row.date,
+    job_created_at: job?.created_at ?? row.date ?? "",
+    client_reference: job?.client_reference ?? null,
   };
 }
 
@@ -98,11 +99,21 @@ export const signalDetailHandlers = [
       company_key: key,
       state_code: state ?? first.hq_state ?? "FL",
       name: first.company,
-      first_seen: [...mentions].sort((a, b) => a.date.localeCompare(b.date))[0]?.date ?? first.date,
-      last_seen: [...mentions].sort((a, b) => b.date.localeCompare(a.date))[0]?.date ?? first.date,
+      first_seen:
+        [...mentions].sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))[0]?.date ??
+        first.date,
+      last_seen:
+        [...mentions].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""))[0]?.date ??
+        first.date,
       flags: flag,
-      mentions: { items: mentions, next_cursor: null },
-      signals: { items: signals.map(crossJobRow), next_cursor: null },
+      mentions: {
+        items: mentions.map((row) => ({ ...row, published_date: row.date })),
+        next_cursor: null,
+      },
+      signals: {
+        items: signals.map((row) => ({ ...crossJobRow(row), published_date: row.date })),
+        next_cursor: null,
+      },
       articles: { items: articles, next_cursor: null },
     });
   }),

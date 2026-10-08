@@ -5,14 +5,7 @@ from datetime import datetime, timezone
 import pytest
 
 from scout_bff.errors import Problem
-from scout_bff.estimate.service import (
-    EstimateCache,
-    known_cost,
-    matches,
-    median,
-    percentile_90,
-    summarise,
-)
+from scout_bff.estimate.service import EstimateCache
 from scout_bff.jobs.progress import (
     ProgressCache,
     duration_seconds,
@@ -21,7 +14,6 @@ from scout_bff.jobs.progress import (
     snapshot,
     total_cost_usd,
 )
-from scout_bff.jobs.retry_dead import normalise_result
 
 NOW = datetime(2026, 10, 4, 11, 31, tzinfo=timezone.utc)
 
@@ -67,52 +59,6 @@ def test_progress_cache_expires_entries():
     cache.put("a", {"status": "queued"}, at=100.0)
     assert cache.get("a", at=104.9) == {"status": "queued"}
     assert cache.get("a", at=105.0) is None
-
-
-def test_normalise_retry_result_accepts_every_shape():
-    assert normalise_result({"retried": 2, "task_ids": [1, 2]}) == {
-        "retried": 2,
-        "task_ids": [1, 2],
-        "skipped_task_ids": [],
-    }
-    assert normalise_result({"task_ids": ["7", 8]}) == {
-        "retried": 1,
-        "task_ids": [8],
-        "skipped_task_ids": [],
-    }
-    assert normalise_result("garbage") == {
-        "retried": 0,
-        "task_ids": [],
-        "skipped_task_ids": [],
-    }
-    assert normalise_result({"retried": 2}, requested=[5, 6])["task_ids"] == [5, 6]
-
-
-def test_estimate_statistics_and_matching():
-    assert median([3.0, 1.0, 2.0]) == 2.0
-    assert median([1.0, 2.0, 3.0, 4.0]) == 2.5
-    assert percentile_90([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]) == 9.0
-    assert percentile_90([4.2]) == 4.2
-    assert known_cost([{"known_cost_usd": 1.5}, {"known_cost_usd": None}]) == 1.5
-    assert known_cost([]) is None
-    job = {
-        "kind": "location_industry",
-        "status": "completed",
-        "input": {"industry": "Wholesale Trade"},
-        "settings": {"sites": 5},
-    }
-    assert matches(job, "location_industry", None, None)
-    assert matches(job, "location_industry", 5, "wholesale trade")
-    assert not matches(job, "location_industry", 3, None)
-    assert not matches(job, "seeds", None, None)
-    assert not matches({**job, "status": "partial"}, "location_industry", None, None)
-    assert summarise([], "recent_jobs") == {"samples": 0}
-    assert summarise([2.0, 4.0], "api") == {
-        "median_cost_usd": 3.0,
-        "p90_cost_usd": 4.0,
-        "samples": 2,
-        "basis": "api",
-    }
 
 
 def test_estimate_cache_round_trip():

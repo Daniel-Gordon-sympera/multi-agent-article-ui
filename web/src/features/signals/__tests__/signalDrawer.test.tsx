@@ -15,7 +15,9 @@ describe("signal drawer", () => {
     { timeout: SLOW },
     async () => {
       signInMockUser("admin@sympera.ai");
-      await renderApp({ initialEntries: [`/signals?detail=${LAKEVIEW_ID}`] });
+      await renderApp({
+        initialEntries: [`/signals?detail=${LAKEVIEW_ID}&detail_job=${MAIN_JOB_ID}`],
+      });
 
       const drawer = await screen.findByRole("dialog", { name: "Signal details" });
       expect(
@@ -68,7 +70,9 @@ describe("signal drawer", () => {
   it("steps to the next signal and closes back to the list", { timeout: SLOW }, async () => {
     const user = userEvent.setup();
     signInMockUser("viewer@sympera.ai");
-    const { router } = await renderApp({ initialEntries: [`/signals?detail=${LAKEVIEW_ID}`] });
+    const { router } = await renderApp({
+      initialEntries: [`/signals?detail=${LAKEVIEW_ID}&detail_job=${MAIN_JOB_ID}`],
+    });
     const drawer = await screen.findByRole("dialog", { name: "Signal details" });
     await within(drawer).findByRole("heading", { name: "Lakeview Builders Group" });
 

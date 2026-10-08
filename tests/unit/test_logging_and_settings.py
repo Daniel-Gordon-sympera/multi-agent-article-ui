@@ -8,6 +8,7 @@ import structlog
 
 from scout_bff.logging import configure_logging, redact, register_secret
 from scout_bff.settings import Settings, placeholder_settings
+from scout_bff.version import __version__
 
 
 def test_redact_replaces_registered_secrets_everywhere():
@@ -66,7 +67,7 @@ def test_configured_logging_never_prints_settings_secrets(monkeypatch):
         "db-password-SECRET-4",
     ):
         assert secret not in output, output
-    assert '"service": "ui"' in output and '"version": "0.1.0"' in output
+    assert '"service": "ui"' in output and f'"version": "{__version__}"' in output
 
 
 def test_settings_read_exact_variable_names(monkeypatch):
@@ -109,8 +110,8 @@ def test_session_secret_must_be_long_enough():
         placeholder_settings(session_secret="too-short")
 
 
-def test_env_ui_file_is_read_when_present(tmp_path, monkeypatch):
-    env_file = tmp_path / ".env.ui"
+def test_explicit_platform_file_is_read_when_present(tmp_path, monkeypatch):
+    env_file = tmp_path / ".env.platform"
     env_file.write_text(
         "UI_DATABASE_URL=postgresql+psycopg://u:p@localhost/db\n"
         "PIPELINE_API_URL=http://localhost:8000\n"
@@ -118,6 +119,7 @@ def test_env_ui_file_is_read_when_present(tmp_path, monkeypatch):
         f"SESSION_SECRET={'x' * 40}\n"
     )
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("PLATFORM_ENV_FILE", str(env_file))
     for name in ("UI_DATABASE_URL", "PIPELINE_API_URL", "SESSION_SECRET"):
         monkeypatch.delenv(name, raising=False)
     settings = Settings()

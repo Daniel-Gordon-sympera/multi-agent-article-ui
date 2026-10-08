@@ -58,7 +58,7 @@ async def test_list_jobs_with_filters_and_keyset_pagination(pipeline, stub):
 
 async def test_unknown_filter_is_a_pipeline_error(pipeline):
     with pytest.raises(PipelineError) as error:
-        await pipeline.list_jobs(industry="Construction")
+        await pipeline.list_jobs(unknown="value")
     assert error.value.status == 422
     assert error.value.category == "unknown_filter"
 
@@ -74,7 +74,7 @@ async def test_get_job_and_resources(pipeline):
     assert len(ranking["items"]) == 3
     assert (await pipeline.workers())["items"][0]["instance_id"] == "analysis-1"
     assert len((await pipeline.daily_stats(created_after="2026-10-02"))["items"]) == 2
-    memory = await pipeline.finder_memory(verdict="keep")
+    memory = await pipeline.finder_memory(verdict="accept")
     assert {row["domain"] for row in memory["items"]} == {
         "floridadaily.com",
         "orlandoweekly.com",

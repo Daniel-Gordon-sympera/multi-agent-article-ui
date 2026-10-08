@@ -51,7 +51,7 @@ describe("/jobs (Runs)", () => {
     );
   });
 
-  it("filters by status through the URL and keeps 'Running' client-side", async () => {
+  it("filters by status through the URL and applies Running before pagination", async () => {
     signInMockUser("viewer@sympera.ai");
     await renderApp({ initialEntries: ["/jobs?status=partial"] });
     const table = await runsTable();

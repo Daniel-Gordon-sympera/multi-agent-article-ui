@@ -65,6 +65,9 @@ export function proxyBytes(
 ): number | null {
   const fromSummary = summary?.bytes_fetched;
   if (typeof fromSummary === "number") return fromSummary;
-  const fromRuns = siteRuns.reduce((sum, run) => sum + (run.stats.bytes ?? 0), 0);
+  const fromRuns = siteRuns.reduce(
+    (sum, run) => sum + (typeof run.stats.bytes === "number" ? run.stats.bytes : 0),
+    0,
+  );
   return fromRuns > 0 ? fromRuns : null;
 }

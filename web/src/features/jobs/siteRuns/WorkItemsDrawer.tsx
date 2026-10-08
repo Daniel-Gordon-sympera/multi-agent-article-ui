@@ -144,8 +144,10 @@ export function WorkItemsDrawer({ siteRuns }: { siteRuns: readonly SiteRun[] }) 
       subtitle={
         run ? (
           <span className="text-[13px] text-muted">
-            {run.seed_url} · {formatInteger(run.stats.pages ?? 0)} pages ·{" "}
-            {formatInteger(run.stats.articles ?? 0)} articles
+            {run.seed_url} ·{" "}
+            {formatInteger(typeof run.stats.pages === "number" ? run.stats.pages : null)} pages ·{" "}
+            {formatInteger(typeof run.stats.articles === "number" ? run.stats.articles : null)}{" "}
+            articles
           </span>
         ) : undefined
       }

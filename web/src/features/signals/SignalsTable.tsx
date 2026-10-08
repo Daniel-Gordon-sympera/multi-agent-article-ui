@@ -11,7 +11,7 @@ import {
   DensityToggle,
   type DataTablePagination,
 } from "@/components/DataTable";
-import type { SignalTableRow } from "./signalColumns";
+import { signalRowKey, type SignalTableRow } from "./signalColumns";
 import { useOpenSignalDetail, type SignalsTableControls } from "./useSignalsTable";
 
 export interface SignalsTableProps {
@@ -55,7 +55,7 @@ export function SignalsTable({
       columns={table.columns}
       data={rows}
       ariaLabel={ariaLabel}
-      getRowId={(row) => String(row.id)}
+      getRowId={signalRowKey}
       rowHeight={72}
       cellPadding="dense"
       minWidth={1000}

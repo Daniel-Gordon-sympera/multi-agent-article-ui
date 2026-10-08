@@ -12,7 +12,13 @@ import httpx
 
 from tests.pipeline_support import problem
 
-COST_ESTIMATE = {"median_cost_usd": 2.95, "p90_cost_usd": 3.4, "samples": 10}
+COST_ESTIMATE = {
+    "median_cost_usd": 2.95,
+    "p90_cost_usd": 3.4,
+    "samples": 10,
+    "excluded_incomplete_jobs": 2,
+    "basis": "recorded_model_calls",
+}
 
 
 class JobsRoutesMixin:
@@ -53,7 +59,13 @@ class JobsRoutesMixin:
                 retried.append(task["id"])
         self.state.setdefault("retry_dead_calls", []).append(job_id)
         return httpx.Response(
-            202, json={"job_id": job_id, "retried": len(retried), "task_ids": retried}
+            202,
+            json={
+                "job_id": job_id,
+                "retried": len(retried),
+                "task_ids": retried,
+                "skipped_task_ids": [],
+            },
         )
 
     def _cost_estimate(self, request: httpx.Request) -> httpx.Response:

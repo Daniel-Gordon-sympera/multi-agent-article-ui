@@ -14,7 +14,6 @@ from scout_bff.pipeline_client import KeyRole, PipelineClient, PipelineError
 from scout_bff.scouts.repository import scout_json
 
 LAST_RUN_CACHE_SECONDS = 5
-JOBS_BATCHES = 10
 _MISSING: dict[str, Any] = {"missing": True}
 
 job_cache: TtlCache[dict[str, Any]] = TtlCache(LAST_RUN_CACHE_SECONDS, max_entries=2048)
@@ -112,21 +111,3 @@ async def scouts_with_runs(
             }
         )
     return items
-
-
-async def scout_jobs(
-    connection: AsyncConnection,
-    pipeline: PipelineClient,
-    scout_id: Any,
-    role: KeyRole,
-) -> list[dict[str, Any]]:
-    """Job rows of the scout's last 10 batches, newest batch first, legs in position order."""
-    recent = await batches.scout_batches(connection, scout_id, limit=JOBS_BATCHES)
-    job_ids = [
-        str(leg["job_id"])
-        for batch in recent
-        for leg in batch["legs"]
-        if leg.get("job_id")
-    ]
-    jobs = await fetch_jobs(pipeline, job_ids, role)
-    return [jobs[job_id] for job_id in job_ids if jobs.get(job_id)]

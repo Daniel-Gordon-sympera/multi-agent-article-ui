@@ -98,7 +98,6 @@ export function RunsPage({ search }: { search: JobsSearch }) {
         search={search}
         rows={data.allRows}
         onPatch={patchFilters}
-        industryOnApi={data.industryOnApi}
         tools={
           <>
             <DensityToggle {...controls.densityToggleProps} />

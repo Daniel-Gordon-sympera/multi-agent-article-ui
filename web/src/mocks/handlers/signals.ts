@@ -1,6 +1,5 @@
 /**
- * Per-job signals/companies/flags and the cross-job read of `/app/signals` (degraded mode, like
- * today's BFF: merged from every job, offset cursor), its summary and the CSV export. The
+ * Per-job signals/companies/flags and the global `/app/signals` read, summary and CSV. The
  * drawer's detail reads live in `signalsDetail.ts`.
  */
 import { http, HttpResponse } from "msw";
@@ -18,14 +17,14 @@ import { crossJobRow, everySignalRow, signalDetailHandlers } from "./signalsDeta
 const EXACT_FILTERS: Array<[string, (r: CrossJobSignalRow) => string]> = [
   ["signal", (r) => r.signal ?? ""],
   ["materiality", (r) => r.materiality ?? ""],
-  ["company_key", (r) => r.company_key],
-  ["hq_scope", (r) => r.hq_scope],
-  ["org_kind", (r) => r.org_kind],
-  ["industry", (r) => r.company_industry],
+  ["company_key", (r) => r.company_key ?? ""],
+  ["hq_scope", (r) => r.hq_scope ?? ""],
+  ["org_kind", (r) => r.org_kind ?? ""],
+  ["industry", (r) => r.company_industry ?? ""],
   ["job_industry", (r) => r.job_industry ?? ""],
   ["state", (r) => r.state_code],
   ["county", (r) => r.county],
-  ["revenue_bin", (r) => r.revenue_bin],
+  ["revenue_bin", (r) => r.revenue_bin ?? ""],
   ["job_id", (r) => r.job_id],
 ];
 const ALL_FILTERS = [
@@ -52,21 +51,19 @@ function filteredCrossJobRows(url: URL): CrossJobSignalRow[] | Response {
     rows = rows.filter((r) => jobIds.has(r.job_id));
   }
   const dateAfter = url.searchParams.get("date_after");
-  if (dateAfter) rows = rows.filter((r) => r.date >= dateAfter);
+  if (dateAfter) rows = rows.filter((r) => r.date != null && r.date >= dateAfter);
   const dateBefore = url.searchParams.get("date_before");
-  if (dateBefore) rows = rows.filter((r) => r.date <= dateBefore);
+  if (dateBefore) rows = rows.filter((r) => r.date != null && r.date <= dateBefore);
   const q = url.searchParams.get("q")?.toLowerCase();
   if (q)
     rows = rows.filter((r) =>
       [r.company, r.evidence, r.signal ?? "", r.signal_title ?? "", r.source_domain].some((v) =>
-        v.toLowerCase().includes(q),
+        (v ?? "").toLowerCase().includes(q),
       ),
     );
-  rows.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  rows.sort((a, b) => (b.date ?? "").localeCompare(a.date ?? "") || b.id - a.id);
   return rows;
 }
-
-const scannedJobs = () => Math.min(20, db.jobs.length);
 
 function atobSafe(value: string | null): string | null {
   if (!value) return null;
@@ -84,7 +81,7 @@ export const signalHandlers = [
     const job = findJob(params.jobId);
     if (!job) return notFound("Job");
     const url = new URL(request.url);
-    const filters = ["signal", "materiality", "company_key", "hq_scope", "org_kind"];
+    const filters = ["id", "signal", "materiality", "company_key", "hq_scope", "org_kind"];
     const rejected = rejectUnknownFilters(url, filters);
     if (rejected) return rejected;
     const rows = everySignalRow().filter((row) => signalJobId(row) === job.id);
@@ -103,7 +100,9 @@ export const signalHandlers = [
     rows = applyExactFilters(rows, url, ["company_key", "org_kind", "hq_scope"]);
     const industry = url.searchParams.get("industry");
     if (industry)
-      rows = rows.filter((r) => r.company_industry.toLowerCase() === industry.toLowerCase());
+      rows = rows.filter(
+        (r) => (r.company_industry ?? "").toLowerCase() === industry.toLowerCase(),
+      );
     return HttpResponse.json(paginate(rows, url, (r) => r.id));
   }),
 
@@ -118,7 +117,7 @@ export const signalHandlers = [
     if (rejected) return rejected;
     const rows = job.id === MAIN_JOB_ID ? db.results.flags : [];
     return HttpResponse.json(
-      paginate(applyExactFilters(rows, url, filters), url, (r) => r.company_id),
+      paginate(applyExactFilters(rows, url, filters), url, (r) => r.company_id ?? 0),
     );
   }),
 
@@ -137,9 +136,6 @@ export const signalHandlers = [
     return HttpResponse.json({
       items: page,
       next_cursor: offset + limit < rows.length ? btoa(String(offset + limit)) : null,
-      degraded: true,
-      scanned_jobs: scannedJobs(),
-      truncated: false,
     });
   }),
 
@@ -171,8 +167,6 @@ export const signalHandlers = [
       jobs: new Set(rows.map((r) => r.job_id)).size,
       by_materiality: byMateriality,
       top_signal: top ? { key: top[0], title: top[1].title, count: top[1].count } : null,
-      degraded: true,
-      scanned_jobs: scannedJobs(),
     });
   }),
 

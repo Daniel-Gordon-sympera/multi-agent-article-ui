@@ -29,14 +29,13 @@ from scout_bff.overview.pipeline_reads import (
 )
 from scout_bff.overview.summary import (
     cost_summary,
-    dead_tasks_from_failures,
     dead_tasks_from_tasks,
     job_cost,
     running_jobs_summary,
     signals_summary,
     sites_summary,
 )
-from scout_bff.pipeline_client import KeyRole, PipelineClient, PipelineError
+from scout_bff.pipeline_client import KeyRole, PipelineClient
 
 router = APIRouter(prefix="/app/overview", tags=["overview"])
 logger = get_logger("scout_bff.overview")
@@ -74,15 +73,8 @@ async def dead_tasks_section(
     role: KeyRole,
 ) -> dict[str, Any]:
     now = utc_now()
-    if capabilities.capabilities.get("tasks_global"):
-        try:
-            tasks = await list_all_items(
-                pipeline, "/v1/tasks", role=role, status="dead"
-            )
-            return dead_tasks_from_tasks(tasks, now)
-        except PipelineError as error:
-            logger.warning("overview_global_tasks_failed", error=error.category)
-    return dead_tasks_from_failures(daily_rows, now.date())
+    tasks = await list_all_items(pipeline, "/v1/tasks", role=role, status="dead")
+    return dead_tasks_from_tasks(tasks, now)
 
 
 async def build_overview(request: Request, user: AuthenticatedUser) -> dict[str, Any]:

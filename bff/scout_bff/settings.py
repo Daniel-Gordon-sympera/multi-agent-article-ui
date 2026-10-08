@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
 from typing import Literal
 
 from pydantic import Field, SecretStr, field_validator
@@ -11,14 +13,21 @@ MINIMUM_SESSION_SECRET_LENGTH = 32
 
 
 class Settings(BaseSettings):
-    """Settings read from the environment and from `.env.ui` when present."""
+    """Process environment overrides the shared platform configuration file."""
 
     model_config = SettingsConfigDict(
-        env_file=".env.ui",
+        env_file=None,
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,
     )
+
+    def __init__(self, **values: object) -> None:
+        if "_env_file" not in values:
+            repository = Path(__file__).resolve().parents[2]
+            default = repository.parent / "multi-agent-article" / ".env.platform"
+            values["_env_file"] = os.environ.get("PLATFORM_ENV_FILE", str(default))
+        super().__init__(**values)
 
     ui_database_url: str
     ui_database_password: SecretStr = SecretStr("")

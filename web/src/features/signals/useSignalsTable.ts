@@ -36,10 +36,14 @@ type AnySearch = Record<string, unknown>;
 export function useOpenSignalDetail() {
   const navigate = useNavigate();
   return useCallback(
-    (row: Pick<SignalTableRow, "id">) =>
+    (row: Pick<SignalTableRow, "id" | "job_id">) =>
       void navigate({
         to: ".",
-        search: (previous: AnySearch) => ({ ...previous, detail: detailParam(row.id) }),
+        search: (previous: AnySearch) => ({
+          ...previous,
+          detail: detailParam(row.id),
+          detail_job: row.job_id,
+        }),
       } as never),
     [navigate],
   );

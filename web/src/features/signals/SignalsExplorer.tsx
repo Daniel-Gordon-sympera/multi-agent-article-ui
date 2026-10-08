@@ -2,7 +2,7 @@
  * Signals explorer (`/signals`, mockup §3.8): header actions (Export CSV, Save view, New run),
  * toolbar (search + saved views | density + columns), active-filter chips with "+ Add filter",
  * the materiality strip, the shared SignalsTable on `GET /app/signals` with offset/keyset
- * paging, the degraded banner of contract §4.4 and the URL-bound drawer (`?detail=`).
+ * paging and the URL-bound drawer (`?detail=&detail_job=`).
  */
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { Download, Plus, Save } from "lucide-react";
@@ -13,7 +13,6 @@ import { Button } from "@/components/Button";
 import type { TableControlsPatch } from "@/components/DataTable";
 import { FilterBar } from "@/components/FilterBar";
 import { FilterChips, type FilterChip } from "@/components/FilterChips";
-import { NoteBanner } from "@/components/NoteBanner";
 import { PageHeader } from "@/components/PageHeader";
 import { SearchInput } from "@/components/SearchInput";
 import { cleanSearch } from "@/lib/url";
@@ -22,7 +21,7 @@ import { SavedViewsControls } from "./SavedViewsControls";
 import { SignalDrawer } from "./SignalDrawer";
 import { SignalsMaterialityStrip } from "./SignalsMaterialityStrip";
 import { SignalsTable, SignalsTableTools } from "./SignalsTable";
-import { degradedBannerText, summaryText } from "./explorerText";
+import { summaryText } from "./explorerText";
 import { SIGNAL_FILTER_KEYS, type SignalsSearch } from "./searchSchema";
 import { toCrossJobFilters } from "./signalExport";
 import { activeChips } from "./signalFilters";
@@ -50,7 +49,13 @@ export function SignalsExplorer() {
   /** Filter changes restart paging, close the drawer and detach the URL from a saved view. */
   const patchFilters = useCallback(
     (changes: SearchPatch & { q?: string | undefined }) =>
-      patch({ ...changes, after: undefined, view: undefined, detail: undefined }),
+      patch({
+        ...changes,
+        after: undefined,
+        view: undefined,
+        detail: undefined,
+        detail_job: undefined,
+      }),
     [patch],
   );
   const onControlsChange = useCallback(
@@ -62,7 +67,7 @@ export function SignalsExplorer() {
   const summary = useCrossJobSignalsSummary(filters);
   const page = useCrossJobSignals(filters, {
     after: search.after,
-    onAfterChange: (after) => patch({ after, detail: undefined }),
+    onAfterChange: (after) => patch({ after, detail: undefined, detail_job: undefined }),
   });
   const table = useSignalsTableControls({
     route: "explorer",
@@ -134,11 +139,6 @@ export function SignalsExplorer() {
         dateAfter={search.date_after}
         dateBefore={search.date_before}
       />
-      {page.degraded ? (
-        <NoteBanner tone="brand" data-testid="degraded-banner">
-          {degradedBannerText(page.scannedJobs, page.truncated)}
-        </NoteBanner>
-      ) : null}
       <SignalsTable
         rows={page.items}
         table={table}
@@ -153,7 +153,12 @@ export function SignalsExplorer() {
           noun: "signal",
         }}
       />
-      <SignalDrawer rows={page.items} detailId={search.detail} loading={page.query.isPending} />
+      <SignalDrawer
+        rows={page.items}
+        detailId={search.detail}
+        detailJobId={search.detail_job}
+        loading={page.query.isPending}
+      />
     </>
   );
 }

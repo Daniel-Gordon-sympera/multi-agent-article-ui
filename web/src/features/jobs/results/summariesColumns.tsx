@@ -1,3 +1,4 @@
+import { formatArticleDate } from "@/lib/articleDate";
 /**
  * Columns of the Summaries tab: article (title / domain · date), main idea (2-line clamp),
  * focus topics, industry / sub-industry, article signal + materiality, companies count and the
@@ -8,14 +9,12 @@ import type { SummaryRow } from "@/api/types/summaries";
 import { Button } from "@/components/Button";
 import { MaterialityPill } from "@/components/MaterialityPill";
 import { Tag } from "@/components/Tag";
-import { formatDate, formatInteger } from "@/lib/format";
+import { formatInteger } from "@/lib/format";
 
 const dash = <span className="text-muted">—</span>;
 
 export function companiesCount(row: SummaryRow): number | null {
-  if (typeof row.companies === "number") return row.companies;
-  if (Array.isArray(row.companies)) return row.companies.length;
-  return row.company_mentions ?? null;
+  return row.kept_count ?? null;
 }
 
 export function buildSummaryColumns(
@@ -29,16 +28,17 @@ export function buildSummaryColumns(
       cell: ({ row }) => (
         <div className="flex min-w-0 flex-col gap-0.5">
           <a
-            href={row.original.url}
+            href={row.original.url ?? undefined}
             target="_blank"
             rel="noopener noreferrer"
             className="truncate font-semibold text-ink hover:text-brand-700"
-            title={row.original.title}
+            title={row.original.title ?? undefined}
           >
             {row.original.title}
           </a>
           <span className="truncate text-[12px] text-muted">
-            {row.original.source_domain} · {formatDate(row.original.date)}
+            {row.original.source_domain} ·{" "}
+            {formatArticleDate(row.original.date, row.original.date_precision)}
           </span>
         </div>
       ),

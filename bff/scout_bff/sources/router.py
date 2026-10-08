@@ -91,26 +91,16 @@ async def list_sources(
             if status == "active" and not (county or state or industry or origin or q)
             else await sources.list_sources(connection, status="active")
         )
-    capable = bool(
-        request.app.state.capabilities.capabilities.get("sources_stats", False)
+    domains = [row["domain"] for row in rows] + [row["domain"] for row in active_rows]
+    precision = await precision_by_domain(
+        request.app.state.pipeline, domains, key_role(user)
     )
-    precision: dict[str, dict[str, Any] | None] = {}
-    if capable:
-        domains = [row["domain"] for row in rows] + [
-            row["domain"] for row in active_rows
-        ]
-        precision = await precision_by_domain(
-            request.app.state.pipeline, domains, key_role(user)
-        )
-    stats["median_precision"] = (
-        median_ratio([precision.get(row["domain"]) for row in active_rows])
-        if capable
-        else None
+    stats["median_precision"] = median_ratio(
+        [precision.get(row["domain"]) for row in active_rows]
     )
     return {
         "items": [
-            sources.source_json(row, precision.get(row["domain"]) if capable else None)
-            for row in rows
+            sources.source_json(row, precision.get(row["domain"])) for row in rows
         ],
         "stats": stats,
     }

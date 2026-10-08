@@ -1,3 +1,4 @@
+import type { components } from "../pipeline.gen";
 /** `/app/*` shapes — engineering contract §4.3, §4.4, §4.6. */
 import type { IsoDateTime, Uuid } from "./common";
 import type { JobKind, JobSettings, JobStatus, SeedInput } from "./jobs";
@@ -17,7 +18,7 @@ export interface User {
   last_login_at?: IsoDateTime | null;
 }
 
-/** Optional pipeline routes (§4.6). Unknown (probe failed) → all false + `probe_error`. */
+/** Required pipeline routes. Failed probes return false and `probe_error`. */
 export interface Capabilities {
   signals_global: boolean;
   tasks_global: boolean;
@@ -69,6 +70,10 @@ export interface UpdateUserInput {
 }
 
 export interface CapabilitiesResponse {
+  contract_version?: number | null;
+  required_contract_version?: number;
+  compatible?: boolean;
+  contract_errors?: string[];
   capabilities: Capabilities;
   probed_at: IsoDateTime | null;
   pipeline_api_version?: string | null;
@@ -185,7 +190,9 @@ export interface SourceFinderFacts {
 
 export interface SourcePrecision {
   accepted: number;
-  candidates: number;
+  candidates: number | null;
+  complete?: boolean;
+  basis?: string;
   ratio: number | null;
   job_id: Uuid | null;
   at: IsoDateTime | null;
@@ -356,54 +363,20 @@ export interface SystemInfo {
 
 /* -------------------------------------------------------------- signals */
 
-export interface CrossJobSignalFilters {
-  signal?: string;
-  materiality?: string;
-  company_key?: string;
-  hq_scope?: string;
-  org_kind?: string;
-  industry?: string;
-  job_industry?: string;
-  state?: string;
-  county?: string;
-  revenue_bin?: string;
-  date_after?: string;
-  date_before?: string;
-  job_id?: string;
-  batch_id?: string;
-  q?: string;
-}
-
-export interface CrossJobSignalsPage {
-  items: CrossJobSignalRow[];
-  next_cursor: string | null;
-  degraded: boolean;
-  scanned_jobs?: number;
-  truncated?: boolean;
-}
-
-/** `GET /app/signals/summary` — counts over the same bounded set as the list (contract §4.4). */
-export interface CrossJobSignalsSummary {
-  signals: number;
-  companies: number;
-  jobs: number;
-  by_materiality: { high: number; medium: number; low: number };
-  top_signal: { key: string; title: string; count: number } | null;
-  degraded?: boolean;
-  scanned_jobs?: number;
-  truncated?: boolean;
-}
+export type {
+  CrossJobSignalFilters,
+  CrossJobSignalsPage,
+  CrossJobSignalsSummary,
+} from "./crossJobSignals";
 
 export interface RetryDeadResult {
   retried: number;
   task_ids: number[];
-  /** Dead tasks the API refused (`409`) during the per-task fallback loop. */
+  /** Tasks skipped by the backend bulk retry operation. */
   skipped_task_ids?: number[];
 }
 
-export type Estimate =
-  | { median_cost_usd: number; p90_cost_usd: number; samples: number; basis: "api" | "recent_jobs" }
-  | { samples: 0 };
+export type Estimate = components["schemas"]["CostEstimate"];
 
 export interface BffReadiness {
   status: "ready" | "not_ready";

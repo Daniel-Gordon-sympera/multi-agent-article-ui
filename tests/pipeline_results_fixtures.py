@@ -185,8 +185,8 @@ FINDER_MEMORY: list[dict[str, Any]] = [
         "job_id": JOB_COMPLETED,
     }
     for domain, verdict, reason, tier in (
-        ("orlandoweekly.com", "keep", "local coverage, medium relevance", 2),
-        ("floridadaily.com", "keep", "state coverage, high relevance", 1),
+        ("orlandoweekly.com", "accept", "local coverage, medium relevance", 2),
+        ("floridadaily.com", "accept", "state coverage, high relevance", 1),
         ("example-spam.com", "reject", "aggregator", None),
     )
 ]

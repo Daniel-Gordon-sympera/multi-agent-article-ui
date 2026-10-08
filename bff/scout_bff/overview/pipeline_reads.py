@@ -1,8 +1,6 @@
-"""Bounded pipeline reads shared by the B4 aggregates (overview, attention, system).
+"""Complete pipeline reads with bounded concurrency for dashboard aggregates.
 
-Everything here is a GET against `/v1` through `PipelineClient`, keyed by the caller's
-role (admin/operator → operator key, viewer → reader key) and bounded in the number of
-rows and parallel calls so a busy dashboard never fans out further than documented.
+All result data comes through the API using the caller's reader or operator key.
 """
 
 from __future__ import annotations
@@ -33,7 +31,6 @@ SITE_RUN_DONE_STATUSES = frozenset(
 )
 MAX_PARALLEL_CALLS = 8
 MAX_LIST_ROWS = 200
-RECENT_JOBS_FOR_FALLBACKS = 20
 
 
 def key_role_for(role: str) -> KeyRole:
@@ -85,18 +82,6 @@ async def gather_limited(
     )
 
 
-def successful(results: Iterable[T | BaseException]) -> list[T]:
-    """Keep the values; re-raise anything that is not a pipeline problem."""
-    kept: list[T] = []
-    for result in results:
-        if isinstance(result, PipelineError):
-            continue
-        if isinstance(result, BaseException):
-            raise result
-        kept.append(result)
-    return kept
-
-
 async def list_jobs_by_status(
     pipeline: PipelineClient,
     statuses: Iterable[str],
@@ -105,16 +90,27 @@ async def list_jobs_by_status(
     created_after: str | None = None,
     limit: int = MAX_LIST_ROWS,
 ) -> list[dict[str, Any]]:
-    """One `GET /v1/jobs?status=` per status (exact-match filters), newest first."""
-    pages = await gather_limited(
-        pipeline.list_jobs(
-            role=role, status=status, limit=limit, created_after=created_after
-        )
-        for status in statuses
-    )
+    """Read all matching jobs for complete overview counts, newest first."""
+
+    async def fetch_status(status: str) -> list[dict[str, Any]]:
+        return [
+            item
+            async for item in pipeline.iter_items(
+                "/v1/jobs",
+                role=role,
+                status=status,
+                limit=limit,
+                created_after=created_after,
+                order="created_desc",
+            )
+        ]
+
+    pages = await gather_limited(fetch_status(status) for status in statuses)
     rows: dict[str, dict[str, Any]] = {}
-    for page in successful(pages):
-        for item in page.get("items", []):
+    for page in pages:
+        if isinstance(page, BaseException):
+            raise page
+        for item in page:
             if isinstance(item, dict) and item.get("id"):
                 rows[str(item["id"])] = item
     return sorted(rows.values(), key=created_at_key, reverse=True)
@@ -138,10 +134,9 @@ async def fetch_job_details(
     for job_id, result in zip(ids, results, strict=True):
         if isinstance(result, dict):
             details[job_id] = result
-        elif isinstance(result, BaseException) and not isinstance(
-            result, PipelineError
-        ):
-            raise result
+        elif isinstance(result, BaseException):
+            if not isinstance(result, PipelineError) or result.status != 404:
+                raise result
     return details
 
 
@@ -153,24 +148,19 @@ async def fetch_job_resources(
     role: KeyRole,
     **filters: Any,
 ) -> dict[str, list[dict[str, Any]]]:
-    """Parallel `GET /v1/jobs/{id}/{resource}` (first page, ≤ 200 rows each)."""
+    """Read all pages for each job; skip only a deleted job (404)."""
     ids = list(dict.fromkeys(job_ids))
     results = await gather_limited(
-        pipeline.list_job_resource(
-            job_id, resource, role=role, limit=MAX_LIST_ROWS, **filters
-        )
+        list_all_items(pipeline, f"/v1/jobs/{job_id}/{resource}", role=role, **filters)
         for job_id in ids
     )
     rows: dict[str, list[dict[str, Any]]] = {}
     for job_id, result in zip(ids, results, strict=True):
-        if isinstance(result, dict):
-            rows[job_id] = [
-                item for item in result.get("items", []) if isinstance(item, dict)
-            ]
-        elif isinstance(result, BaseException) and not isinstance(
-            result, PipelineError
-        ):
-            raise result
+        if isinstance(result, list):
+            rows[job_id] = result
+        elif isinstance(result, BaseException):
+            if not isinstance(result, PipelineError) or result.status != 404:
+                raise result
     return rows
 
 
@@ -179,10 +169,10 @@ async def list_all_items(
     path: str,
     *,
     role: KeyRole,
-    max_pages: int = 5,
+    max_pages: int | None = None,
     **filters: Any,
 ) -> list[dict[str, Any]]:
-    """Walk a keyset list (bounded pages of 1000 rows) and return the rows."""
+    """Read complete keyset results; an explicit cap denotes a sampled view."""
     return [
         item
         async for item in pipeline.iter_items(
@@ -194,12 +184,11 @@ async def list_all_items(
 async def recent_daily_stats(
     pipeline: PipelineClient, *, role: KeyRole, days: int
 ) -> list[dict[str, Any]]:
-    """`GET /v1/stats/daily` for the last `days` days (one page, ≤ 200 rows)."""
+    """Read every daily stats row in the requested period."""
     created_after = (utc_now().date() - timedelta(days=days + 1)).isoformat()
-    page = await pipeline.daily_stats(
-        role=role, created_after=created_after, limit=MAX_LIST_ROWS
+    return await list_all_items(
+        pipeline, "/v1/stats/daily", role=role, created_after=created_after
     )
-    return [row for row in page.get("items", []) if isinstance(row, dict)]
 
 
 def job_label(job: dict[str, Any]) -> str:

@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { expectAccessible } from "./accessibility";
 import { expect, test, type Page } from "@playwright/test";
 
 async function signIn(page: Page, email = "admin@sympera.ai", password = "scout-admin") {
@@ -7,20 +7,6 @@ async function signIn(page: Page, email = "admin@sympera.ai", password = "scout-
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
-}
-
-async function expectAccessible(page: Page, label: string) {
-  const results = await new AxeBuilder({ page })
-    .exclude("[data-sonner-toaster]")
-    .withTags(["wcag2a", "wcag2aa", "best-practice"])
-    .analyze();
-  const serious = results.violations.filter(
-    (v) => v.impact === "serious" || v.impact === "critical",
-  );
-  const summary = serious
-    .map((v) => `${v.id}: ${v.help} (${v.nodes.map((n) => n.target.join(" ")).join("; ")})`)
-    .join("\n");
-  expect(serious, `${label} has accessibility violations:\n${summary}`).toEqual([]);
 }
 
 function trackConsole(page: Page): string[] {

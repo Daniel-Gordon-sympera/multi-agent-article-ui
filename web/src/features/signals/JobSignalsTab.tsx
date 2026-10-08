@@ -1,8 +1,8 @@
 /**
  * Job › Signals tab (`/jobs/$jobId/signals`, mockup §3.6): toolbar (search, Signal, Materiality,
  * Org kind, HQ scope, Industry, Revenue bin · density, columns, `signals.csv`), the shared
- * SignalsTable on `GET /v1/jobs/{id}/signals` (server filters where the API has them, the rest
- * over the page), the footer with "N signals · M companies" and the flags sentence, and the
+ * SignalsTable on `GET /app/signals?job_id=` with server filters, the exact summary footer,
+ * the matching full CSV export, and the
  * URL-bound drawer. The summary strip above comes from the `$jobId` layout.
  */
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +18,7 @@ import type { TableControlsPatch } from "@/components/DataTable";
 import { FilterBar } from "@/components/FilterBar";
 import { FilterSelect } from "@/components/FilterSelect";
 import { SearchInput } from "@/components/SearchInput";
-import { jobExportUrl } from "@/lib/csv";
+import { crossJobSignalsExportUrl } from "@/api/bff";
 import { cleanSearch } from "@/lib/url";
 import { SignalDrawer } from "./SignalDrawer";
 import { SignalsTable, SignalsTableTools } from "./SignalsTable";
@@ -32,8 +32,7 @@ import {
   REVENUE_BIN_OPTIONS,
   SIGNAL_OPTIONS,
 } from "./signalCatalog";
-import { countCompanies, filterJobSignalRows } from "./signalFilters";
-import { useJobSignals } from "./useSignalsQueries";
+import { useCrossJobSignals, useCrossJobSignalsSummary } from "./useSignalsQueries";
 import { useSignalsTableControls } from "./useSignalsTable";
 
 const ROUTE_ID = "/_app/jobs/$jobId/signals" as const;
@@ -55,7 +54,7 @@ export function JobSignalsTab() {
   );
   const patchFilters = useCallback(
     (changes: Partial<JobSignalsSearch>) =>
-      patch({ ...changes, after: undefined, detail: undefined }),
+      patch({ ...changes, after: undefined, detail: undefined, detail_job: undefined }),
     [patch],
   );
   const onControlsChange = useCallback(
@@ -70,26 +69,32 @@ export function JobSignalsTab() {
   });
   const serverFilters = useMemo(
     () => ({
+      job_id: jobId,
+      industry: search.industry,
+      revenue_bin: search.revenue_bin,
+      q: search.q,
       signal: search.signal,
       materiality: search.materiality,
       org_kind: search.org_kind,
       hq_scope: search.hq_scope,
     }),
-    [search.hq_scope, search.materiality, search.org_kind, search.signal],
+    [
+      jobId,
+      search.hq_scope,
+      search.materiality,
+      search.org_kind,
+      search.signal,
+      search.industry,
+      search.revenue_bin,
+      search.q,
+    ],
   );
-  const page = useJobSignals(jobId, serverFilters, {
+  const page = useCrossJobSignals(serverFilters, {
     after: search.after,
-    onAfterChange: (after) => patch({ after, detail: undefined }),
+    onAfterChange: (after) => patch({ after, detail: undefined, detail_job: undefined }),
   });
-  const rows = useMemo(
-    () =>
-      filterJobSignalRows(page.items, {
-        industry: search.industry,
-        revenue_bin: search.revenue_bin,
-        q: search.q,
-      }),
-    [page.items, search.industry, search.q, search.revenue_bin],
-  );
+  const rows = page.items;
+  const summary = useCrossJobSignalsSummary(serverFilters);
   const table = useSignalsTableControls({
     route: "job",
     density: search.density,
@@ -106,7 +111,7 @@ export function JobSignalsTab() {
     search.revenue_bin ||
     search.q,
   );
-  const total = anyFilter ? null : (job.data?.progress.signals ?? null);
+  const total = summary.data?.signals ?? null;
   const from = page.footer.showing?.from ?? 1;
   const industry = typeof job.data?.input.industry === "string" ? job.data.input.industry : null;
 
@@ -167,7 +172,7 @@ export function JobSignalsTab() {
         <div className="ml-auto flex items-center gap-2">
           <SignalsTableTools table={table} />
           <Button asChild variant="secondary" size="sm">
-            <a href={jobExportUrl(jobId, "signals")} download="signals.csv">
+            <a href={crossJobSignalsExportUrl(serverFilters)} download="signals.csv">
               <Download aria-hidden />
               signals.csv
             </a>
@@ -191,7 +196,7 @@ export function JobSignalsTab() {
           ...page.footer,
           showing: rows.length ? { from, to: from + rows.length - 1, total } : null,
           noun: "signal",
-          note: `${countCompanies(rows)} companies · ${FLAGS_SENTENCE}`,
+          note: `${summary.data?.companies ?? "—"} companies · ${FLAGS_SENTENCE}`,
         }}
       />
       <SignalDrawer

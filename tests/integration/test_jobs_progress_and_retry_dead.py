@@ -2,7 +2,6 @@
 
 import copy
 
-from tests.conftest import fetch_all
 from tests.pipeline_fixtures import (
     DEAD_TASK_ID,
     JOB_ANALYSING,
@@ -64,52 +63,6 @@ async def test_progress_skips_unknown_ids_and_rejects_too_many(operator_client):
 async def test_progress_requires_a_session(client):
     response = await client.get(PROGRESS, params={"job_ids": JOB_ANALYSING})
     assert response.status_code == 401
-
-
-async def test_retry_dead_falls_back_to_one_retry_per_task(
-    operator_client, pipeline, engine
-):
-    assert pipeline.state["tasks"][DEAD_TASK_ID]["status"] == "dead"
-    response = await operator_client.post(f"/app/jobs/{JOB_ANALYSING}/retry-dead")
-    assert response.status_code == 200, response.text
-    assert response.json() == {
-        "retried": 1,
-        "task_ids": [DEAD_TASK_ID],
-        "skipped_task_ids": [],
-    }
-    assert pipeline.state["tasks"][DEAD_TASK_ID]["status"] == "queued"
-    assert "retry_dead_calls" not in pipeline.state
-    paths = [call.request.url.path for call in pipeline.calls]
-    assert f"/v1/tasks/{DEAD_TASK_ID}/retry" in paths
-    audit = await fetch_all(
-        engine, "SELECT path, status, target FROM ui.audit_log WHERE method = 'POST'"
-    )
-    rows = [row for row in audit if row["path"].endswith("/retry-dead")]
-    assert rows and rows[0]["status"] == 200
-    assert (
-        rows[0]["target"]["retried"] == 1 and rows[0]["target"]["basis"] == "per_task"
-    )
-
-
-async def test_retry_dead_reports_tasks_that_changed_state(operator_client, pipeline):
-    # The list says dead, but the retry answers 409: the id lands in skipped_task_ids.
-    original = pipeline._retry_task
-
-    def refuse(request, task_id):
-        pipeline.state["tasks"][int(task_id)]["status"] = "running"
-        return original(request, task_id)
-
-    # Re-adding a route with the same pattern replaces it in place (respx RouteList).
-    pipeline.router.route(
-        method="POST", path__regex=r"^/v1/tasks/(?P<task_id>\d+)/retry$"
-    ).mock(side_effect=refuse)
-    response = await operator_client.post(f"/app/jobs/{JOB_ANALYSING}/retry-dead")
-    assert response.status_code == 200, response.text
-    assert response.json() == {
-        "retried": 0,
-        "task_ids": [],
-        "skipped_task_ids": [DEAD_TASK_ID],
-    }
 
 
 async def test_retry_dead_proxies_when_the_api_has_the_route(

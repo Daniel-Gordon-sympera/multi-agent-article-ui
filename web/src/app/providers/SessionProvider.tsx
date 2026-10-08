@@ -5,12 +5,28 @@
  * wired through `sessionStore`.
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from "react";
-import { getMe, login, logout } from "@/api/bff";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from "react";
+import { getCapabilities, getMe, login, logout } from "@/api/bff";
 import { clearEtagCache, isApiError } from "@/api/client";
 import { qk } from "@/api/keys";
 import { sessionStore } from "@/api/sessionStore";
-import type { ApiStatus, Capabilities, CapabilityName, Me, Role, User } from "@/api/types/bff";
+import type {
+  ApiStatus,
+  CapabilitiesResponse,
+  Capabilities,
+  CapabilityName,
+  Me,
+  Role,
+  User,
+} from "@/api/types/bff";
 
 export type SessionStatus = "loading" | "authenticated" | "anonymous" | "error";
 export type SessionAction = "operate" | "admin";
@@ -23,6 +39,7 @@ export interface SessionValue {
   csrfToken: string | null;
   capabilities: Capabilities | null;
   api: ApiStatus | null;
+  contract: CapabilitiesResponse | null;
   error: unknown;
   can: (action: SessionAction) => boolean;
   hasCapability: (name: CapabilityName) => boolean;
@@ -69,6 +86,36 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   });
 
   const me = meQuery.data ?? null;
+  const capabilityQuery = useQuery({
+    queryKey: qk.app.capabilities(),
+    queryFn: getCapabilities,
+    enabled: Boolean(me),
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+  });
+  const capabilities = capabilityQuery.data?.capabilities ?? me?.capabilities ?? null;
+  const capabilitySignature = JSON.stringify(
+    capabilityQuery.data
+      ? [
+          capabilityQuery.data.capabilities,
+          capabilityQuery.data.compatible,
+          capabilityQuery.data.contract_version,
+        ]
+      : null,
+  );
+  const previousCapabilities = useRef(capabilitySignature);
+  useEffect(() => {
+    if (previousCapabilities.current !== capabilitySignature) {
+      previousCapabilities.current = capabilitySignature;
+      clearEtagCache();
+      void queryClient.invalidateQueries({
+        predicate: (query) =>
+          query.queryKey[0] === "v1" ||
+          (query.queryKey[0] === "app" &&
+            !["auth", "capabilities"].includes(String(query.queryKey[1]))),
+      });
+    }
+  }, [capabilitySignature, queryClient]);
 
   useEffect(() => {
     sessionStore.setCsrfToken(me?.csrf_token ?? null);
@@ -134,16 +181,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       user: me?.user ?? null,
       role: me?.user.role ?? null,
       csrfToken: me?.csrf_token ?? null,
-      capabilities: me?.capabilities ?? null,
+      capabilities,
+      contract: capabilityQuery.data ?? null,
       api: me?.api ?? null,
       error: meQuery.error,
       can: (action) => roleCan(me?.user.role, action),
-      hasCapability: (name) => (me?.capabilities ?? EMPTY_CAPABILITIES)[name] === true,
+      hasCapability: (name) => (capabilities ?? EMPTY_CAPABILITIES)[name] === true,
       signIn,
       signOut,
       refresh,
     }),
-    [me, meQuery.error, refresh, signIn, signOut, status],
+    [me, capabilities, capabilityQuery.data, meQuery.error, refresh, signIn, signOut, status],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

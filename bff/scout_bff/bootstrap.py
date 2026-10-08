@@ -144,6 +144,21 @@ def apply_grants(
     )
     for statement in statements:
         connection.execute(text(statement))
+    if role_exists(connection, "svc_maintenance"):
+        for statement in (
+            "GRANT USAGE ON SCHEMA ui TO svc_maintenance",
+            "GRANT SELECT ON ALL TABLES IN SCHEMA ui TO svc_maintenance",
+            "GRANT SELECT ON ALL SEQUENCES IN SCHEMA ui TO svc_maintenance",
+            "ALTER DEFAULT PRIVILEGES IN SCHEMA ui "
+            "GRANT SELECT ON TABLES TO svc_maintenance",
+            "ALTER DEFAULT PRIVILEGES IN SCHEMA ui "
+            "GRANT SELECT ON SEQUENCES TO svc_maintenance",
+            "ALTER DEFAULT PRIVILEGES FOR ROLE svc_ui IN SCHEMA ui "
+            "GRANT SELECT ON TABLES TO svc_maintenance",
+            "ALTER DEFAULT PRIVILEGES FOR ROLE svc_ui IN SCHEMA ui "
+            "GRANT SELECT ON SEQUENCES TO svc_maintenance",
+        ):
+            connection.execute(text(statement))
     if report is not None:
         report.note(f"grants: {SERVICE_ROLE} owns ui.*, {LOGIN_ROLE} inherits it")
 

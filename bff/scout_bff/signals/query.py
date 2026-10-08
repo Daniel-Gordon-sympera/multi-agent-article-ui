@@ -2,38 +2,35 @@
 
 from __future__ import annotations
 
-import json
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from uuid import UUID
 
-from scout_bff.cursors import cursor_scope
+from scout_bff.batches.naming import batch_reference_prefix
 from scout_bff.errors import Problem
 
-# Filters the per-job `/signals` route understands; forwarded unchanged.
-PASS_THROUGH_FILTERS: tuple[str, ...] = (
+# Cross-job filters forwarded to the backend; batch_id becomes a reference prefix.
+ALL_FILTERS: tuple[str, ...] = (
     "signal",
     "materiality",
     "company_key",
     "hq_scope",
     "org_kind",
-)
-# Filters that pick the jobs to scan (fallback) or are forwarded to /v1/signals.
-JOB_FILTERS: tuple[str, ...] = ("job_industry", "state", "county", "job_id", "batch_id")
-# Filters applied row by row inside the BFF.
-ROW_FILTERS: tuple[str, ...] = ("industry", "revenue_bin", "date_after", "date_before")
-FREE_TEXT_FILTER = "q"
-ALL_FILTERS: tuple[str, ...] = (
-    *PASS_THROUGH_FILTERS,
-    *JOB_FILTERS,
-    *ROW_FILTERS,
-    FREE_TEXT_FILTER,
+    "job_industry",
+    "state",
+    "county",
+    "job_id",
+    "batch_id",
+    "industry",
+    "revenue_bin",
+    "date_after",
+    "date_before",
+    "q",
 )
 PAGING_PARAMETERS: tuple[str, ...] = ("limit", "after")
 DEFAULT_LIMIT = 50
 MAX_LIMIT = 200
-CURSOR_SCOPE_NAME = "app-signals"
 
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _UUID_FILTERS = ("job_id", "batch_id")
@@ -85,37 +82,16 @@ class SignalsQuery:
         after = params.get("after") if paging else None
         return cls(filters=filters, limit=limit, after=after or None)
 
-    @property
-    def pass_through(self) -> dict[str, str]:
-        return {k: v for k, v in self.filters.items() if k in PASS_THROUGH_FILTERS}
-
-    @property
-    def job_filters(self) -> dict[str, str]:
-        return {k: v for k, v in self.filters.items() if k in JOB_FILTERS}
-
-    @property
-    def row_filters(self) -> dict[str, str]:
-        return {k: v for k, v in self.filters.items() if k in ROW_FILTERS}
-
-    @property
-    def free_text(self) -> str | None:
-        return self.filters.get(FREE_TEXT_FILTER)
-
-    @property
-    def cache_key(self) -> str:
-        """The normalised filter set; paging is not part of the cached list."""
-        return json.dumps(self.filters, sort_keys=True)
-
-    @property
-    def cursor_scope(self) -> str:
-        return cursor_scope(CURSOR_SCOPE_NAME, self.filters)
-
-    def forwarded(self) -> dict[str, str]:
-        """What goes to `GET /v1/signals` (B1): every filter but `q`, plus paging."""
-        params = {k: v for k, v in self.filters.items() if k != FREE_TEXT_FILTER}
-        params["limit"] = str(self.limit)
-        if self.after:
-            params["after"] = self.after
+    def forwarded(self, *, paging: bool = True) -> dict[str, str]:
+        """Forward every filter; UI batches use their stable client reference prefix."""
+        params = dict(self.filters)
+        batch_id = params.pop("batch_id", None)
+        if batch_id:
+            params["client_reference_prefix"] = batch_reference_prefix(batch_id)
+        if paging:
+            params["limit"] = str(self.limit)
+            if self.after:
+                params["after"] = self.after
         return params
 
 

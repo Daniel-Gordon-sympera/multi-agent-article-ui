@@ -13,13 +13,14 @@ from scout_bff.batches.service import run_fan_out
 from scout_bff.errors import Problem
 from scout_bff.pipeline_client import KeyRole
 from scout_bff.scouts import repository as scouts
+from scout_bff.scouts.job_history import scout_jobs_page
 from scout_bff.scouts.models import (
     JobSettingsInput,
     RunScoutInput,
     ScoutInput,
     ScoutUpdate,
 )
-from scout_bff.scouts.runs import scout_jobs, scouts_with_runs
+from scout_bff.scouts.runs import scouts_with_runs
 
 router = APIRouter(prefix="/app/scouts", tags=["scouts"])
 operator = Depends(require_role("operator"))
@@ -153,7 +154,10 @@ async def list_scout_jobs(
 ) -> dict[str, Any]:
     async with request.app.state.engine.connect() as connection:
         await scouts.require_scout(connection, scout_id)
-        items = await scout_jobs(
-            connection, request.app.state.pipeline, scout_id, key_role(user)
+        return await scout_jobs_page(
+            connection,
+            request.app.state.pipeline,
+            scout_id,
+            key_role(user),
+            dict(request.query_params),
         )
-    return {"items": items}

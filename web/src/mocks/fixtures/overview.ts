@@ -28,7 +28,8 @@ export function toCrossJobRow(
     county: job?.county ?? "Orange",
     state_code: job?.state_code ?? "FL",
     job_industry: typeof job?.input.industry === "string" ? job.input.industry : null,
-    job_created_at: job?.created_at ?? row.date,
+    job_created_at: job?.created_at ?? row.date ?? "",
+    client_reference: job?.client_reference ?? null,
   };
 }
 
@@ -40,6 +41,6 @@ export function buildRecentSignalRows(database: MockDatabase): CrossJobSignalRow
   ).filter((row): row is CrossJobSignalRow => row !== undefined);
   const rest = rows
     .filter((row) => !named.includes(row))
-    .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? "") || b.id - a.id);
   return [...named, ...rest];
 }

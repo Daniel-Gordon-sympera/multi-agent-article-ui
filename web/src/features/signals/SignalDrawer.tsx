@@ -1,9 +1,14 @@
+import { formatArticleDate } from "@/lib/articleDate";
 /**
  * SignalDrawer — mockup §3.9: header (company + org tag; signal + materiality + "County, ST ·
  * Industry · date"), Evidence (verbatim blockquote, checks, role, confidence meter), Article,
  * Company profile, Job; footer Copy link · Export row · Previous/Next within the loaded rows.
  * URL-bound through `?detail=<mention id>`; Escape, scrim and focus trap come from `Drawer`.
  */
+import { useQuery } from "@tanstack/react-query";
+import { listJobSignals, getJob } from "@/api/pipeline";
+import { qk } from "@/api/keys";
+import { ErrorState } from "@/components/ErrorState";
 import { useNavigate } from "@tanstack/react-router";
 import { Download, Link2 } from "lucide-react";
 import { useCallback, useMemo } from "react";
@@ -31,7 +36,7 @@ import {
 } from "@/features/signals/signalDrawerData";
 import { signalRowFilename, signalRowsToCsv } from "@/features/signals/signalExport";
 import { downloadText } from "@/lib/csv";
-import { formatLocation, formatShortDate, formatScore } from "@/lib/format";
+import { formatLocation, formatScore } from "@/lib/format";
 import { detailParam, signalEvidence, type SignalTableRow } from "./signalColumns";
 
 export interface SignalDrawerProps {
@@ -39,6 +44,7 @@ export interface SignalDrawerProps {
   rows: readonly SignalTableRow[];
   /** `?detail=` of the URL; the drawer is open while it is set. */
   detailId: string | number | undefined;
+  detailJobId?: string;
   /** Rows still loading (deep link before the first page arrived). */
   loading?: boolean;
   /** On the job tab: the job the rows belong to (the rows carry no job columns there). */
@@ -47,24 +53,55 @@ export interface SignalDrawerProps {
 
 type AnySearch = Record<string, unknown>;
 
-export function SignalDrawer({ rows, detailId, loading = false, job }: SignalDrawerProps) {
+export function SignalDrawer({
+  rows,
+  detailId,
+  detailJobId,
+  loading = false,
+  job,
+}: SignalDrawerProps) {
   const navigate = useNavigate();
+  const requestedJobId = job?.id ?? detailJobId;
   const index = useMemo(
-    () => (detailId === undefined ? -1 : rows.findIndex((r) => String(r.id) === String(detailId))),
-    [detailId, rows],
+    () =>
+      detailId === undefined || !requestedJobId
+        ? -1
+        : rows.findIndex(
+            (row) =>
+              String(row.id) === String(detailId) && (!row.job_id || row.job_id === requestedJobId),
+          ),
+    [detailId, requestedJobId, rows],
   );
-  const row = index >= 0 ? rows[index] : undefined;
+  const detail = useQuery({
+    queryKey: qk.v1.jobs.sub(requestedJobId ?? "", "signals", { id: detailId }),
+    queryFn: async () =>
+      (await listJobSignals(requestedJobId ?? "", { id: detailId }, { limit: 1 })).items[0] ?? null,
+    enabled: detailId !== undefined && Boolean(requestedJobId) && index < 0,
+  });
+  const detailJob = useQuery({
+    queryKey: qk.v1.jobs.detail(requestedJobId ?? ""),
+    queryFn: () => getJob(requestedJobId ?? ""),
+    enabled: Boolean(requestedJobId) && !job,
+  });
+  const row: SignalTableRow | undefined =
+    index >= 0 ? rows[index] : detail.data ? { ...detail.data, job_id: requestedJobId } : undefined;
+  const isLoading =
+    loading || (Boolean(requestedJobId) && detailId !== undefined && index < 0 && detail.isPending);
 
   const goTo = useCallback(
     (target: SignalTableRow | undefined) => {
       if (!target) return;
       void navigate({
         to: ".",
-        search: (previous: AnySearch) => ({ ...previous, detail: detailParam(target.id) }),
+        search: (previous: AnySearch) => ({
+          ...previous,
+          detail: detailParam(target.id),
+          detail_job: target.job_id ?? requestedJobId,
+        }),
         replace: true,
       } as never);
     },
-    [navigate],
+    [navigate, requestedJobId],
   );
   const previous = index > 0 ? rows[index - 1] : undefined;
   const next = index >= 0 && index < rows.length - 1 ? rows[index + 1] : undefined;
@@ -72,7 +109,16 @@ export function SignalDrawer({ rows, detailId, loading = false, job }: SignalDra
   const jobContext: DrawerJobContext | null = job
     ? job
     : row
-      ? { county: row.county, stateCode: row.state_code, industry: row.job_industry }
+      ? {
+          id: requestedJobId ?? row.job_id ?? undefined,
+          county: row.county ?? detailJob.data?.county,
+          stateCode: row.state_code ?? detailJob.data?.state_code,
+          industry:
+            row.job_industry ??
+            (typeof detailJob.data?.input.industry === "string"
+              ? detailJob.data.input.industry
+              : undefined),
+        }
       : null;
   const jobId = job?.id ?? row?.job_id;
   const jobTitle = jobContext
@@ -93,9 +139,27 @@ export function SignalDrawer({ rows, detailId, loading = false, job }: SignalDra
 
   return (
     <Drawer
-      searchKey="detail"
+      open={detailId !== undefined}
+      onOpenChange={(open) => {
+        if (!open)
+          void navigate({
+            to: ".",
+            search: (previous: AnySearch) => ({
+              ...previous,
+              detail: undefined,
+              detail_job: undefined,
+            }),
+            replace: true,
+          } as never);
+      }}
       ariaLabel="Signal details"
-      title={row ? row.company : loading ? "Loading signal…" : "Signal not loaded"}
+      title={
+        row
+          ? (row.company ?? row.name_as_written)
+          : isLoading
+            ? "Loading signal…"
+            : "Signal not loaded"
+      }
       titleAside={row?.org_kind ? <Tag>{row.org_kind}</Tag> : undefined}
       subtitle={
         row ? (
@@ -105,7 +169,8 @@ export function SignalDrawer({ rows, detailId, loading = false, job }: SignalDra
             </span>
             <MaterialityPill materiality={row.materiality} />
             <span className="text-[12px] text-muted">
-              {drawerLocationLine(row, job)} · {formatShortDate(row.date)}
+              {drawerLocationLine(row, jobContext)} ·{" "}
+              {formatArticleDate(row.date, row.date_precision)}
             </span>
           </>
         ) : undefined
@@ -132,7 +197,7 @@ export function SignalDrawer({ rows, detailId, loading = false, job }: SignalDra
           <DrawerSection title="Evidence">
             <EvidenceQuote
               quote={signalEvidence(row)}
-              cite={row.url}
+              cite={row.url ?? undefined}
               meta={[`quote #${row.signal_quote_id ?? row.quote_id}`]}
               checks={evidenceChecks(row.checks)}
             />
@@ -148,20 +213,22 @@ export function SignalDrawer({ rows, detailId, loading = false, job }: SignalDra
             </div>
           </DrawerSection>
           <ArticleSection key={`article-${row.id}`} row={row} />
-          <CompanyProfileSection key={`company-${row.id}`} row={row} job={jobContext} />
+          <CompanyProfileSection key={`company-${jobId}-${row.id}`} row={row} job={jobContext} />
           {jobId ? <JobSection key={`job-${row.id}`} jobId={jobId} title={jobTitle} /> : null}
         </>
-      ) : loading ? (
+      ) : isLoading ? (
         <div className="flex flex-col gap-3" aria-busy="true">
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-4 w-2/3" />
           <Skeleton className="h-4 w-1/2" />
         </div>
+      ) : detail.isError ? (
+        <ErrorState error={detail.error} onRetry={() => void detail.refetch()} />
       ) : (
         <EmptyState
           variant="plain"
-          title="This signal is not in the loaded rows"
-          description="It may belong to another page or be excluded by the current filters. Close the drawer, adjust the filters or page, and open it again."
+          title="Signal unavailable"
+          description="This link needs a valid job and signal. Open the signal from a job or the explorer to copy a complete link."
         />
       )}
     </Drawer>

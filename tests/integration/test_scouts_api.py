@@ -150,11 +150,11 @@ async def test_last_run_reads_status_and_signals_from_the_api(
     history = await operator_client.get(f"/app/scouts/{scout['id']}/jobs")
     assert history.status_code == 200
     items = history.json()["items"]
-    assert [job["id"] for job in items] == job_ids[:2]
-    assert items[0]["status"] == "analysing"
+    assert [job["id"] for job in items] == list(reversed(job_ids[:2]))
+    assert items[1]["status"] == "analysing"
 
 
-async def test_history_lists_the_last_ten_batches_newest_first(operator_client):
+async def test_history_lists_all_batches_newest_first(operator_client):
     scout = await create(operator_client, industries=["Construction"])
     batches = []
     for _ in range(12):
@@ -162,10 +162,27 @@ async def test_history_lists_the_last_ten_batches_newest_first(operator_client):
         assert response.status_code == 201
         batches.append(response.json())
     history = (await operator_client.get(f"/app/scouts/{scout['id']}/jobs")).json()
-    expected = [batch["jobs"][0]["job_id"] for batch in reversed(batches[2:])]
+    expected = [batch["jobs"][0]["job_id"] for batch in reversed(batches)]
     assert [job["id"] for job in history["items"]] == expected
     (item,) = (await operator_client.get("/app/scouts")).json()["items"]
     assert item["runs_count"] == 12 and item["last_run"]["run_number"] == 12
+    first = (
+        await operator_client.get(
+            f"/app/scouts/{scout['id']}/jobs", params={"limit": 5}
+        )
+    ).json()
+    second = (
+        await operator_client.get(
+            f"/app/scouts/{scout['id']}/jobs",
+            params={"limit": 5, "after": first["next_cursor"]},
+        )
+    ).json()
+    assert [row["id"] for row in first["items"] + second["items"]] == expected[:10]
+    changed = await operator_client.get(
+        f"/app/scouts/{scout['id']}/jobs",
+        params={"after": first["next_cursor"], "state": "GA"},
+    )
+    assert changed.status_code == 400
 
 
 async def test_seed_scouts_use_the_curated_sources(operator_client, pipeline):

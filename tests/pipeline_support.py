@@ -9,6 +9,8 @@ from typing import Any
 import httpx
 
 JOB_FILTERS = {
+    "kind": "kind",
+    "industry": "input.industry",
     "status": "status",
     "county": "county",
     "state": "state_code",

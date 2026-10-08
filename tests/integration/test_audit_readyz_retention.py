@@ -137,9 +137,9 @@ async def test_capabilities_endpoint_and_me_reflect_the_probe(client_factory, pi
     response = await viewer.get("/app/capabilities")
     assert response.status_code == 200
     body = response.json()
-    assert body["pipeline_api_version"] == "1.0.0"
+    assert body["pipeline_api_version"] == pipeline.openapi["info"]["version"]
     assert body["probed_at"] and body["probe_error"] is None
-    assert body["capabilities"]["signals_global"] is False
+    assert body["capabilities"]["signals_global"] is True
     assert viewer.me["api"]["ready"] is True  # type: ignore[attr-defined]
     assert viewer.me["api"]["checked_at"]  # type: ignore[attr-defined]
 
@@ -164,7 +164,7 @@ async def test_capabilities_true_when_the_pipeline_grows_a_signals_route(
             )
     capabilities = response.json()["capabilities"]
     assert capabilities["signals_global"] is True
-    assert capabilities["tasks_global"] is False
+    assert capabilities["tasks_global"] is True
 
 
 async def test_lifespan_runs_and_stops_background_tasks(engine, pipeline):

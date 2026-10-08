@@ -1,3 +1,4 @@
+import { defaultSettings } from "./jobSettings";
 /**
  * The 9 jobs of mockup-spec §4.1 with stable ids (the main job is
  * `0192f1c2-7e0a-4c1b-9d33-5a1e8b2f0c41`; the others keep their 8-char prefix).
@@ -16,16 +17,7 @@ export {
   SCOUT_IDS,
 } from "./jobIds";
 
-const defaultSettings = {
-  days: 30,
-  sites: 5,
-  site_timeout: 0,
-  max_runtime: 18000,
-  memory_mode: "full" as const,
-  reanalyze: false,
-};
-
-const progress = (id: string, p: Partial<Omit<JobProgress, "job_id">>): JobProgress => ({
+const progress = (id: string, p: Partial<JobProgress>): JobProgress => ({
   job_id: id,
   seeds: 0,
   sections: 0,

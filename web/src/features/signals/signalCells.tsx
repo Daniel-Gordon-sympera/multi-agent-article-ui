@@ -1,3 +1,4 @@
+import { formatArticleDate } from "@/lib/articleDate";
 /**
  * Cell renderers of the signal column registry (mockup §3.6 / §3.8) and `buildSignalColumns`,
  * which turns the registry into TanStack column definitions for one route. The renderers are
@@ -10,7 +11,7 @@ import type { ReactNode } from "react";
 import { Tag } from "@/components/Tag";
 import { SignalDetailLink } from "@/features/signals/SignalDetailLink";
 import { SignalRecordCell } from "@/features/signals/SignalRecordCell";
-import { formatDate, shortId } from "@/lib/format";
+import { shortId } from "@/lib/format";
 import {
   RECORD_CELL_MAX_WIDTH,
   SIGNAL_COLUMNS,
@@ -45,11 +46,14 @@ function renderHqCity(row: SignalTableRow, withScope: boolean): ReactNode {
 function renderIndustry(row: SignalTableRow): ReactNode {
   return (
     <div className="flex max-w-[130px] min-w-0 flex-col gap-0.5">
-      <span className="truncate" title={row.company_industry}>
+      <span className="truncate" title={row.company_industry ?? undefined}>
         {text(row.company_industry)}
       </span>
       {row.company_sub_industry ? (
-        <span className="truncate text-[11px] text-muted" title={row.company_sub_industry}>
+        <span
+          className="truncate text-[11px] text-muted"
+          title={row.company_sub_industry ?? undefined}
+        >
           {row.company_sub_industry}
         </span>
       ) : null}
@@ -61,15 +65,15 @@ function renderSource(row: SignalTableRow): ReactNode {
   return (
     <div className="flex max-w-[130px] min-w-0 flex-col gap-0.5">
       <a
-        href={row.url}
+        href={row.url ?? undefined}
         target="_blank"
         rel="noopener noreferrer"
         className="truncate font-medium text-brand-600 hover:text-brand-700 hover:underline"
-        title={row.url}
+        title={row.url ?? undefined}
       >
         {row.source_domain}
       </a>
-      <span className="truncate text-[11px] text-muted" title={row.title}>
+      <span className="truncate text-[11px] text-muted" title={row.title ?? undefined}>
         {row.title}
       </span>
     </div>
@@ -95,7 +99,7 @@ function renderJob(row: SignalTableRow): ReactNode {
       to="/jobs/$jobId"
       params={{ jobId: row.job_id }}
       className="text-[12px] font-medium text-brand-600 hover:text-brand-700 hover:underline"
-      title={row.job_id}
+      title={row.job_id ?? undefined}
     >
       {shortId(row.job_id)}
     </Link>
@@ -106,6 +110,7 @@ function renderOpen(row: SignalTableRow): ReactNode {
   return (
     <SignalDetailLink
       signalId={row.id}
+      jobId={row.job_id}
       aria-label="Open signal details"
       className="inline-flex size-8 items-center justify-center rounded-control text-muted hover:bg-surface-2 hover:text-ink"
     >
@@ -129,7 +134,9 @@ function renderCell(spec: SignalColumnSpec, route: SignalsTableRoute, row: Signa
     case "revenueBin":
       return text(row.revenue_bin);
     case "date":
-      return <span className="whitespace-nowrap">{formatDate(row.date)}</span>;
+      return (
+        <span className="whitespace-nowrap">{formatArticleDate(row.date, row.date_precision)}</span>
+      );
     case "source":
       return renderSource(row);
     case "jobLocation":

@@ -40,7 +40,7 @@ const WORK_OUTCOMES = ["completed", "completed", "rejected", "completed", "faile
 
 function workItemsFor(run: (typeof db.siteRuns)[number]): WorkItem[] {
   const started = run.started_at ?? new Date().toISOString();
-  const count = Math.min(24, (run.stats.pages ?? 0) + 4);
+  const count = Math.min(24, (typeof run.stats.pages === "number" ? run.stats.pages : 0) + 4);
   return Array.from({ length: count }, (_, i) => {
     const stage = i % 6 === 0 ? "listing" : i % 11 === 0 ? "supplement" : "candidate";
     const outcome = i === 0 ? "completed" : WORK_OUTCOMES[i % WORK_OUTCOMES.length]!;

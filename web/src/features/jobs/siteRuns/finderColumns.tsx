@@ -23,7 +23,11 @@ export const FINDER_SOURCE_COLUMNS: ColumnDef<FinderSourceRow, unknown>[] = [
     header: "Domain",
     meta: { hideable: false, minWidth: 200 },
     cell: ({ row }) => (
-      <DomainCell name={row.original.name} url={row.original.url} domain={row.original.domain} />
+      <DomainCell
+        name={row.original.name ?? row.original.domain}
+        url={row.original.url}
+        domain={row.original.domain}
+      />
     ),
   },
   {
@@ -51,7 +55,10 @@ export const FINDER_SOURCE_COLUMNS: ColumnDef<FinderSourceRow, unknown>[] = [
     header: "Reason",
     meta: { minWidth: 220 },
     cell: ({ row }) => (
-      <span className="line-clamp-2 text-[12px] text-ink-2" title={row.original.reason}>
+      <span
+        className="line-clamp-2 text-[12px] text-ink-2"
+        title={row.original.reason ?? undefined}
+      >
         {row.original.reason}
       </span>
     ),
@@ -83,7 +90,7 @@ export const RANKING_COLUMNS: ColumnDef<RankingRow, unknown>[] = [
     meta: { hideable: false, minWidth: 200 },
     cell: ({ row }) => (
       <DomainCell
-        name={row.original.name}
+        name={row.original.name ?? row.original.domain}
         url={row.original.url}
         domain={row.original.url.replace(/^https?:\/\//, "").replace(/^www\./, "")}
       />
@@ -125,7 +132,10 @@ export const RANKING_COLUMNS: ColumnDef<RankingRow, unknown>[] = [
     header: "Reason",
     meta: { minWidth: 220 },
     cell: ({ row }) => (
-      <span className="line-clamp-2 text-[12px] text-ink-2" title={row.original.reason}>
+      <span
+        className="line-clamp-2 text-[12px] text-ink-2"
+        title={row.original.reason ?? undefined}
+      >
         {row.original.reason}
       </span>
     ),

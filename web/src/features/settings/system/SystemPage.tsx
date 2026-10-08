@@ -2,6 +2,8 @@
  * Settings › System: `GET /app/system` as KeyValueGrids (BFF, pipeline), the capability table
  * with the B1–B4 explanations, and the notes about what the API does not expose yet.
  */
+import { useQueryClient } from "@tanstack/react-query";
+import { qk } from "@/api/keys";
 import { RefreshCw } from "lucide-react";
 import type { SystemInfo } from "@/api/types/bff";
 import { Button } from "@/components/Button";
@@ -89,8 +91,8 @@ function SystemCards({ system }: { system: SystemInfo }) {
       <Card aria-labelledby="system-capabilities-title">
         <CardHeader
           id="system-capabilities-title"
-          title="Optional pipeline routes"
-          subtitle="probed from the API's /openapi.json; missing routes fall back as described"
+          title="Required pipeline routes"
+          subtitle="checked against the pipeline API contract; missing routes are reported as unavailable"
         />
         <div className="overflow-x-auto">
           <table
@@ -99,7 +101,7 @@ function SystemCards({ system }: { system: SystemInfo }) {
           >
             <thead>
               <tr>
-                {["Capability", "Route", "PR", "State", "When present", "Until then"].map((h) => (
+                {["Capability", "Route", "PR", "State", "When present", "When missing"].map((h) => (
                   <th
                     key={h}
                     scope="col"
@@ -164,15 +166,20 @@ function SystemCards({ system }: { system: SystemInfo }) {
 
 export function SystemPage() {
   const system = useSystemInfo();
+  const client = useQueryClient();
   return (
     <SettingsSection
       id="settings-system"
       title="System"
-      description="Versions, readiness checks, prompt version and which optional API routes are deployed."
+      description="Versions, readiness checks, prompt version and the required API contract."
       actions={
         <Button
           variant="secondary"
-          onClick={() => void system.refetch()}
+          onClick={() => {
+            void system
+              .refetch()
+              .then(() => client.invalidateQueries({ queryKey: qk.app.capabilities() }));
+          }}
           loading={system.isFetching}
         >
           <RefreshCw aria-hidden />

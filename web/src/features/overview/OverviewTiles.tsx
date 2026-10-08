@@ -37,14 +37,14 @@ export function OverviewTiles({ summary, loading, error, onRetry }: OverviewTile
         note={summary ? scoutsLabel(summary.running_jobs) : undefined}
       />
       <StatTile
-        label="Signals · last 7 days"
+        label="New stored signals · last 7 days"
         loading={pending}
         value={summary ? formatInteger(summary.signals_7d.count) : "—"}
         delta={summary ? signalsDelta(summary.signals_7d) : undefined}
         sparkline={summary?.signals_7d.series}
       />
       <StatTile
-        label="Model + proxy cost · today"
+        label="Recorded model cost · today"
         loading={pending}
         value={summary ? costValue(summary.cost_today) : "—"}
         delta={summary ? costDelta(summary.cost_today) : undefined}

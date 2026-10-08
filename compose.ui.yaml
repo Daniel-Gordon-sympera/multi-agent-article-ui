@@ -3,11 +3,11 @@
 # This file is never used alone. Run it from the pipeline repository, next to
 # its compose.yaml, with the UI repository checked out as a sibling folder:
 #
-#   docker compose -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml up -d --build
+#   docker compose --env-file .env.platform -f compose.yaml -f ../multi-agent-articles-ui/compose.ui.yaml up -d --build
 #
 # Relative paths below (build context, Caddyfile mount) resolve against the
 # directory of the FIRST compose file, i.e. the pipeline repository.
-# Variables come from the pipeline's .env (see .env.ui.example for the UI ones).
+# Variables come from the pipeline's .env.platform (see .env.platform.example).
 #
 # Services added: ui_migrate (one-shot schema/roles/admin bootstrap), ui (the BFF
 # serving the SPA). Service extended: caddy (UI_DOMAIN + the UI site block).
@@ -25,8 +25,8 @@ x-ui-environment: &ui_environment
   PIPELINE_OPERATOR_KEY: ${PIPELINE_OPERATOR_KEY:?Set PIPELINE_OPERATOR_KEY}
   PIPELINE_READER_KEY: ${PIPELINE_READER_KEY:?Set PIPELINE_READER_KEY}
   SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET}
-  UI_PUBLIC_URL: ${UI_PUBLIC_URL:-https://${UI_DOMAIN:-scout.localhost}}
-  UI_SECURE_COOKIES: ${UI_SECURE_COOKIES:-true}
+  UI_PUBLIC_URL: ${UI_PUBLIC_URL:-http://localhost:8080}
+  UI_SECURE_COOKIES: ${UI_SECURE_COOKIES:-false}
   LOG_FORMAT: json
   LOG_LEVEL: ${LOG_LEVEL:-INFO}
 
@@ -69,6 +69,7 @@ services:
       start_period: 15s
 
   caddy:
+    profiles: [https]
     environment:
       UI_DOMAIN: ${UI_DOMAIN:-scout.localhost}
     volumes:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from typing import Any, Literal
 
 import httpx
@@ -77,6 +77,7 @@ class PipelineClient:
     def __init__(self, http: httpx.AsyncClient, settings: Any) -> None:
         self.http = http
         self.settings = settings
+        self.contract_check: Callable[[], None] | None = None
 
     def _headers(self, role: KeyRole | None) -> dict[str, str]:
         headers = {"Accept": "application/json"}
@@ -93,8 +94,12 @@ class PipelineClient:
         json: Any = None,
         role: KeyRole | None = "operator",
         accept_statuses: tuple[int, ...] = (),
+        check_contract: bool = True,
+        stream: bool = False,
     ) -> httpx.Response:
         """Send one request; problem answers raise, connection failures raise."""
+        if check_contract and self.contract_check is not None:
+            self.contract_check()
         request = self.http.build_request(
             method,
             path,
@@ -104,7 +109,7 @@ class PipelineClient:
             timeout=timeout_for(path, ""),
         )
         try:
-            response = await send_with_retries(self.http, request)
+            response = await send_with_retries(self.http, request, stream=stream)
         except (httpx.ConnectError, httpx.ConnectTimeout) as error:
             raise PipelineUnavailable() from error
         except httpx.TimeoutException as error:
@@ -114,6 +119,8 @@ class PipelineClient:
                 f"Pipeline API request failed: {error}"
             ) from error
         if response.is_error and response.status_code not in accept_statuses:
+            await response.aread()
+            await response.aclose()
             raise problem_from_response(response)
         return response
 
@@ -124,12 +131,15 @@ class PipelineClient:
         return response.json()
 
     async def openapi(self) -> dict[str, Any]:
-        return await self.get_json("/openapi.json", role=None)
+        response = await self.request(
+            "GET", "/openapi.json", role=None, check_contract=False
+        )
+        return response.json()
 
     async def readyz(self) -> dict[str, Any]:
         """Returns the readiness body for both 200 and 503 answers."""
         response = await self.request(
-            "GET", "/readyz", role=None, accept_statuses=(503,)
+            "GET", "/readyz", role=None, accept_statuses=(503,), check_contract=False
         )
         try:
             body = response.json()
@@ -143,6 +153,7 @@ class PipelineClient:
         return body
 
     async def list_jobs(self, *, role: KeyRole = "operator", **filters: Any) -> Page:
+        filters.setdefault("order", "created_desc")
         return await self.get_json("/v1/jobs", role=role, **filters)
 
     async def get_job(self, job_id: str, *, role: KeyRole = "operator") -> dict:
@@ -187,15 +198,23 @@ class PipelineClient:
         path: str,
         *,
         role: KeyRole = "operator",
-        max_pages: int = 10,
+        max_pages: int | None = None,
         **filters: Any,
     ) -> AsyncIterator[dict[str, Any]]:
-        """Walk keyset pages of a list resource, bounded by `max_pages`."""
+        """Walk complete keyset results unless a caller asks for a sampled view."""
         after: str | None = None
-        for _ in range(max_pages):
+        if path == "/v1/jobs":
+            filters.setdefault("order", "created_desc")
+        page_count = 0
+        seen_cursors: set[str] = set()
+        while max_pages is None or page_count < max_pages:
+            page_count += 1
             page = await self.get_json(path, role=role, after=after, **filters)
             for item in page.get("items", []):
                 yield item
             after = page.get("next_cursor")
             if not after:
                 return
+            if after in seen_cursors:
+                raise PipelineError(502, "invalid_upstream_cursor", "Cursor repeated.")
+            seen_cursors.add(after)

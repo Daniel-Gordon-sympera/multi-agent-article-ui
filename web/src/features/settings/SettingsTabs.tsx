@@ -23,6 +23,7 @@ export function SettingsTabs() {
           {tab.label}
         </TabLink>
       ))}
+      {can("operate") ? <TabLink to="/settings/access-policies">Website access</TabLink> : null}
       {can("admin") ? <TabLink to="/settings/users">Users</TabLink> : null}
     </Tabs>
   );

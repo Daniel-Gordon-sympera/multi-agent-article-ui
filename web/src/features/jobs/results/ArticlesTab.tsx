@@ -1,3 +1,4 @@
+import { formatArticleDate } from "@/lib/articleDate";
 /**
  * Job › Articles — the accepted articles (`/articles`): title/url, domain, published date,
  * accepted at, origin, saved text availability; filters domain / origin; "Saved text" opens the
@@ -25,7 +26,6 @@ import { matchesQuery, optionsFromRows } from "@/features/jobs/shared/tableSearc
 import type { ArticlesTabSearch } from "@/features/jobs/tabSearchSchemas";
 import { useJobResourcePage } from "@/features/jobs/useJobResourcePage";
 import { useJobDetail } from "@/features/jobs/useJobQueries";
-import { formatDate } from "@/lib/format";
 import { ArticleTextDialog } from "./ArticleTextDialog";
 
 const ORIGINS = ["fetched", "memory"];
@@ -61,7 +61,8 @@ function buildArticleColumns(onText: (row: ArticleRow) => void): ColumnDef<Artic
       id: "published",
       header: "Published",
       meta: { width: 120 },
-      cell: ({ row }) => formatDate(row.original.published_date),
+      cell: ({ row }) =>
+        formatArticleDate(row.original.published_date, row.original.date_precision),
     },
     {
       id: "accepted",

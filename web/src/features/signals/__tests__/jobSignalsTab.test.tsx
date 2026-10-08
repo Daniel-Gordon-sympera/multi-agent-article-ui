@@ -30,14 +30,14 @@ describe("/jobs/$jobId/signals", () => {
       ).toBeInTheDocument();
       expect(screen.getByRole("link", { name: /signals\.csv/ })).toHaveAttribute(
         "href",
-        `/v1/jobs/${MAIN_JOB_ID}/export/signals.csv`,
+        `/app/signals/export.csv?job_id=${MAIN_JOB_ID}`,
       );
       expect(screen.getByLabelText("Job summary")).toHaveTextContent("139 companies · 24 signals");
     },
   );
 
   it(
-    "filters server-side by materiality and client-side by search, then opens the drawer",
+    "filters all rows server-side by materiality and search, then opens the drawer",
     { timeout: SLOW },
     async () => {
       const user = userEvent.setup();
@@ -56,7 +56,7 @@ describe("/jobs/$jobId/signals", () => {
       await user.type(screen.getByRole("searchbox"), "Osceola{Enter}");
       await waitFor(() => expect(router.state.location.search.q).toBe("Osceola"));
       await waitFor(() => expect(within(table).getAllByRole("row")).toHaveLength(2));
-      expect(screen.getByText(/Showing 1–1 signals/)).toBeInTheDocument();
+      expect(screen.getByText(/Showing 1–1 of 1 signal/)).toBeInTheDocument();
 
       await user.click(within(table).getByRole("link", { name: "Open signal details" }));
       const drawer = await screen.findByRole("dialog", { name: "Signal details" });

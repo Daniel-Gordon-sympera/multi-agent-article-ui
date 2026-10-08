@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { expectAccessible } from "./accessibility";
 import { expect, test, type Page } from "@playwright/test";
 
 const MAIN_JOB_ID = "0192f1c2-7e0a-4c1b-9d33-5a1e8b2f0c41";
@@ -9,20 +9,6 @@ async function signIn(page: Page, email = "admin@sympera.ai", password = "scout-
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
-}
-
-async function expectAccessible(page: Page, label: string) {
-  const results = await new AxeBuilder({ page })
-    .exclude("[data-sonner-toaster]")
-    .withTags(["wcag2a", "wcag2aa", "best-practice"])
-    .analyze();
-  const serious = results.violations.filter(
-    (v) => v.impact === "serious" || v.impact === "critical",
-  );
-  const summary = serious
-    .map((v) => `${v.id}: ${v.help} (${v.nodes.map((n) => n.target.join(" ")).join("; ")})`)
-    .join("\n");
-  expect(serious, `${label} has accessibility violations:\n${summary}`).toEqual([]);
 }
 
 function trackConsole(page: Page): string[] {
@@ -45,9 +31,9 @@ test.describe("Overview (mock mode)", () => {
     const tiles = page.getByRole("region", { name: "Key figures" });
     await expect(tiles).toContainText("Running jobs");
     await expect(tiles).toContainText("across 3 Scouts");
-    await expect(tiles).toContainText("Signals · last 7 days");
+    await expect(tiles).toContainText("New stored signals · last 7 days");
     await expect(tiles).toContainText("vs previous 7 days");
-    await expect(tiles).toContainText("Model + proxy cost · today");
+    await expect(tiles).toContainText("Recorded model cost · today");
     await expect(tiles).toContainText("vs yesterday");
     await expect(tiles).toContainText("Dead tasks");
     await expect(tiles).toContainText("retry from the job's Tasks tab");
@@ -137,8 +123,12 @@ test.describe("Settings (mock mode)", () => {
     await expectAccessible(page, "settings preferences");
 
     await page.goto("/settings/keys");
-    await expect(page.getByText(/needs pipeline API update \(B4\)/)).toBeVisible();
+    await expect(page.getByRole("table", { name: "API keys" })).toBeVisible();
     await expectAccessible(page, "settings keys");
+
+    await page.goto("/settings/access-policies");
+    await expect(page.getByRole("table", { name: "Website access policies" })).toBeVisible();
+    await expectAccessible(page, "website access policies");
 
     await page.goto("/settings/users");
     await expect(page.getByRole("table", { name: "Users" }).getByRole("row")).toHaveCount(5);
@@ -159,7 +149,7 @@ test.describe("Settings (mock mode)", () => {
     expect(secret).toMatch(/^sympera_reader_/);
     await created.getByRole("button", { name: "I stored it" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
-    const table = page.getByRole("table", { name: "Keys created in this browser" });
+    const table = page.getByRole("table", { name: "API keys" });
     await expect(table.getByText("e2e-reader")).toBeVisible();
     await expect(page.locator("body")).not.toContainText(secret);
     await page.getByRole("button", { name: "Revoke key e2e-reader" }).click();

@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { expectAccessible } from "./accessibility";
 import { expect, test, type Page } from "@playwright/test";
 
 const MAIN_JOB_ID = "0192f1c2-7e0a-4c1b-9d33-5a1e8b2f0c41";
@@ -11,22 +11,6 @@ async function signIn(page: Page, email = "admin@sympera.ai", password = "scout-
   await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
 }
 
-async function expectAccessible(page: Page, label: string) {
-  const results = await new AxeBuilder({ page })
-    .exclude("[data-sonner-toaster]")
-    .withTags(["wcag2a", "wcag2aa", "best-practice"])
-    .analyze();
-  const serious = results.violations.filter(
-    (v) => v.impact === "serious" || v.impact === "critical",
-  );
-  const summary = serious
-    .map((v) => `${v.id}: ${v.help} (${v.nodes.map((n) => n.target.join(" ")).join("; ")})`)
-    .join("\n");
-  expect(serious, `${label} has accessibility violations:\n${summary}`).toEqual([]);
-}
-
-/** Collects JS errors; the browser's own "Failed to load resource" line for the expected 401 of
- * `GET /app/auth/me` before sign-in is not an application error and is ignored. */
 function trackConsole(page: Page): string[] {
   const errors: string[] = [];
   page.on("console", (message) => {

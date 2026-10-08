@@ -3,7 +3,6 @@
  * (`?include=record`) and the "main idea" of an article, all derived from the signal rows so
  * every job's signals open a complete drawer in mock mode.
  */
-import type { JsonObject } from "@/api/types/common";
 import type { SignalRow } from "@/api/types/signals";
 import type { SummaryRow } from "@/api/types/summaries";
 import { addSeconds, minutesAgo } from "./clock";
@@ -30,7 +29,7 @@ export function drawnMainIdea(articleId: number): string | undefined {
 export function mainIdeaFor(row: SignalRow): string {
   return (
     MAIN_IDEAS[row.article_id] ??
-    `${row.title}: ${row.evidence.replace(/\.$/, "")}; the article covers the ${row.company_industry.toLowerCase()} sector in the ${row.scope_place} area.`
+    `${row.title}: ${row.evidence.replace(/\.$/, "")}; the article covers the ${(row.company_industry ?? "unknown").toLowerCase()} sector in the ${row.scope_place} area.`
   );
 }
 
@@ -39,10 +38,10 @@ export function articleTextFor(rows: SignalRow[]): string {
   const first = rows[0]!;
   const quotes = rows.map((row) => row.evidence);
   const paragraphs = [
-    first.title.toUpperCase(),
+    (first.title ?? "Article").toUpperCase(),
     `${first.scope_place} — ${first.evidence}`,
     ...quotes.slice(1),
-    `The announcement follows a year of steady activity in the ${first.company_industry.toLowerCase()} sector across ${first.hq_state}, local officials said, with permits and hiring both ahead of last year.`,
+    `The announcement follows a year of steady activity in the ${(first.company_industry ?? "unknown").toLowerCase()} sector across ${first.hq_state}, local officials said, with permits and hiring both ahead of last year.`,
     `Company representatives said more details would be shared at a community meeting next month. "We are committed to this area," a spokesperson said.`,
     `This article was saved by the pipeline from ${first.source_domain} on ${first.date}.`,
   ];
@@ -50,16 +49,19 @@ export function articleTextFor(rows: SignalRow[]): string {
 }
 
 /** The analysis record the `summaries` row carries with `?include=record`. */
-export function summaryRecordFor(rows: SignalRow[]): JsonObject {
+export function summaryRecordFor(rows: SignalRow[]): Record<string, unknown> {
   const first = rows[0]!;
   return {
     prompt_version: PROMPT_VERSION,
     model: "deepseek-v4-pro",
     main_idea: mainIdeaFor(first),
-    short_snippet: first.title,
+    snippet: first.title,
     industry: first.company_industry,
     sub_industry: first.company_sub_industry,
-    focus_topics: [first.company_industry.toLowerCase(), first.scope_place.toLowerCase()],
+    focus_topics: [
+      (first.company_industry ?? "unknown").toLowerCase(),
+      (first.scope_place ?? "unknown").toLowerCase(),
+    ],
     quotes: rows.map((row) => ({ id: row.quote_id, text: row.evidence, verbatim: true })),
     companies: rows.map((row) => ({
       number_company: row.number_company,
@@ -93,14 +95,13 @@ export function summaryRowFor(rows: SignalRow[], jobId: string): SummaryRow {
     first_job_id: jobId,
     task_id: 48_000 + (first.summary_id % 1000),
     main_idea: mainIdeaFor(first),
-    short_snippet: first.title,
-    focus_topics: [first.company_industry.toLowerCase()],
+    snippet: first.title,
+    focus_topics: [(first.company_industry ?? "unknown").toLowerCase()],
     industry: first.company_industry,
     sub_industry: first.company_sub_industry,
     article_signal: first.signal,
     article_materiality: first.materiality,
-    companies: rows.length,
-    company_mentions: rows.length,
+    kept_count: rows.length,
     sponsored: false,
     is_list_page: false,
     warnings: [],
