@@ -186,23 +186,31 @@ schema dump).
 
 ## 9. Upgrade and rollback
 
-Upgrade: HOWTO §11 (`dcu build ui && dcu up -d ui_migrate ui`). Migrations are
-additive; `ui_migrate` is idempotent (it takes an advisory lock, so two concurrent runs
-cannot collide).
+Upgrade: deploy compatible backend and UI revisions together, following the backend
+[local integration guide](../../../multi-agent-article/docs/user_manual/local_ui_integration.md).
+Let active jobs finish, preserve volumes, apply migrations, then replace both images.
+UI bootstrap is idempotent and uses an advisory lock to prevent concurrent migrations.
 
-Rollback: set `UI_IMAGE_TAG` back to the previous release and `dcu up -d ui`. Because
-migrations are additive, an older BFF runs against a newer schema. Only if a release
-notes a destructive migration: `dcu run --rm --entrypoint /app/.venv/bin/python ui_migrate -m alembic downgrade <revision>`
-with the owner `UI_DATABASE_URL` in the environment, then start the older image.
+Rollback: select a known compatible backend/UI pair and check the database revisions
+required by both images. Readiness requires each application's exact migration head;
+an additive migration does not guarantee that an older image is ready. Follow the
+release's recovery procedure, or restore a verified backup into an empty database
+and validate the pair there before switching. Changing `UI_IMAGE_TAG` alone is not a
+complete rollback plan.
 
 ## 10. Required pipeline contract
 
-`capabilities.py` checks `/openapi.json` at startup and every
-`UI_CAPABILITY_REFRESH_SECONDS` (default 300). Version **1** requires global signals,
-tasks, source statistics, cost estimates, retry-dead, API-key inventory and job
-filters. Paths, parameters and response schemas are checked together with the marker
-`x-scout-contract-version`. `/readyz` checks this contract and authenticated reads
-using both configured keys. A responsive `/healthz` alone is not readiness.
+`capabilities.py` reads `/openapi.json` at startup and every
+`UI_CAPABILITY_REFRESH_SECONDS` (default 300). It checks marker
+`x-scout-contract-version: 1`, every required method/path, and required query names.
+Response schemas are verified by the offline OpenAPI snapshot, generated-type and
+regression checks; readiness does not validate response schemas.
+
+`/readyz` uses the cached contract result and makes fresh backend readiness and
+reader/operator key checks. After replacing a backend, allow the next contract
+probe or restart the BFF. A responsive `/healthz` alone is not readiness. Worker
+availability is separate: inspect Settings › Workers & health before starting paid
+jobs; API/BFF readiness does not require workers to be running.
 
 Inspect `GET /app/capabilities` or Settings › System for `compatible`,
 `contract_version`, `required_contract_version`, `contract_errors` and the per-route
